@@ -10,6 +10,7 @@ import { Room, Player } from '@/types/game';
 import { locationService } from '@/lib/locationService';
 import AuthGuard from '@/components/AuthGuard';
 import LocationPermissionModal from '@/components/LocationPermissionModal';
+import GameMap from '@/components/GameMap';
 
 interface PageProps {
   params: {
@@ -32,6 +33,7 @@ function GamePage({ params }: PageProps) {
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [locationError, setLocationError] = useState('');
+  const [showMap, setShowMap] = useState(false);
 
   useEffect(() => {
     if (!user || !profile) return;
@@ -288,14 +290,70 @@ function GamePage({ params }: PageProps) {
           </div>
         )}
 
-        {!currentPlayer?.isAlive && (
-          <div className="mb-6 text-center">
-            <div className="bg-gray-600 text-white rounded-lg p-4">
-              <div className="font-bold text-lg mb-2">💀 You have been eliminated</div>
-              <p className="text-sm">
-                Watch the remaining players battle it out!
-              </p>
+        {/* Map Section for Killers */}
+        {currentPlayer?.role === 'killer' && isActive && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold text-red-600">🗺️ Tracking Map</h2>
+              <button
+                onClick={() => setShowMap(!showMap)}
+                className="px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-sm font-medium"
+              >
+                {showMap ? 'Hide Map' : 'Show Map'}
+              </button>
             </div>
+            
+            {showMap && (
+              <GameMap
+                players={players}
+                currentPlayerUid={user?.id || ''}
+                isKiller={true}
+                className="mb-4"
+              />
+            )}
+            
+            {!showMap && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+                <p className="text-red-700 text-sm">Click &quot;Show Map&quot; to track survivor locations</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {!currentPlayer?.isAlive && (
+          <div className="mb-6">
+            <div className="text-center mb-4">
+              <div className="bg-gray-600 text-white rounded-lg p-4">
+                <div className="font-bold text-lg mb-2">💀 You have been eliminated</div>
+                <p className="text-sm">
+                  Watch the remaining players battle it out!
+                </p>
+              </div>
+            </div>
+            
+            {/* Spectator Map */}
+            {isActive && (
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-lg font-semibold text-gray-600">👻 Spectator Map</h2>
+                  <button
+                    onClick={() => setShowMap(!showMap)}
+                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium"
+                  >
+                    {showMap ? 'Hide Map' : 'Show Map'}
+                  </button>
+                </div>
+                
+                {showMap && (
+                  <GameMap
+                    players={players}
+                    currentPlayerUid={user?.id || ''}
+                    isKiller={true} // Show full map view for spectators
+                    className="mb-4"
+                  />
+                )}
+              </div>
+            )}
           </div>
         )}
 
