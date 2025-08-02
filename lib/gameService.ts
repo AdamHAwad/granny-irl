@@ -1,6 +1,28 @@
+/**
+ * Game Service - Core business logic for Granny IRL
+ * 
+ * Handles:
+ * - Room management (create, join, leave, kick)
+ * - Game state transitions (waiting → headstart → active → finished)
+ * - Player elimination and game end detection
+ * - Real-time subscriptions with polling fallback
+ * - Location tracking integration
+ * - Game history and statistics
+ * 
+ * Key patterns:
+ * - All database operations go through Supabase client
+ * - Real-time updates via subscriptions + 2s polling fallback
+ * - Comprehensive logging for debugging
+ * - Resilient error handling for free tier limitations
+ */
+
 import { supabase } from './supabase';
 import { Room, Player, RoomSettings, GameResult, PlayerGameStats, GameHistoryEntry, PlayerLocation } from '@/types/game';
 
+/**
+ * Generates a random 6-digit room code (e.g., "ABC123")
+ * Uses base36 for alphanumeric codes that are easy to share
+ */
 export function generateRoomCode(): string {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 }

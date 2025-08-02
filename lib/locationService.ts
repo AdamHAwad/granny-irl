@@ -1,3 +1,20 @@
+/**
+ * Location Service - GPS tracking and geolocation utilities for Granny IRL
+ * 
+ * Features:
+ * - Browser Geolocation API wrapper with error handling
+ * - High-frequency location tracking during games (5s updates)
+ * - Device orientation/compass support for directional arrows
+ * - Distance and bearing calculations using Haversine formula
+ * - Privacy-focused permission management
+ * 
+ * Usage patterns:
+ * - Request permission before starting tracking
+ * - Use HIGH_FREQUENCY_LOCATION_OPTIONS during active games
+ * - Always call stopWatching() when games end
+ * - Handle graceful degradation when GPS unavailable
+ */
+
 import { PlayerLocation } from '@/types/game';
 
 export interface LocationPermissionStatus {

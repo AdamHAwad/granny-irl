@@ -1,3 +1,25 @@
+/**
+ * Interactive Game Map - Leaflet-based real-world map for Granny IRL
+ * 
+ * Features:
+ * - OpenStreetMap integration (free, no API keys)
+ * - Interactive controls (pinch-zoom, drag-pan)
+ * - Custom player markers with profile pictures
+ * - Real-time position updates
+ * - Auto-fit bounds to show all players
+ * - Distance calculations and accuracy circles
+ * - Mobile-optimized touch controls
+ * 
+ * Only visible to:
+ * - Killers during active games (hunt mode)
+ * - Eliminated players (spectator mode)
+ * 
+ * Technical notes:
+ * - Uses dynamic imports to avoid SSR issues
+ * - Custom div icons for profile picture markers
+ * - Responsive design for mobile gameplay
+ */
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -6,7 +28,7 @@ import { locationService } from '@/lib/locationService';
 import dynamic from 'next/dynamic';
 import 'leaflet/dist/leaflet.css';
 
-// Fix for default markers in Next.js
+// Leaflet setup for Next.js SSR compatibility
 import L from 'leaflet';
 
 // Dynamically import Leaflet components to avoid SSR issues

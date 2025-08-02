@@ -1,128 +1,136 @@
-# Development Workflow - Granny IRL
+# Granny IRL Development Guide
+
+## Quick Context
+- **Production-ready** real-life tag game app
+- **Tech Stack**: Next.js 14 + Supabase + Leaflet maps
+- **Live**: https://granny-irl.vercel.app
+- **Repo**: https://github.com/AdamHAwad/granny-irl
 
 ## Branching Strategy
 
 ### Branch Structure:
-- **`main`** - Production branch (auto-deploys to Vercel)
-- **`development`** - Main development branch (stable features)
-- **`feature/*`** - Feature branches (for individual features)
+- **`main`** - Production (auto-deploys to Vercel)
+- **`development`** - Integration branch for testing
+- **`feature/*`** - Individual feature development
 
-### Workflow:
-
-#### 1. **For New Features:**
+### Quick Workflow:
 ```bash
-# Create feature branch from development
-git checkout development
-git pull origin development
-git checkout -b feature/host-kick-functionality
+# For new features
+git checkout -b feature/your-feature
+# Work, commit, push to main directly (current practice)
 
-# Work on feature...
-git add .
-git commit -m "Add host kick feature"
-git push -u origin feature/host-kick-functionality
-
-# Merge back to development when done
-git checkout development
-git merge feature/host-kick-functionality
-git push origin development
+# For production deploy
+git push origin main  # Auto-deploys
 ```
 
-#### 2. **For Production Releases:**
-```bash
-# Merge development to main when ready for production
-git checkout main
-git merge development
-git push origin main
-# This triggers automatic Vercel deployment
-```
+## Current Implementation Status
 
-#### 3. **For Hotfixes:**
-```bash
-# Create hotfix branch from main
-git checkout main
-git checkout -b hotfix/critical-bug-fix
+### ✅ Core Features Complete
+- Authentication (Google OAuth)
+- Room management (6-digit codes)
+- Real-time gameplay with location tracking
+- Interactive OpenStreetMap integration
+- Proximity detection and directional arrows
+- Game history and player statistics
+- Mobile-optimized responsive design
 
-# Fix the issue...
-git add .
-git commit -m "Fix critical bug"
-git push -u origin hotfix/critical-bug-fix
+### 🔧 Known Technical Details
+- **Supabase free tier**: Causes some slowness in transitions
+- **Location updates**: 5-second frequency during games
+- **Map implementation**: Leaflet + OpenStreetMap (no API costs)
+- **Real-time**: Subscriptions + 2s polling fallback
 
-# Merge to both main and development
-git checkout main
-git merge hotfix/critical-bug-fix
-git checkout development  
-git merge hotfix/critical-bug-fix
-git push origin main development
-```
+### 🚧 Next Priority Features
+1. **Game Boundaries** - Host draws play area limits
+2. **Heat Maps** - Player movement density tracking
+3. **Trail History** - Path visualization (toggleable)
+4. **Native Mobile Apps** - iOS/Android wrappers
 
-## Current Status
-- **Production (main)**: Stable MVP with all core features
-- **Development**: Ready for new feature development
-- **Live URL**: https://granny-irl.vercel.app (deploys from main)
+## Quick Development Setup
 
-## Development Environment Setup
-
-### Local Development:
+### Local Environment:
 ```bash
 git clone https://github.com/AdamHAwad/granny-irl.git
 cd granny-irl
-git checkout development
 npm install
-npm run dev  # Runs on localhost:3000
+npm run dev  # localhost:3000
 ```
 
-### Environment Variables:
-```
-NEXT_PUBLIC_SUPABASE_URL=https://vyybwuzpwvrwpbtoreoz.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5eWJ3dXpwd3Zyd3BidG9yZW96Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQwODc2MjYsImV4cCI6MjA2OTY2MzYyNn0.3Hg9ercrUA7y4VRK973dIO99TMSIjzNOuWo2XSWHTJU
-```
-
-## Feature Development Guidelines
-
-### Commit Message Format:
-```
-type(scope): description
-
-Examples:
-feat(game): add host kick functionality
-fix(auth): resolve login redirect issue
-docs(readme): update installation instructions
-refactor(timer): optimize game timer logic
-```
-
-### Testing Before Merge:
-1. **Local testing**: `npm run build` must pass
-2. **Feature testing**: Test the specific feature works
-3. **Regression testing**: Ensure existing features still work
-4. **Mobile testing**: Test on mobile devices
-
-### Code Review Checklist:
-- [ ] Feature works as expected
-- [ ] No TypeScript errors
-- [ ] Mobile responsive
-- [ ] Error handling implemented
-- [ ] Console logs appropriate for debugging
-- [ ] Documentation updated if needed
-
-## Release Process
-
-### Development → Production:
-1. **Test development branch thoroughly**
-2. **Update version in package.json**
-3. **Create release commit**
-4. **Merge to main**
-5. **Tag release**: `git tag v1.1.0`
-6. **Monitor Vercel deployment**
-7. **Test production deployment**
-
-### Rollback Process:
+### Essential Commands:
 ```bash
-# If production has issues, rollback
-git checkout main
-git reset --hard HEAD~1  # Go back one commit
-git push --force origin main
+npm run build     # Test production build
+npm run lint      # Check code quality
+git push         # Auto-deploy to production
 ```
+
+## Code Architecture
+
+### File Structure:
+```
+/lib/               # Business logic services
+├── gameService.ts  # Room/game state management
+├── userService.ts  # Profile/auth operations
+└── locationService.ts # GPS tracking utilities
+
+/components/        # Reusable UI components
+├── InteractiveGameMap.tsx # Leaflet map implementation
+├── ProximityArrow.tsx     # Directional tracking
+└── [others...]
+
+/app/              # Next.js App Router pages
+├── page.tsx       # Home/profile
+├── room/[code]/   # Room lobby
+├── game/[code]/   # Active gameplay
+└── results/[code] # Game results
+```
+
+### Key Patterns:
+- **Services handle all business logic**
+- **Components focus on UI/UX**
+- **Real-time via Supabase subscriptions**
+- **Mobile-first responsive design**
+
+## Testing Strategy
+
+### Quick Test Setup:
+- Use 5s headstart, 30s rounds
+- Test with multiple browser tabs
+- Enable GPS permissions
+- Check console for debug logs
+
+### Critical Test Cases:
+- Room creation/joining
+- Location permission flow
+- Game state transitions
+- Player elimination
+- Map interactions
+
+## Debugging Guide
+
+### Common Issues:
+1. **Slow transitions** → Supabase free tier latency
+2. **Location not working** → Browser permissions
+3. **Map not loading** → Network/Leaflet imports
+4. **Profile pics missing** → Supabase storage policies
+
+### Debug Tools:
+- Console logs throughout services
+- Browser DevTools for network
+- Supabase dashboard for DB queries
+
+## Performance Notes
+
+### Current Optimizations:
+- Dynamic imports for Leaflet (SSR compatibility)
+- High-frequency location only during games
+- Efficient player filtering and map bounds
+- Graceful degradation for offline/low-GPS
+
+### Known Limitations:
+- Free tier causes 2-5s delays in database operations
+- Compass may not work on all devices
+- Location accuracy varies by device
 
 ---
-
-**Current Development Status**: Ready for organized feature development on `development` branch.
+**Updated**: Current session  
+**Next**: See CLAUDE.md for pending features

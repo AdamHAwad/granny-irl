@@ -1,219 +1,200 @@
 # Claude Development Context - Granny IRL
 
 ## Project Overview
-**Granny IRL** is a web-based companion app for real-life tag games, similar to Friday the 13th video game mechanics. Players use their phones to coordinate outdoor tag games with killers and survivors.
+**Granny IRL** is a web-based companion app for real-life outdoor tag games. Players use their phones to coordinate games with killers hunting survivors in the real world. Think "Friday the 13th" meets "Pokémon GO".
 
 **Live URL**: https://granny-irl.vercel.app/
 
-## Current Status: MVP COMPLETE ✅
+## Current Status: PRODUCTION READY ✅
 - Fully functional multiplayer game coordination
-- Google authentication working
-- Real-time room updates
-- Game timer mechanics
-- Results tracking
-- Mobile-optimized UI
-- Successfully deployed on Vercel
+- Real-time location tracking with interactive maps
+- Complete game flow from lobby to results
+- Mobile-optimized for outdoor gameplay
+- All major features implemented and tested
 
 ## Technical Stack
-- **Frontend**: Next.js 14 with App Router, TypeScript, Tailwind CSS
-- **Backend**: Supabase (PostgreSQL database, Auth, Real-time)
-- **Authentication**: Google OAuth via Supabase Auth
-- **Deployment**: Vercel
+- **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS
+- **Backend**: Supabase (PostgreSQL, Auth, Real-time, Storage)
+- **Maps**: Leaflet + OpenStreetMap (free, no API keys)
+- **Deployment**: Vercel (automatic from GitHub main branch)
 - **Real-time**: Supabase subscriptions + 2-second polling fallback
-
-## Migration History
-- **Started with**: Firebase (Auth + Realtime Database)
-- **Migrated to**: Supabase (due to Firebase storage limitations)
-- **Key challenge**: Field naming (camelCase → snake_case)
 
 ## Database Schema (Supabase PostgreSQL)
 
 ### Tables:
 1. **user_profiles**
-   - `uid` (FK to auth.users)
-   - `display_name` 
-   - `custom_username`
-   - `profile_picture_url`
-   - `created_at`
+   ```sql
+   - uid (FK to auth.users)
+   - display_name 
+   - custom_username
+   - profile_picture_url
+   - created_at
+   ```
 
 2. **rooms**
-   - `id` (6-digit string code)
-   - `host_uid`
-   - `players` (JSONB object)
-   - `settings` (JSONB object)
-   - `status` ('waiting' | 'headstart' | 'active' | 'finished')
-   - `created_at`, `headstart_started_at`, `game_started_at`, `game_ended_at`
+   ```sql
+   - id (6-digit string code)
+   - host_uid
+   - players (JSONB - Player objects)
+   - settings (JSONB - RoomSettings)
+   - status ('waiting' | 'headstart' | 'active' | 'finished')
+   - created_at, headstart_started_at, game_started_at, game_ended_at
+   ```
 
 3. **game_results**
-   - `room_id`
-   - `winners` ('killers' | 'survivors')
-   - `elimination_order` (array of UIDs)
-   - `game_started_at`, `game_ended_at`
-   - `final_players` (JSONB snapshot)
+   ```sql
+   - room_id
+   - winners ('killers' | 'survivors')
+   - elimination_order (array of UIDs)
+   - game_started_at, game_ended_at
+   - final_players (JSONB snapshot)
+   ```
 
-## Key Features Implemented
+## Core Features Implemented
 
-### 1. Authentication Flow
-- Google OAuth via Supabase
-- Custom username/profile picture setup
-- Persistent sessions
+### 1. Authentication & Profiles
+- Google OAuth via Supabase Auth
+- Custom usernames and profile pictures
+- Profile picture upload to Supabase Storage
+- Edit profile functionality with existing data
 
 ### 2. Room Management
-- Create rooms with 6-digit codes
-- Join existing rooms
+- 6-digit room codes for easy sharing
 - Real-time player list updates
-- Room settings: killer count (1-3), round length, headstart time, max players
+- Host controls (kick players, start game)
+- Room settings: killers (1-3), round length (30s-30min), headstart (5s-5min)
+- Rooms persist for multiple games
 
 ### 3. Game Flow
-- **Waiting Phase**: Players join, host starts game
-- **Headstart Phase**: Survivors get time to hide (5s-5min options)
-- **Active Phase**: Round timer counts down (30s-30min options)
-- **Results Phase**: Shows winners, elimination order, game stats
+- **Waiting**: Players join, host configures
+- **Headstart**: Survivors hide (configurable time)
+- **Active**: Hunt begins, real-time tracking
+- **Finished**: Shows results and stats
 
-### 4. Game Mechanics
+### 4. Location Features
+- Permission request system with privacy info
+- Real-time GPS tracking (5-second updates)
+- Interactive OpenStreetMap integration
+- Proximity detection (<100m triggers arrow)
+- Directional arrow pointing to nearest survivor
+- Auto-cleanup on game end
+
+### 5. Map Features
+- Pinch-to-zoom, drag-to-pan
+- Player markers with profile pictures
+- Color coding (red=killers, blue=survivors)
+- Distance calculations and display
+- Auto-fit bounds to show all players
+- Accuracy circles for GPS precision
+
+### 6. Game Mechanics
 - Random killer assignment
-- Self-reporting elimination ("I died" button)
-- Automatic game end detection (time expires OR all survivors eliminated)
+- Self-elimination button ("I Was Caught!")
+- Automatic win detection
 - Sound/vibration notifications
+- Game history tracking
+- Player statistics
 
-### 5. Testing Features
-- 5-second headstart option
-- 30-second round option
-- Quick game cycles for development
+## File Structure
 
-## File Structure & Key Components
-
-### Core Files:
-- `/lib/supabase.ts` - Supabase client configuration
-- `/lib/gameService.ts` - All game logic, room management, real-time subscriptions
-- `/lib/userService.ts` - User profile management
-- `/contexts/AuthContext.tsx` - Authentication state management
-- `/types/game.ts` - TypeScript definitions
-
-### Pages:
-- `/app/page.tsx` - Home screen, profile setup, current room display
-- `/app/room/[roomCode]/page.tsx` - Room lobby (waiting phase)
-- `/app/game/[roomCode]/page.tsx` - Active game screen with timers
-- `/app/results/[roomCode]/page.tsx` - Game results and statistics
-
-### Components:
-- `SignInButton.tsx` - Google OAuth sign-in
-- `ProfileSetup.tsx` - Custom username/picture setup
-- `CreateRoomModal.tsx` - Room creation with settings
-- `JoinRoomModal.tsx` - Join room by code
-- `CurrentRoom.tsx` - Shows active room on home screen
-
-## Environment Variables (Vercel)
+### Core Services
 ```
+/lib/
+├── supabase.ts          # Supabase client config
+├── gameService.ts       # Game logic, room management
+├── userService.ts       # Profile management
+└── locationService.ts   # GPS tracking, calculations
+```
+
+### Key Components
+```
+/components/
+├── InteractiveGameMap.tsx    # Leaflet map implementation
+├── ProximityArrow.tsx        # Directional tracking arrow
+├── LocationPermissionModal.tsx # Privacy-focused permissions
+├── ProfileSetup.tsx          # User profile editor
+└── [auth/room/game components]
+```
+
+### Pages (App Router)
+```
+/app/
+├── page.tsx                  # Home/profile/room list
+├── room/[roomCode]/page.tsx  # Room lobby
+├── game/[roomCode]/page.tsx  # Active gameplay
+├── results/[roomCode]/page.tsx # Game results
+└── history/page.tsx          # Player statistics
+```
+
+## Environment Setup
+```env
 NEXT_PUBLIC_SUPABASE_URL=https://vyybwuzpwvrwpbtoreoz.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5eWJ3dXpwd3Zyd3BidG9yZW96Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQwODc2MjYsImV4cCI6MjA2OTY2MzYyNn0.3Hg9ercrUA7y4VRK973dIO99TMSIjzNOuWo2XSWHTJU
+NEXT_PUBLIC_SUPABASE_ANON_KEY=[your-key]
 ```
 
-## Supabase Configuration
-- **Project**: vyybwuzpwvrwpbtoreoz.supabase.co
-- **Auth Redirect URLs**: 
-  - `https://granny-irl.vercel.app/**`
-  - `http://localhost:3000/**`
-- **Site URL**: `https://granny-irl.vercel.app`
+## Key Implementation Details
 
-## Recent Fixes Applied
-1. **Timer transition bug**: Fixed headstart → active phase transition
-2. **Premature game ending**: Added 5-second grace period in `checkGameEnd`
-3. **Auth redirect issue**: Hardcoded production domain for OAuth redirects
-4. **Build errors**: Fixed TypeScript issues with user properties
-5. **Removed old Firebase**: Cleaned up unused Firebase dependencies
+### Location Tracking
+- Uses browser Geolocation API
+- High-frequency mode during games (5s updates)
+- Handles iOS device orientation permissions
+- Distance/bearing calculations using Haversine formula
 
-## Known Issues & Limitations
-- Real-time subscriptions sometimes unreliable (polling fallback in place)
-- No major known bugs or limitations currently
+### Real-time Updates
+- Primary: Supabase real-time subscriptions
+- Fallback: 2-second polling (reliability)
+- Resilient error handling for transitions
 
-## Recently Completed Features ✅
-1. **Host kick feature** - Room hosts can remove players from rooms
-2. **Profile picture uploads** - Full Supabase storage integration with cleanup
-3. **Game history system** - Track player statistics and game records over time
-4. **Multi-game room support** - Fixed "Results not found" error for rooms playing multiple games
+### Performance Optimizations
+- Dynamic imports for Leaflet (SSR compatibility)
+- Debounced location updates
+- Efficient player filtering
+- Smart map bounds calculation
 
-## Future Development Priorities
-1. **Mobile apps (iOS/Android)** - WebView wrapper app or React Native port
-2. **Location sharing** - Killer sees all player locations, updates every 1 minute
-3. **Improve real-time reliability** - Better WebSocket handling
-4. **Add game modes** - Different rule variations
-5. **Advanced features** - Spectator mode, custom rules, tournaments
+## Recent Bug Fixes
+1. **Profile pictures not showing in edit modal** - Fixed by passing existing profile data
+2. **"Room not found" during transitions** - Added 5-second grace period
+3. **Elimination button stuck** - Needs proper state management (reverted)
+4. **Map profile pictures as capsules** - Fixed with proper circular cropping
 
-### Feature Details:
+## Known Limitations
+- Free tier slowness (Supabase database operations)
+- Compass may not work on all devices
+- Location accuracy depends on device GPS
 
-#### Game History System ✅
-- **Statistics tracking**: Games played, wins, losses, killer/survivor wins, avg placement
-- **Detailed game records**: Role, outcome, placement, duration for each game
-- **Performance metrics**: Win rate, elimination count, placement trends
-- **Data source**: Uses existing `game_results` table for historical data
-- **UI**: Accessible via "Game History" link on home page
-- **Mobile optimized**: Responsive grid layout for stats and history
-- **Multi-game support**: Fixed getGameResult() to handle rooms with multiple games
+## Pending Features
+1. **Game Boundaries** - Host draws play area on map
+2. **Heat Maps** - Show player movement density
+3. **Trail History** - Track player paths
+4. **Mobile Apps** - Native iOS/Android wrappers
 
-#### Host Kick Feature ✅
-- Add "kick" button next to each player (only visible to host)
-- Remove player from room.players object
-- Force redirect kicked player to home screen
-- Show notification "You've been removed from the room"
-
-#### Profile Picture System ✅
-- Create Supabase storage bucket for avatars
-- Update upload endpoint in ProfileSetup component
-- Handle image resizing/compression
-- Add default avatar fallback
-- Automatic cleanup of old profile pictures
-
-#### Mobile App Strategy
-- Option 1: WebView wrapper (quickest approach)
-  - Use Capacitor or similar to wrap website
-  - Add native features like push notifications
-  - Maintain single codebase
-- Option 2: React Native
-  - Full native experience
-  - Better performance
-  - More development effort
-
-#### Location Sharing
-- Request location permissions during game
-- Update player location every 60 seconds
-- Store in rooms.players[uid].location
-- Only visible to killers during active phase
-- Privacy consideration: Auto-disable after game ends
-- Show distance/direction indicators on killer's screen
-- Show map (similar to Splashin app) with:
-  - Survivors' profile pictures at their last pinged locations (1-minute updates)
-  - Killer's profile picture in bold red circle (real-time updates)
-  - Killer uses map to track survivors during hunt
-  - Survivors cannot see map while alive (no unfair advantage)
-  - Dead players can spectate the map to watch the action
-- **Proximity Direction Feature** (like Find My app):
-  - When killer is within ~50 meters of a survivor
-  - Dynamic arrow appears pointing toward nearest survivor
-  - Arrow updates in real-time using device compass/orientation
-  - Uses Web APIs: Geolocation + DeviceOrientationEvent
-  - Shows approximate distance (e.g., "~30m away")
-  - Could pulse/change color as killer gets closer
-  - Note: Requires HTTPS and device compass support
-
-## Development Commands
+## Development Workflow
 ```bash
 npm run dev          # Local development
 npm run build        # Production build
 npm run lint         # Code linting
+git push            # Auto-deploy to Vercel
 ```
 
-## Git Repository
-- **GitHub**: https://github.com/AdamHAwad/granny-irl
-- **Branch**: main
-- **Latest commit**: OAuth debugging and fixes
+## Testing Credentials
+- Use any Google account for authentication
+- Test room codes: Create new or join existing
+- Location testing: Enable GPS on device
 
-## Deployment Notes
-- Auto-deploys from GitHub main branch
-- Build time: ~2-3 minutes
-- Uses Vercel's Next.js optimization
-- All environment variables configured
+## Deployment
+- **Production**: https://granny-irl.vercel.app
+- **GitHub**: https://github.com/AdamHAwad/granny-irl
+- **Auto-deploy**: Push to main branch
+- **Build time**: ~2-3 minutes
+
+## Quick Start for New Features
+1. Check this file for context
+2. Review `/types/game.ts` for data structures
+3. Use existing services in `/lib/`
+4. Follow component patterns
+5. Test with 5s/30s game settings
 
 ---
-
-**Status**: Production-ready MVP with full game mechanics working. Ready for user testing and feature expansion.
+**Last Updated**: Current session
+**Status**: Production-ready with active development</content>
+</invoke>
