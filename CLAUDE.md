@@ -130,10 +130,45 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd
 
 ## Future Development Priorities
 1. **Implement game history** - Track player statistics over time
-2. **Improve real-time reliability** - Better WebSocket handling
-3. **Add game modes** - Different rule variations
-4. **Mobile app** - PWA or native apps
-5. **Advanced features** - Spectator mode, custom rules, tournaments
+2. **Host kick feature** - Allow room hosts to remove players from rooms
+3. **Fix profile picture uploads** - Currently not working, needs Supabase storage bucket setup
+4. **Mobile apps (iOS/Android)** - WebView wrapper app or React Native port
+5. **Location sharing** - Killer sees all player locations, updates every 1 minute
+6. **Improve real-time reliability** - Better WebSocket handling
+7. **Add game modes** - Different rule variations
+8. **Advanced features** - Spectator mode, custom rules, tournaments
+
+### Feature Details:
+
+#### Host Kick Feature
+- Add "kick" button next to each player (only visible to host)
+- Remove player from room.players object
+- Force redirect kicked player to home screen
+- Show notification "You've been removed from the room"
+
+#### Profile Picture Fix
+- Create Supabase storage bucket for avatars
+- Update upload endpoint in ProfileSetup component
+- Handle image resizing/compression
+- Add default avatar fallback
+
+#### Mobile App Strategy
+- Option 1: WebView wrapper (quickest approach)
+  - Use Capacitor or similar to wrap website
+  - Add native features like push notifications
+  - Maintain single codebase
+- Option 2: React Native
+  - Full native experience
+  - Better performance
+  - More development effort
+
+#### Location Sharing
+- Request location permissions during game
+- Update player location every 60 seconds
+- Store in rooms.players[uid].location
+- Only visible to killers during active phase
+- Privacy consideration: Auto-disable after game ends
+- Show distance/direction indicators on killer's screen
 
 ## Development Commands
 ```bash
