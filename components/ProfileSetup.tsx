@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { uploadProfilePicture, updateUserProfile } from '@/lib/userService';
+import { uploadProfilePicture, updateUserProfile, deleteProfilePicture } from '@/lib/userService';
 
 interface ProfileSetupProps {
   onComplete: () => void;
@@ -58,6 +58,23 @@ export default function ProfileSetup({ onComplete }: ProfileSetupProps) {
     onComplete();
   };
 
+  const handleRemoveImage = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      await deleteProfilePicture(user.id);
+      setProfileImage(null);
+      setPreviewUrl(null);
+      console.log('Profile picture removed successfully');
+    } catch (error) {
+      console.error('Error removing profile picture:', error);
+      alert(`Error removing profile picture: ${error}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-lg text-black">
       <h2 className="text-2xl font-bold text-center mb-6">Complete Your Profile</h2>
@@ -80,15 +97,28 @@ export default function ProfileSetup({ onComplete }: ProfileSetupProps) {
             )}
           </div>
           
-          <label className="block">
-            <span className="text-sm text-gray-600">Profile Picture (optional)</span>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mt-2"
-            />
-          </label>
+          <div className="space-y-2">
+            <label className="block">
+              <span className="text-sm text-gray-600">Profile Picture (optional)</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mt-2"
+                disabled={loading}
+              />
+            </label>
+            {(previewUrl || profileImage) && (
+              <button
+                type="button"
+                onClick={handleRemoveImage}
+                disabled={loading}
+                className="text-sm text-red-600 hover:text-red-800 underline disabled:opacity-50"
+              >
+                Remove Picture
+              </button>
+            )}
+          </div>
         </div>
 
         <div>

@@ -63,6 +63,9 @@ export async function uploadProfilePicture(
 ): Promise<string> {
   console.log('uploadProfilePicture: Starting upload for user:', uid);
   
+  // Delete any existing profile pictures first
+  await deleteExistingProfilePictures(uid);
+  
   // Compress image if needed
   const compressedFile = await compressImage(file);
   
@@ -148,12 +151,78 @@ async function compressImage(file: File): Promise<File> {
 
 export async function deleteProfilePicture(uid: string): Promise<void> {
   try {
-    const { error } = await supabase.storage
-      .from('profile-pictures')
-      .remove([`${uid}.jpg`, `${uid}.png`, `${uid}.jpeg`]);
+    console.log('deleteProfilePicture: Removing profile picture for user:', uid);
     
+    // Delete all possible profile picture files for this user
+    await deleteExistingProfilePictures(uid);
+    
+    // Update profile to remove the URL
     await updateUserProfile(uid, { profile_picture_url: undefined });
+    
+    console.log('deleteProfilePicture: Profile picture deleted successfully');
   } catch (error) {
     console.error('Error deleting profile picture:', error);
+    throw error;
+  }
+}
+
+// Helper function to delete existing profile pictures for a user
+async function deleteExistingProfilePictures(uid: string): Promise<void> {
+  try {
+    console.log('deleteExistingProfilePictures: Cleaning up old pictures for user:', uid);
+    
+    // List all files for this user (try common extensions)
+    const possibleFiles = [
+      `${uid}.jpg`,
+      `${uid}.jpeg`, 
+      `${uid}.png`,
+      `${uid}.gif`,
+      `${uid}.webp`,
+      `${uid}.bmp`
+    ];
+    
+    // Get list of actual files in the bucket for this user
+    const { data: existingFiles, error: listError } = await supabase.storage
+      .from('profile-pictures')
+      .list('', {
+        search: uid
+      });
+    
+    if (listError) {
+      console.log('deleteExistingProfilePictures: Could not list files:', listError);
+      // Try to delete common file types anyway
+      const { error: removeError } = await supabase.storage
+        .from('profile-pictures')
+        .remove(possibleFiles);
+      
+      if (removeError) {
+        console.log('deleteExistingProfilePictures: Error removing files:', removeError);
+      }
+      return;
+    }
+    
+    // Filter files that belong to this user and delete them
+    const userFiles = existingFiles
+      ?.filter(file => file.name.startsWith(uid))
+      ?.map(file => file.name) || [];
+    
+    if (userFiles.length > 0) {
+      console.log('deleteExistingProfilePictures: Found files to delete:', userFiles);
+      
+      const { error: removeError } = await supabase.storage
+        .from('profile-pictures')
+        .remove(userFiles);
+      
+      if (removeError) {
+        console.error('deleteExistingProfilePictures: Error removing files:', removeError);
+      } else {
+        console.log('deleteExistingProfilePictures: Successfully deleted files:', userFiles);
+      }
+    } else {
+      console.log('deleteExistingProfilePictures: No existing files found for user');
+    }
+  } catch (error) {
+    console.error('deleteExistingProfilePictures: Error:', error);
+    // Don't throw - this is cleanup, shouldn't break the main flow
   }
 }
