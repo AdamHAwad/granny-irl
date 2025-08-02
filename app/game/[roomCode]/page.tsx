@@ -325,14 +325,22 @@ function GamePage({ params }: PageProps) {
           </div>
         )}
 
-        {/* Map Section for Killers */}
-        {currentPlayer?.role === 'killer' && isActive && (
+        {/* Map Section - Available to all alive players during active game */}
+        {currentPlayer?.isAlive && isActive && (
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-semibold text-red-600">🗺️ Tracking Map</h2>
+              <h2 className={`text-lg font-semibold ${
+                currentPlayer?.role === 'killer' ? 'text-red-600' : 'text-blue-600'
+              }`}>
+                🗺️ {currentPlayer?.role === 'killer' ? 'Tracking Map' : 'Survivor Map'}
+              </h2>
               <button
                 onClick={() => setShowMap(!showMap)}
-                className="px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-sm font-medium"
+                className={`px-3 py-1 rounded-lg text-sm font-medium ${
+                  currentPlayer?.role === 'killer' 
+                    ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                    : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                }`}
               >
                 {showMap ? 'Hide Map' : 'Show Map'}
               </button>
@@ -342,14 +350,22 @@ function GamePage({ params }: PageProps) {
               <InteractiveGameMap
                 players={players}
                 currentPlayerUid={user?.id || ''}
-                isKiller={true}
+                isKiller={currentPlayer?.role === 'killer'}
                 className="mb-4"
               />
             )}
             
             {!showMap && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
-                <p className="text-red-700 text-sm">Click &quot;Show Map&quot; to track survivor locations</p>
+              <div className={`border rounded-lg p-3 text-center ${
+                currentPlayer?.role === 'killer' 
+                  ? 'bg-red-50 border-red-200' 
+                  : 'bg-blue-50 border-blue-200'
+              }`}>
+                <p className={`text-sm ${
+                  currentPlayer?.role === 'killer' ? 'text-red-700' : 'text-blue-700'
+                }`}>
+                  Click &quot;Show Map&quot; to see {currentPlayer?.role === 'killer' ? 'survivor locations' : 'your location and other survivors'}
+                </p>
               </div>
             )}
           </div>
@@ -383,7 +399,8 @@ function GamePage({ params }: PageProps) {
                   <InteractiveGameMap
                     players={players}
                     currentPlayerUid={user?.id || ''}
-                    isKiller={true} // Show full map view for spectators
+                    isKiller={false}
+                    isEliminated={true} // Spectators can see everyone
                     className="mb-4"
                   />
                 )}

@@ -10,9 +10,10 @@
  * - Distance calculations and accuracy circles
  * - Mobile-optimized touch controls
  * 
- * Only visible to:
- * - Killers during active games (hunt mode)
- * - Eliminated players (spectator mode)
+ * Visibility Rules:
+ * - Killers: Can see all players (killers + survivors)
+ * - Survivors: Can see themselves + other survivors (killers hidden)
+ * - Eliminated players: Can see all players (spectator mode)
  * 
  * Technical notes:
  * - Uses dynamic imports to avoid SSR issues
@@ -57,6 +58,7 @@ interface InteractiveGameMapProps {
   players: Player[];
   currentPlayerUid: string;
   isKiller: boolean;
+  isEliminated?: boolean;
   className?: string;
 }
 
@@ -113,7 +115,8 @@ const createCustomIcon = (player: Player, isCurrentPlayer: boolean = false) => {
 export default function InteractiveGameMap({ 
   players, 
   currentPlayerUid, 
-  isKiller, 
+  isKiller,
+  isEliminated = false,
   className = '' 
 }: InteractiveGameMapProps) {
   const [map, setMap] = useState<L.Map | null>(null);
@@ -121,13 +124,32 @@ export default function InteractiveGameMap({
   const [zoom, setZoom] = useState(17); // Higher zoom for better detail
   const [isLoading, setIsLoading] = useState(true);
 
-  // Filter players with valid locations
-  const playersWithLocation = players.filter(player => 
-    player.location && 
-    player.isAlive && 
-    player.lastLocationUpdate && 
-    Date.now() - player.lastLocationUpdate < 30000 // Within 30 seconds
-  );
+  // Filter players based on role and visibility rules
+  const getVisiblePlayers = () => {
+    const allPlayersWithLocation = players.filter(player => 
+      player.location && 
+      player.isAlive && 
+      player.lastLocationUpdate && 
+      Date.now() - player.lastLocationUpdate < 30000 // Within 30 seconds
+    );
+
+    // Eliminated players (spectators) can see everyone
+    if (isEliminated) {
+      return allPlayersWithLocation;
+    }
+
+    // Killers can see all players (killers + survivors)
+    if (isKiller) {
+      return allPlayersWithLocation;
+    }
+
+    // Survivors can only see themselves and other survivors (not killers)
+    return allPlayersWithLocation.filter(player => 
+      player.role === 'survivor' || player.uid === currentPlayerUid
+    );
+  };
+
+  const playersWithLocation = getVisiblePlayers();
 
   const currentPlayer = players.find(p => p.uid === currentPlayerUid);
 
@@ -215,23 +237,22 @@ export default function InteractiveGameMap({
     );
   };
 
-  if (!isKiller) {
-    return (
-      <div className={`bg-gray-100 rounded-lg p-4 text-center ${className}`}>
-        <div className="text-gray-600">
-          <p className="font-medium">🗺️ Map View</p>
-          <p className="text-sm mt-2">Map is only available to killers during active games</p>
-        </div>
-      </div>
-    );
-  }
+  // Map is now available to all players during active games
+  // No access restriction needed
 
   if (playersWithLocation.length === 0) {
+    const waitingMessage = isKiller 
+      ? "📍 Waiting for survivor locations..."
+      : "📍 Waiting for player locations...";
+    const subMessage = isKiller
+      ? "Survivors need to enable location sharing to appear on the map"
+      : "Players need to enable location sharing to appear on the map";
+      
     return (
       <div className={`bg-gray-100 rounded-lg p-4 text-center ${className}`}>
         <div className="text-gray-600">
-          <p className="font-medium">📍 Waiting for survivor locations...</p>
-          <p className="text-sm mt-2">Survivors need to enable location sharing to appear on the map</p>
+          <p className="font-medium">{waitingMessage}</p>
+          <p className="text-sm mt-2">{subMessage}</p>
         </div>
       </div>
     );
@@ -247,12 +268,50 @@ export default function InteractiveGameMap({
     );
   }
 
+  // Dynamic styling and header based on player role
+  const getBorderColor = () => {
+    if (isEliminated) return 'border-gray-200';
+    if (isKiller) return 'border-red-200';
+    return 'border-blue-200';
+  };
+
+  const getHeaderBg = () => {
+    if (isEliminated) return 'bg-gray-50 border-gray-200';
+    if (isKiller) return 'bg-red-50 border-red-200';
+    return 'bg-blue-50 border-blue-200';
+  };
+
+  const getHeaderText = () => {
+    if (isEliminated) return 'text-gray-800';
+    if (isKiller) return 'text-red-800';
+    return 'text-blue-800';
+  };
+
+  const getHeaderTitle = () => {
+    if (isEliminated) return '👻 Spectator Map';
+    if (isKiller) return '🎯 Killer Tracking Map';
+    return '🗺️ Survivor Map';
+  };
+
+  const getSubtitleText = () => {
+    if (isEliminated) return 'text-gray-600';
+    if (isKiller) return 'text-red-600';
+    return 'text-blue-600';
+  };
+
+  const visibleSurvivors = playersWithLocation.filter(p => p.role === 'survivor').length;
+  const visibleKillers = playersWithLocation.filter(p => p.role === 'killer').length;
+
   return (
-    <div className={`bg-white rounded-lg border-2 border-red-200 ${className}`}>
-      <div className="p-3 bg-red-50 border-b border-red-200">
-        <h3 className="font-bold text-red-800 text-center">🎯 Killer Tracking Map</h3>
-        <div className="text-xs text-red-600 text-center mt-1">
-          {playersWithLocation.filter(p => p.role === 'survivor').length} survivor{playersWithLocation.filter(p => p.role === 'survivor').length !== 1 ? 's' : ''} visible
+    <div className={`bg-white rounded-lg border-2 ${getBorderColor()} ${className}`}>
+      <div className={`p-3 border-b ${getHeaderBg()}`}>
+        <h3 className={`font-bold ${getHeaderText()} text-center`}>{getHeaderTitle()}</h3>
+        <div className={`text-xs ${getSubtitleText()} text-center mt-1`}>
+          {isKiller || isEliminated ? (
+            `${visibleSurvivors} survivor${visibleSurvivors !== 1 ? 's' : ''} visible`
+          ) : (
+            `${visibleSurvivors} survivor${visibleSurvivors !== 1 ? 's' : ''} visible (including you)`
+          )}
         </div>
       </div>
 
@@ -295,18 +354,35 @@ export default function InteractiveGameMap({
         {/* Legend */}
         <div className="absolute bottom-4 left-4 bg-white bg-opacity-90 rounded-lg p-2 text-xs shadow-lg z-[1000]">
           <div className="font-semibold mb-1">Legend</div>
+          
+          {/* Current player marker */}
           <div className="flex items-center gap-2 mb-1">
-            <div className="w-4 h-4 rounded-full bg-red-600 border-2 border-white"></div>
-            <span>You (Killer)</span>
+            <div className={`w-4 h-4 rounded-full border-2 border-white ${
+              isKiller ? 'bg-red-600' : 'bg-blue-600'
+            }`}></div>
+            <span>You ({isKiller ? 'Killer' : 'Survivor'})</span>
           </div>
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-3 h-3 rounded-full bg-blue-500 border-2 border-white"></div>
-            <span>Survivors</span>
-          </div>
-          {playersWithLocation.some(p => p.role === 'killer' && p.uid !== currentPlayerUid) && (
+          
+          {/* Other survivors (always visible to all) */}
+          {visibleSurvivors > (isKiller ? 0 : 1) && (
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-3 h-3 rounded-full bg-blue-500 border-2 border-white"></div>
+              <span>Other Survivors</span>
+            </div>
+          )}
+          
+          {/* Other killers (only visible to killers and eliminated players) */}
+          {(isKiller || isEliminated) && playersWithLocation.some(p => p.role === 'killer' && p.uid !== currentPlayerUid) && (
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-red-400 border-2 border-white"></div>
               <span>Other Killers</span>
+            </div>
+          )}
+          
+          {/* Note for survivors */}
+          {!isKiller && !isEliminated && (
+            <div className="text-xs text-gray-600 mt-2 italic">
+              Killers are hidden from your view
             </div>
           )}
         </div>
@@ -318,7 +394,9 @@ export default function InteractiveGameMap({
       </div>
 
       {/* Update info */}
-      <div className="p-2 text-xs text-gray-600 text-center border-t border-red-200">
+      <div className={`p-2 text-xs text-gray-600 text-center border-t ${
+        isEliminated ? 'border-gray-200' : isKiller ? 'border-red-200' : 'border-blue-200'
+      }`}>
         Updates every 5 seconds • Tap markers for details
       </div>
     </div>
