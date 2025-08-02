@@ -42,10 +42,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
+      console.log('signInWithGoogle called');
+      console.log('NODE_ENV:', process.env.NODE_ENV);
+      
       // Always redirect to production domain when deployed
       const redirectUrl = process.env.NODE_ENV === 'production' 
         ? 'https://granny-irl.vercel.app/' 
         : `${window.location.origin}/`;
+      
+      console.log('Redirect URL:', redirectUrl);
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -53,6 +58,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           redirectTo: redirectUrl,
         },
       });
+      
+      console.log('OAuth result:', { error });
+      
       if (error) throw error;
     } catch (error) {
       console.error('Error signing in with Google:', error);
