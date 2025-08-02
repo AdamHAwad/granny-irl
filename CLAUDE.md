@@ -125,13 +125,13 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd
 
 ## Known Issues & Limitations
 - Real-time subscriptions sometimes unreliable (polling fallback in place)
-- No game history persistence yet (pending feature)
-- Profile pictures require Supabase storage bucket setup
+- No major known bugs or limitations currently
 
 ## Recently Completed Features ✅
 1. **Host kick feature** - Room hosts can remove players from rooms
 2. **Profile picture uploads** - Full Supabase storage integration with cleanup
 3. **Game history system** - Track player statistics and game records over time
+4. **Multi-game room support** - Fixed "Results not found" error for rooms playing multiple games
 
 ## Future Development Priorities
 1. **Mobile apps (iOS/Android)** - WebView wrapper app or React Native port
@@ -149,6 +149,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd
 - **Data source**: Uses existing `game_results` table for historical data
 - **UI**: Accessible via "Game History" link on home page
 - **Mobile optimized**: Responsive grid layout for stats and history
+- **Multi-game support**: Fixed getGameResult() to handle rooms with multiple games
 
 #### Host Kick Feature ✅
 - Add "kick" button next to each player (only visible to host)
