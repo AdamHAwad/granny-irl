@@ -190,21 +190,24 @@ export default function GameMap({ players, currentPlayerUid, isKiller, className
                   {/* Player avatar */}
                   <div className="relative">
                     {player.profilePictureUrl ? (
-                      <img
-                        src={player.profilePictureUrl}
-                        alt={player.displayName}
-                        className="w-8 h-8 rounded-full border-2 border-blue-500 bg-white object-cover"
-                        onError={(e) => {
-                          console.log('Failed to load profile picture for', player.displayName, ':', player.profilePictureUrl);
-                          // Hide the image and show fallback
-                          e.currentTarget.style.display = 'none';
-                          const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-                          if (fallback) fallback.style.display = 'flex';
-                        }}
-                        onLoad={() => {
-                          console.log('Successfully loaded profile picture for', player.displayName);
-                        }}
-                      />
+                      <div className="w-8 h-8 rounded-full border-2 border-blue-500 bg-white overflow-hidden flex items-center justify-center">
+                        <img
+                          src={player.profilePictureUrl}
+                          alt={player.displayName}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            console.log('Failed to load profile picture for', player.displayName, ':', player.profilePictureUrl);
+                            // Hide the entire container and show fallback
+                            const container = e.currentTarget.parentElement;
+                            if (container) container.style.display = 'none';
+                            const fallback = container?.nextElementSibling as HTMLElement;
+                            if (fallback) fallback.style.display = 'flex';
+                          }}
+                          onLoad={() => {
+                            console.log('Successfully loaded profile picture for', player.displayName);
+                          }}
+                        />
+                      </div>
                     ) : null}
                     <div 
                       className="w-8 h-8 rounded-full border-2 border-blue-500 bg-blue-100 flex items-center justify-center"
@@ -252,17 +255,20 @@ export default function GameMap({ players, currentPlayerUid, isKiller, className
                   className="absolute"
                 >
                   {player.profilePictureUrl ? (
-                    <img
-                      src={player.profilePictureUrl}
-                      alt={player.displayName}
-                      className="w-6 h-6 rounded-full border-2 border-red-400 bg-white opacity-75 object-cover"
-                      onError={(e) => {
-                        console.log('Failed to load profile picture for other killer', player.displayName, ':', player.profilePictureUrl);
-                        e.currentTarget.style.display = 'none';
-                        const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-                        if (fallback) fallback.style.display = 'flex';
-                      }}
-                    />
+                    <div className="w-6 h-6 rounded-full border-2 border-red-400 bg-white opacity-75 overflow-hidden flex items-center justify-center">
+                      <img
+                        src={player.profilePictureUrl}
+                        alt={player.displayName}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          console.log('Failed to load profile picture for other killer', player.displayName, ':', player.profilePictureUrl);
+                          const container = e.currentTarget.parentElement;
+                          if (container) container.style.display = 'none';
+                          const fallback = container?.nextElementSibling as HTMLElement;
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
+                      />
+                    </div>
                   ) : null}
                   <div 
                     className="w-6 h-6 rounded-full border-2 border-red-400 bg-red-100 flex items-center justify-center opacity-75"
@@ -288,17 +294,20 @@ export default function GameMap({ players, currentPlayerUid, isKiller, className
                 className="absolute"
               >
                 {currentPlayer?.profilePictureUrl ? (
-                  <img
-                    src={currentPlayer.profilePictureUrl}
-                    alt="You"
-                    className="w-10 h-10 rounded-full border-4 border-red-600 bg-white shadow-lg object-cover"
-                    onError={(e) => {
-                      console.log('Failed to load profile picture for current player', currentPlayer.displayName, ':', currentPlayer.profilePictureUrl);
-                      e.currentTarget.style.display = 'none';
-                      const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-                      if (fallback) fallback.style.display = 'flex';
-                    }}
-                  />
+                  <div className="w-10 h-10 rounded-full border-4 border-red-600 bg-white shadow-lg overflow-hidden flex items-center justify-center">
+                    <img
+                      src={currentPlayer.profilePictureUrl}
+                      alt="You"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        console.log('Failed to load profile picture for current player', currentPlayer.displayName, ':', currentPlayer.profilePictureUrl);
+                        const container = e.currentTarget.parentElement;
+                        if (container) container.style.display = 'none';
+                        const fallback = container?.nextElementSibling as HTMLElement;
+                        if (fallback) fallback.style.display = 'flex';
+                      }}
+                    />
+                  </div>
                 ) : null}
                 <div 
                   className="w-10 h-10 rounded-full border-4 border-red-600 bg-red-200 flex items-center justify-center shadow-lg"
