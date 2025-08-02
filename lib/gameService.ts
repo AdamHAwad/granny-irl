@@ -133,6 +133,59 @@ export async function leaveRoom(roomCode: string, playerUid: string): Promise<vo
   }
 }
 
+export async function kickPlayer(
+  roomCode: string,
+  hostUid: string,
+  playerToKickUid: string
+): Promise<void> {
+  console.log('kickPlayer: Host', hostUid, 'kicking player', playerToKickUid, 'from room', roomCode);
+  
+  const { data: room, error } = await supabase
+    .from('rooms')
+    .select('*')
+    .eq('id', roomCode)
+    .single();
+
+  if (error) {
+    console.error('kickPlayer: Error fetching room:', error);
+    throw new Error('Room not found');
+  }
+
+  // Verify the person kicking is the host
+  if (room.host_uid !== hostUid) {
+    console.error('kickPlayer: Only host can kick players');
+    throw new Error('Only the host can kick players');
+  }
+
+  // Can't kick yourself
+  if (hostUid === playerToKickUid) {
+    console.error('kickPlayer: Host cannot kick themselves');
+    throw new Error('Host cannot kick themselves');
+  }
+
+  // Check if player exists in room
+  if (!room.players[playerToKickUid]) {
+    console.error('kickPlayer: Player not found in room');
+    throw new Error('Player not found in room');
+  }
+
+  // Remove player from room
+  const updatedPlayers = { ...room.players };
+  delete updatedPlayers[playerToKickUid];
+
+  const { error: updateError } = await supabase
+    .from('rooms')
+    .update({ players: updatedPlayers })
+    .eq('id', roomCode);
+
+  if (updateError) {
+    console.error('kickPlayer: Error updating room:', updateError);
+    throw updateError;
+  }
+
+  console.log('kickPlayer: Successfully kicked player', playerToKickUid);
+}
+
 export async function startGame(roomCode: string): Promise<void> {
   const { data: room, error } = await supabase
     .from('rooms')
