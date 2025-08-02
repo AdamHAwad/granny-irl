@@ -277,62 +277,29 @@ export async function eliminatePlayer(
   playerUid: string,
   eliminatedBy?: string
 ): Promise<void> {
-  console.log('eliminatePlayer: Eliminating player', playerUid, 'from room', roomCode);
-  
-  try {
-    const { data: room, error } = await supabase
-      .from('rooms')
-      .select('*')
-      .eq('id', roomCode)
-      .single();
+  const { data: room, error } = await supabase
+    .from('rooms')
+    .select('*')
+    .eq('id', roomCode)
+    .single();
 
-    if (error) {
-      console.error('eliminatePlayer: Error fetching room:', error);
-      throw new Error('Failed to fetch room data');
-    }
+  if (error) throw error;
 
-    if (!room) {
-      console.error('eliminatePlayer: Room not found');
-      throw new Error('Room not found');
-    }
-
-    // Check if player exists in room
-    if (!room.players[playerUid]) {
-      console.error('eliminatePlayer: Player not found in room');
-      throw new Error('Player not found in room');
-    }
-
-    // Check if player is already eliminated
-    if (!room.players[playerUid].isAlive) {
-      console.log('eliminatePlayer: Player already eliminated');
-      return; // Don't throw error, just return
-    }
-
-    const updatedPlayers = { ...room.players };
-    updatedPlayers[playerUid].isAlive = false;
-    updatedPlayers[playerUid].eliminatedAt = Date.now();
-    if (eliminatedBy) {
-      updatedPlayers[playerUid].eliminatedBy = eliminatedBy;
-    }
-
-    const { error: updateError } = await supabase
-      .from('rooms')
-      .update({ players: updatedPlayers })
-      .eq('id', roomCode);
-
-    if (updateError) {
-      console.error('eliminatePlayer: Error updating room:', updateError);
-      throw new Error('Failed to update player status');
-    }
-    
-    console.log('eliminatePlayer: Successfully eliminated player', playerUid);
-    
-    // Check if game should end
-    await checkGameEnd(roomCode);
-  } catch (error) {
-    console.error('eliminatePlayer: Fatal error:', error);
-    throw error;
+  const updatedPlayers = { ...room.players };
+  updatedPlayers[playerUid].isAlive = false;
+  updatedPlayers[playerUid].eliminatedAt = Date.now();
+  if (eliminatedBy) {
+    updatedPlayers[playerUid].eliminatedBy = eliminatedBy;
   }
+
+  const { error: updateError } = await supabase
+    .from('rooms')
+    .update({ players: updatedPlayers })
+    .eq('id', roomCode);
+
+  if (updateError) throw updateError;
+  
+  await checkGameEnd(roomCode);
 }
 
 export async function checkGameEnd(roomCode: string): Promise<void> {

@@ -137,33 +137,13 @@ function GamePage({ params }: PageProps) {
     if (!user || !room) return;
 
     setEliminating(true);
-    
-    // Set a timeout to recover from stuck state
-    const timeoutId = setTimeout(() => {
-      console.error('Elimination request timed out after 10 seconds');
-      setEliminating(false);
-      alert('Failed to report elimination. Please try again.');
-    }, 10000); // 10 second timeout
-
     try {
       await eliminatePlayer(params.roomCode, user.id);
-      
-      // Clear the timeout on success
-      clearTimeout(timeoutId);
-      
-      // Play effects
       playElimination();
       vibrate([300, 100, 300, 100, 300]);
-      
-      // Reset eliminating state on success
-      setEliminating(false);
-      
-      // The room subscription will handle the redirect to results
     } catch (error) {
       console.error('Error eliminating player:', error);
-      clearTimeout(timeoutId);
       setEliminating(false);
-      alert('Failed to report elimination. Please try again.');
     }
   };
 
