@@ -38,6 +38,14 @@ function GamePage({ params }: PageProps) {
         return;
       }
 
+      // Check if current user has been kicked from the room
+      if (!roomData.players[user.id]) {
+        console.log('User has been kicked from game:', user.id);
+        setError('You have been removed from this room');
+        setTimeout(() => router.push('/'), 2000);
+        return;
+      }
+
       setRoom(roomData);
       setLoading(false);
 

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { subscribeToRoom, leaveRoom, startGame } from '@/lib/gameService';
+import { subscribeToRoom, leaveRoom, startGame, kickPlayer } from '@/lib/gameService';
 import { Room } from '@/types/game';
 import AuthGuard from '@/components/AuthGuard';
 
@@ -22,6 +22,7 @@ function RoomPage({ params }: PageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [starting, setStarting] = useState(false);
+  const [kicking, setKicking] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user || !profile) return;
@@ -30,6 +31,14 @@ function RoomPage({ params }: PageProps) {
       if (!roomData) {
         setError('Room not found');
         setLoading(false);
+        return;
+      }
+
+      // Check if current user has been kicked from the room
+      if (!roomData.players[user.id]) {
+        console.log('User has been kicked from room:', user.id);
+        setError('You have been removed from this room');
+        setTimeout(() => router.push('/'), 2000);
         return;
       }
 
@@ -64,6 +73,19 @@ function RoomPage({ params }: PageProps) {
     } catch (error: any) {
       setError(error.message || 'Failed to start game');
       setStarting(false);
+    }
+  };
+
+  const handleKickPlayer = async (playerUid: string) => {
+    if (!user || !room) return;
+
+    setKicking(playerUid);
+    try {
+      await kickPlayer(params.roomCode, user.id, playerUid);
+    } catch (error: any) {
+      setError(error.message || 'Failed to kick player');
+    } finally {
+      setKicking(null);
     }
   };
 
@@ -151,6 +173,15 @@ function RoomPage({ params }: PageProps) {
                     <p className="text-xs text-blue-600">Host</p>
                   )}
                 </div>
+                {isHost && player.uid !== room.host_uid && (
+                  <button
+                    onClick={() => handleKickPlayer(player.uid)}
+                    disabled={kicking === player.uid}
+                    className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {kicking === player.uid ? 'Kicking...' : 'Kick'}
+                  </button>
+                )}
               </div>
             ))}
           </div>
