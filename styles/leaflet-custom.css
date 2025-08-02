@@ -1,0 +1,56 @@
+/* Custom Leaflet styles for Granny IRL */
+
+/* Fix for Leaflet default marker icons in Next.js */
+.leaflet-default-icon-path {
+  background-image: url(https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png);
+}
+
+/* Custom div icon styles */
+.custom-div-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Improve popup appearance */
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+.leaflet-popup-content {
+  margin: 8px 12px;
+  line-height: 1.4;
+}
+
+/* Better control buttons */
+.leaflet-control-zoom {
+  border: 2px solid rgba(0,0,0,0.2) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
+}
+
+.leaflet-control-zoom a {
+  border-radius: 6px !important;
+}
+
+/* Mobile-friendly touch areas */
+@media (max-width: 768px) {
+  .leaflet-control-zoom a {
+    width: 40px !important;
+    height: 40px !important;
+    line-height: 40px !important;
+    font-size: 20px !important;
+  }
+}
+
+/* Hide attribution on small screens to save space */
+@media (max-width: 640px) {
+  .leaflet-control-attribution {
+    font-size: 8px;
+  }
+}
+
+/* Ensure map container respects rounded corners */
+.leaflet-container {
+  border-radius: 0 0 0.5rem 0.5rem;
+}

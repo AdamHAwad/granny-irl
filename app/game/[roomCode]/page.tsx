@@ -10,7 +10,7 @@ import { Room, Player } from '@/types/game';
 import { locationService, HIGH_FREQUENCY_LOCATION_OPTIONS } from '@/lib/locationService';
 import AuthGuard from '@/components/AuthGuard';
 import LocationPermissionModal from '@/components/LocationPermissionModal';
-import GameMap from '@/components/GameMap';
+import InteractiveGameMap from '@/components/InteractiveGameMap';
 import ProximityArrow from '@/components/ProximityArrow';
 
 interface PageProps {
@@ -339,7 +339,7 @@ function GamePage({ params }: PageProps) {
             </div>
             
             {showMap && (
-              <GameMap
+              <InteractiveGameMap
                 players={players}
                 currentPlayerUid={user?.id || ''}
                 isKiller={true}
@@ -380,7 +380,7 @@ function GamePage({ params }: PageProps) {
                 </div>
                 
                 {showMap && (
-                  <GameMap
+                  <InteractiveGameMap
                     players={players}
                     currentPlayerUid={user?.id || ''}
                     isKiller={true} // Show full map view for spectators
