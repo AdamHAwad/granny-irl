@@ -1,19 +1,31 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { uploadProfilePicture, updateUserProfile, deleteProfilePicture } from '@/lib/userService';
+import { UserProfile } from '@/types/user';
 
 interface ProfileSetupProps {
   onComplete: () => void;
+  existingProfile?: UserProfile | null;
 }
 
-export default function ProfileSetup({ onComplete }: ProfileSetupProps) {
+export default function ProfileSetup({ onComplete, existingProfile }: ProfileSetupProps) {
   const { user } = useAuth();
   const [customUsername, setCustomUsername] = useState('');
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Load existing profile data when component mounts
+  useEffect(() => {
+    if (existingProfile) {
+      setCustomUsername(existingProfile.custom_username || '');
+      if (existingProfile.profile_picture_url) {
+        setPreviewUrl(existingProfile.profile_picture_url);
+      }
+    }
+  }, [existingProfile]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

@@ -27,6 +27,7 @@ function GamePage({ params }: PageProps) {
   const [room, setRoom] = useState<Room | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [lastSuccessfulRoom, setLastSuccessfulRoom] = useState<Room | null>(null);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [headstartRemaining, setHeadstartRemaining] = useState(0);
   const [eliminating, setEliminating] = useState(false);
@@ -41,10 +42,22 @@ function GamePage({ params }: PageProps) {
 
     const unsubscribe = subscribeToRoom(params.roomCode, (roomData) => {
       if (!roomData) {
-        setError('Room not found');
-        setLoading(false);
+        // If we have a recent successful room fetch, don't immediately show error
+        // This prevents temporary subscription failures during transitions
+        console.log('Room fetch failed, but may be temporary - not showing error immediately');
+        if (!lastSuccessfulRoom) {
+          // Only show error if we've never successfully loaded the room
+          setTimeout(() => {
+            setError('Room not found');
+            setLoading(false);
+          }, 5000); // Wait 5 seconds before showing error
+        }
         return;
       }
+
+      // Successful room fetch - clear any errors
+      setError('');
+      setLastSuccessfulRoom(roomData);
 
       // Check if current user has been kicked from the room
       if (!roomData.players[user.id]) {
@@ -72,7 +85,7 @@ function GamePage({ params }: PageProps) {
     });
 
     return unsubscribe;
-  }, [user, profile, params.roomCode, router, showLocationModal, locationEnabled]);
+  }, [user, profile, params.roomCode, router, showLocationModal, locationEnabled, lastSuccessfulRoom]);
 
   useEffect(() => {
     if (!room) return;
