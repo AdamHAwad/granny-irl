@@ -128,29 +128,40 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd
 - No game history persistence yet (pending feature)
 - Profile pictures require Supabase storage bucket setup
 
+## Recently Completed Features ✅
+1. **Host kick feature** - Room hosts can remove players from rooms
+2. **Profile picture uploads** - Full Supabase storage integration with cleanup
+3. **Game history system** - Track player statistics and game records over time
+
 ## Future Development Priorities
-1. **Implement game history** - Track player statistics over time
-2. **Host kick feature** - Allow room hosts to remove players from rooms
-3. **Fix profile picture uploads** - Currently not working, needs Supabase storage bucket setup
-4. **Mobile apps (iOS/Android)** - WebView wrapper app or React Native port
-5. **Location sharing** - Killer sees all player locations, updates every 1 minute
-6. **Improve real-time reliability** - Better WebSocket handling
-7. **Add game modes** - Different rule variations
-8. **Advanced features** - Spectator mode, custom rules, tournaments
+1. **Mobile apps (iOS/Android)** - WebView wrapper app or React Native port
+2. **Location sharing** - Killer sees all player locations, updates every 1 minute
+3. **Improve real-time reliability** - Better WebSocket handling
+4. **Add game modes** - Different rule variations
+5. **Advanced features** - Spectator mode, custom rules, tournaments
 
 ### Feature Details:
 
-#### Host Kick Feature
+#### Game History System ✅
+- **Statistics tracking**: Games played, wins, losses, killer/survivor wins, avg placement
+- **Detailed game records**: Role, outcome, placement, duration for each game
+- **Performance metrics**: Win rate, elimination count, placement trends
+- **Data source**: Uses existing `game_results` table for historical data
+- **UI**: Accessible via "Game History" link on home page
+- **Mobile optimized**: Responsive grid layout for stats and history
+
+#### Host Kick Feature ✅
 - Add "kick" button next to each player (only visible to host)
 - Remove player from room.players object
 - Force redirect kicked player to home screen
 - Show notification "You've been removed from the room"
 
-#### Profile Picture Fix
+#### Profile Picture System ✅
 - Create Supabase storage bucket for avatars
 - Update upload endpoint in ProfileSetup component
 - Handle image resizing/compression
 - Add default avatar fallback
+- Automatic cleanup of old profile pictures
 
 #### Mobile App Strategy
 - Option 1: WebView wrapper (quickest approach)

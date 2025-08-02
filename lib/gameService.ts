@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { Room, Player, RoomSettings, GameResult } from '@/types/game';
+import { Room, Player, RoomSettings, GameResult, PlayerGameStats, GameHistoryEntry } from '@/types/game';
 
 export function generateRoomCode(): string {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -531,5 +531,96 @@ export async function getCurrentUserRooms(uid: string): Promise<Room[]> {
   } catch (error) {
     console.error('Error fetching user rooms:', error);
     return [];
+  }
+}
+
+export async function getPlayerGameHistory(uid: string): Promise<GameHistoryEntry[]> {
+  try {
+    console.log('getPlayerGameHistory: Fetching history for user:', uid);
+    
+    const { data, error } = await supabase
+      .from('game_results')
+      .select('*')
+      .order('game_ended_at', { ascending: false });
+
+    if (error) throw error;
+
+    // Filter games where the user participated and transform to GameHistoryEntry
+    const userGames: GameHistoryEntry[] = (data || [])
+      .filter((result: GameResult) => result.final_players[uid])
+      .map((result: GameResult) => {
+        const player = result.final_players[uid];
+        const playerRole = player.role!;
+        const playerWon = 
+          (playerRole === 'killer' && result.winners === 'killers') ||
+          (playerRole === 'survivor' && result.winners === 'survivors');
+        
+        // Calculate placement (1 = winner, higher = eliminated earlier)
+        let placement = 1; // Default to winner
+        if (!playerWon) {
+          if (player.isAlive) {
+            // Survived but lost (time ran out, killers won)
+            placement = Object.values(result.final_players)
+              .filter(p => p.role === playerRole && !p.isAlive).length + 1;
+          } else {
+            // Was eliminated - find position in elimination order
+            const eliminationIndex = result.elimination_order.indexOf(uid);
+            placement = eliminationIndex !== -1 ? 
+              result.elimination_order.length - eliminationIndex + 1 : 
+              Object.keys(result.final_players).length;
+          }
+        }
+
+        const gameDurationMinutes = 
+          (result.game_ended_at - result.game_started_at) / (1000 * 60);
+
+        return {
+          room_id: result.room_id,
+          winners: result.winners,
+          game_started_at: result.game_started_at,
+          game_ended_at: result.game_ended_at,
+          playerRole,
+          playerWon,
+          placement,
+          gameDurationMinutes: Math.round(gameDurationMinutes * 10) / 10, // Round to 1 decimal
+        };
+      });
+
+    console.log('getPlayerGameHistory: Found', userGames.length, 'games for user:', uid);
+    return userGames;
+  } catch (error) {
+    console.error('Error fetching player game history:', error);
+    return [];
+  }
+}
+
+export async function getPlayerGameStats(uid: string): Promise<PlayerGameStats> {
+  try {
+    const history = await getPlayerGameHistory(uid);
+    
+    const stats: PlayerGameStats = {
+      gamesPlayed: history.length,
+      wins: history.filter(game => game.playerWon).length,
+      losses: history.filter(game => !game.playerWon).length,
+      killerWins: history.filter(game => game.playerRole === 'killer' && game.playerWon).length,
+      survivorWins: history.filter(game => game.playerRole === 'survivor' && game.playerWon).length,
+      avgPlacement: history.length > 0 ? 
+        Math.round((history.reduce((sum, game) => sum + game.placement, 0) / history.length) * 10) / 10 : 0,
+      totalEliminations: history.filter(game => !game.playerWon && game.placement > 1).length,
+    };
+
+    console.log('getPlayerGameStats: Calculated stats for user:', uid, stats);
+    return stats;
+  } catch (error) {
+    console.error('Error calculating player game stats:', error);
+    return {
+      gamesPlayed: 0,
+      wins: 0,
+      losses: 0,
+      killerWins: 0,
+      survivorWins: 0,
+      avgPlacement: 0,
+      totalEliminations: 0,
+    };
   }
 }

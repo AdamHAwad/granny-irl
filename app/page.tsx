@@ -82,6 +82,12 @@ function AuthenticatedHome() {
               Edit Profile
             </button>
             <button
+              onClick={() => router.push('/history')}
+              className="text-purple-600 hover:text-purple-800 underline"
+            >
+              Game History
+            </button>
+            <button
               onClick={logout}
               className="text-gray-600 hover:text-gray-800 underline"
             >
