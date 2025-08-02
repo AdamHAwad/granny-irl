@@ -58,27 +58,58 @@ export default function ProximityArrow({
   // Get device compass heading
   useEffect(() => {
     let mounted = true;
+    let orientationListener: ((event: DeviceOrientationEvent) => void) | null = null;
 
-    const updateDeviceHeading = async () => {
+    const setupDeviceOrientation = async () => {
       if (!mounted) return;
-      
-      try {
-        const heading = await locationService.getDeviceHeading();
-        if (mounted) {
+
+      // Check if device orientation is supported
+      if (!('DeviceOrientationEvent' in window)) {
+        console.log('ProximityArrow: DeviceOrientationEvent not supported');
+        return;
+      }
+
+      // Request permission for iOS 13+
+      if (typeof (DeviceOrientationEvent as any).requestPermission === 'function') {
+        try {
+          const permission = await (DeviceOrientationEvent as any).requestPermission();
+          if (permission !== 'granted') {
+            console.log('ProximityArrow: Device orientation permission denied');
+            return;
+          }
+        } catch (error) {
+          console.log('ProximityArrow: Error requesting orientation permission:', error);
+          return;
+        }
+      }
+
+      // Set up continuous orientation tracking
+      orientationListener = (event: DeviceOrientationEvent) => {
+        if (!mounted) return;
+        
+        // Use alpha for compass heading (0-360 degrees)
+        let heading = event.alpha;
+        
+        // On some devices, alpha might be null or webkitCompassHeading might be available
+        if (heading === null && (event as any).webkitCompassHeading !== undefined) {
+          heading = 360 - (event as any).webkitCompassHeading; // WebKit compass is reversed
+        }
+        
+        if (heading !== null && mounted) {
           setDeviceHeading(heading);
         }
-      } catch (error) {
-        console.log('ProximityArrow: Could not get device heading:', error);
-      }
+      };
+
+      window.addEventListener('deviceorientation', orientationListener);
     };
 
-    // Update heading every 2 seconds
-    const interval = setInterval(updateDeviceHeading, 2000);
-    updateDeviceHeading(); // Initial call
+    setupDeviceOrientation();
 
     return () => {
       mounted = false;
-      clearInterval(interval);
+      if (orientationListener) {
+        window.removeEventListener('deviceorientation', orientationListener);
+      }
     };
   }, []);
 

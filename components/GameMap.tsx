@@ -23,12 +23,12 @@ export default function GameMap({ players, currentPlayerUid, isKiller, className
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
   const [currentLocation, setCurrentLocation] = useState<PlayerLocation | null>(null);
 
-  // Filter players with locations
+  // Filter players with locations (more frequent updates = shorter timeout)
   const playersWithLocation = players.filter(player => 
     player.location && 
     player.isAlive && 
     player.lastLocationUpdate && 
-    Date.now() - player.lastLocationUpdate < 120000 // Within 2 minutes
+    Date.now() - player.lastLocationUpdate < 30000 // Within 30 seconds (faster updates)
   );
 
   const currentPlayer = players.find(p => p.uid === currentPlayerUid);
@@ -340,7 +340,7 @@ export default function GameMap({ players, currentPlayerUid, isKiller, className
 
         {/* Update info */}
         <div className="mt-2 text-xs text-gray-600 text-center">
-          Updates every 30 seconds • Hover for details
+          Updates every 5 seconds • Hover for details
         </div>
       </div>
     </div>

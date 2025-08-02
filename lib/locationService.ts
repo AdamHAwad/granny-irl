@@ -20,6 +20,13 @@ export const DEFAULT_LOCATION_OPTIONS: LocationWatchOptions = {
   maximumAge: 30000, // Accept location up to 30 seconds old
 };
 
+// High-frequency location options for active games (faster updates)
+export const HIGH_FREQUENCY_LOCATION_OPTIONS: LocationWatchOptions = {
+  enableHighAccuracy: true, // Use GPS for better accuracy
+  timeout: 5000, // 5 seconds timeout
+  maximumAge: 5000, // Force fresh location every 5 seconds
+};
+
 class LocationService {
   private watchId: number | null = null;
   private lastKnownLocation: PlayerLocation | null = null;

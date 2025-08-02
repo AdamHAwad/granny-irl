@@ -7,7 +7,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { useSoundNotifications } from '@/hooks/useSoundNotifications';
 import { subscribeToRoom, eliminatePlayer, updatePlayerLocation, clearPlayerLocation } from '@/lib/gameService';
 import { Room, Player } from '@/types/game';
-import { locationService } from '@/lib/locationService';
+import { locationService, HIGH_FREQUENCY_LOCATION_OPTIONS } from '@/lib/locationService';
 import AuthGuard from '@/components/AuthGuard';
 import LocationPermissionModal from '@/components/LocationPermissionModal';
 import GameMap from '@/components/GameMap';
@@ -168,7 +168,7 @@ function GamePage({ params }: PageProps) {
 
     console.log('Starting location tracking for user:', user.id);
 
-    // Start watching location changes
+    // Start watching location changes with high frequency for active games
     locationService.startWatching(
       async (location) => {
         await updatePlayerLocation(params.roomCode, user.id, location);
@@ -176,7 +176,8 @@ function GamePage({ params }: PageProps) {
       (error) => {
         console.error('Location tracking error:', error);
         setLocationError(`Location error: ${error}`);
-      }
+      },
+      HIGH_FREQUENCY_LOCATION_OPTIONS
     );
 
     // Cleanup when component unmounts or dependencies change
