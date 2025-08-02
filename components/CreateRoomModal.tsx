@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { createRoom } from '@/lib/gameService';
-import { RoomSettings } from '@/types/game';
+import { RoomSettings, PlayerLocation } from '@/types/game';
+import { locationService } from '@/lib/locationService';
 
 interface CreateRoomModalProps {
   isOpen: boolean;
@@ -26,6 +27,28 @@ export default function CreateRoomModal({
     headstartMinutes: 3,
     maxPlayers: 15,
   });
+  const [boundaryEnabled, setBoundaryEnabled] = useState(false);
+  const [boundaryRadius, setBoundaryRadius] = useState(100); // Default 100 meters
+  const [hostLocation, setHostLocation] = useState<PlayerLocation | null>(null);
+  const [locationError, setLocationError] = useState<string>('');
+
+  // Get host location when boundary is enabled
+  useEffect(() => {
+    if (boundaryEnabled && isOpen) {
+      getHostLocation();
+    }
+  }, [boundaryEnabled, isOpen]);
+
+  const getHostLocation = async () => {
+    try {
+      setLocationError('');
+      const location = await locationService.getCurrentLocation();
+      setHostLocation(location);
+    } catch (error) {
+      setLocationError('Unable to get your location. Please enable location services.');
+      setBoundaryEnabled(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +58,17 @@ export default function CreateRoomModal({
     try {
       console.log('CreateRoom: Starting room creation for user:', user.id);
       console.log('CreateRoom: Profile data:', profile);
-      console.log('CreateRoom: Settings:', settings);
+      
+      // Include boundary in settings if enabled
+      const finalSettings: RoomSettings = {
+        ...settings,
+        boundary: boundaryEnabled && hostLocation ? {
+          center: hostLocation,
+          radiusMeters: boundaryRadius
+        } : undefined
+      };
+      
+      console.log('CreateRoom: Settings:', finalSettings);
       
       const roomCode = await createRoom(
         user.id,
@@ -43,7 +76,7 @@ export default function CreateRoomModal({
           displayName: profile.custom_username || profile.display_name,
           profilePictureUrl: profile.profile_picture_url,
         },
-        settings
+        finalSettings
       );
       
       console.log('CreateRoom: Room created successfully with code:', roomCode);
@@ -158,6 +191,73 @@ export default function CreateRoomModal({
               <option value={12}>12 players</option>
               <option value={15}>15 players</option>
             </select>
+          </div>
+
+          {/* Game Boundary Section */}
+          <div className="border-t pt-4">
+            <div className="flex items-center gap-3 mb-3">
+              <input
+                type="checkbox"
+                id="boundaryEnabled"
+                checked={boundaryEnabled}
+                onChange={(e) => setBoundaryEnabled(e.target.checked)}
+                className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+              />
+              <label htmlFor="boundaryEnabled" className="text-sm font-medium text-gray-700">
+                🌍 Set Game Boundary
+              </label>
+            </div>
+            
+            <p className="text-xs text-gray-500 mb-3">
+              Create a play area centered on your current location. Players will see the boundary on the map.
+            </p>
+
+            {boundaryEnabled && (
+              <div className="space-y-3">
+                {locationError && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                    <p className="text-red-700 text-sm">⚠️ {locationError}</p>
+                  </div>
+                )}
+                
+                {hostLocation && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <p className="text-green-700 text-sm">
+                      📍 Boundary center: Your current location
+                    </p>
+                    <p className="text-xs text-green-600 mt-1">
+                      Lat: {hostLocation.latitude.toFixed(6)}, Lng: {hostLocation.longitude.toFixed(6)}
+                      {hostLocation.accuracy && ` (±${Math.round(hostLocation.accuracy)}m)`}
+                    </p>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Boundary Radius: {boundaryRadius}m
+                  </label>
+                  <input
+                    type="range"
+                    min="50"
+                    max="1000"
+                    step="25"
+                    value={boundaryRadius}
+                    onChange={(e) => setBoundaryRadius(parseInt(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                    style={{
+                      background: `linear-gradient(to right, #10B981 0%, #10B981 ${((boundaryRadius - 50) / (1000 - 50)) * 100}%, #E5E7EB ${((boundaryRadius - 50) / (1000 - 50)) * 100}%, #E5E7EB 100%)`
+                    }}
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>50m</span>
+                    <span>1000m</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Recommended: 100-300m for outdoor games
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3 pt-4">

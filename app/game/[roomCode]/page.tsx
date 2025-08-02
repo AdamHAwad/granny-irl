@@ -351,6 +351,7 @@ function GamePage({ params }: PageProps) {
                 players={players}
                 currentPlayerUid={user?.id || ''}
                 isKiller={currentPlayer?.role === 'killer'}
+                boundary={room.settings.boundary}
                 className="mb-4"
               />
             )}
@@ -401,6 +402,7 @@ function GamePage({ params }: PageProps) {
                     currentPlayerUid={user?.id || ''}
                     isKiller={false}
                     isEliminated={true} // Spectators can see everyone
+                    boundary={room.settings.boundary}
                     className="mb-4"
                   />
                 )}

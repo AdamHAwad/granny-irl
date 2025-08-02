@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -10,6 +10,8 @@ import ProfileSetup from '@/components/ProfileSetup';
 import CreateRoomModal from '@/components/CreateRoomModal';
 import JoinRoomModal from '@/components/JoinRoomModal';
 import CurrentRoom from '@/components/CurrentRoom';
+import LocationPermissionModal from '@/components/LocationPermissionModal';
+import { locationService } from '@/lib/locationService';
 
 function AuthenticatedHome() {
   const { user, logout } = useAuth();
@@ -17,6 +19,51 @@ function AuthenticatedHome() {
   const router = useRouter();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [locationPermissionChecked, setLocationPermissionChecked] = useState(false);
+  const [hasLocationPermission, setHasLocationPermission] = useState(false);
+
+  // Check for location permission when user finishes profile setup
+  useEffect(() => {
+    if (!loading && !needsSetup && profile && !locationPermissionChecked) {
+      checkLocationPermission();
+    }
+  }, [loading, needsSetup, profile, locationPermissionChecked]);
+
+  const checkLocationPermission = async () => {
+    try {
+      // Check if location services are supported
+      if (!locationService.isSupported()) {
+        setLocationPermissionChecked(true);
+        return;
+      }
+
+      // Try to get current location to check permission status
+      await locationService.getCurrentLocation();
+      setHasLocationPermission(true);
+      setLocationPermissionChecked(true);
+    } catch (error) {
+      // Permission not granted, show modal
+      setShowLocationModal(true);
+      setLocationPermissionChecked(true);
+    }
+  };
+
+  const handleLocationPermissionGranted = () => {
+    setHasLocationPermission(true);
+    setShowLocationModal(false);
+  };
+
+  const handleLocationPermissionDenied = (error: string) => {
+    console.log('Location permission denied:', error);
+    setShowLocationModal(false);
+    // Continue without location - user can enable it later
+  };
+
+  const handleLocationPermissionSkip = () => {
+    setShowLocationModal(false);
+    // Continue without location - user can enable it later
+  };
 
   if (loading) {
     return (
@@ -75,6 +122,26 @@ function AuthenticatedHome() {
           <h1 className="text-4xl font-bold mb-4">Granny IRL</h1>
           <p className="text-lg mb-4">Welcome, {displayName}!</p>
           
+          {/* Location status indicator */}
+          {locationPermissionChecked && (
+            <div className={`mb-4 px-3 py-2 rounded-lg text-sm ${
+              hasLocationPermission 
+                ? 'bg-green-100 text-green-800 border border-green-200' 
+                : 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+            }`}>
+              {hasLocationPermission ? (
+                <>📍 Location enabled - ready for enhanced gameplay!</>
+              ) : (
+                <>📍 Location disabled - <button 
+                  onClick={() => setShowLocationModal(true)}
+                  className="underline hover:no-underline"
+                >
+                  click to enable
+                </button> for enhanced features</>
+              )}
+            </div>
+          )}
+          
           <div className="flex gap-4 justify-center text-sm">
             <button
               onClick={() => setNeedsSetup(true)}
@@ -125,6 +192,13 @@ function AuthenticatedHome() {
         isOpen={showJoinModal}
         onClose={() => setShowJoinModal(false)}
         onRoomJoined={handleRoomJoined}
+      />
+
+      <LocationPermissionModal
+        isOpen={showLocationModal}
+        onPermissionGranted={handleLocationPermissionGranted}
+        onPermissionDenied={handleLocationPermissionDenied}
+        onSkip={handleLocationPermissionSkip}
       />
     </>
   );

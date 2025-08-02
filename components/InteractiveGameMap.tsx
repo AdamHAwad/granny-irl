@@ -24,7 +24,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Player, PlayerLocation } from '@/types/game';
+import { Player, PlayerLocation, GameBoundary } from '@/types/game';
 import { locationService } from '@/lib/locationService';
 import dynamic from 'next/dynamic';
 import 'leaflet/dist/leaflet.css';
@@ -59,6 +59,7 @@ interface InteractiveGameMapProps {
   currentPlayerUid: string;
   isKiller: boolean;
   isEliminated?: boolean;
+  boundary?: GameBoundary;
   className?: string;
 }
 
@@ -117,6 +118,7 @@ export default function InteractiveGameMap({
   currentPlayerUid, 
   isKiller,
   isEliminated = false,
+  boundary,
   className = '' 
 }: InteractiveGameMapProps) {
   const [map, setMap] = useState<L.Map | null>(null);
@@ -348,6 +350,22 @@ export default function InteractiveGameMap({
                 />
               );
             })}
+
+            {/* Game boundary circle */}
+            {boundary && (
+              <Circle
+                key="game-boundary"
+                center={[boundary.center.latitude, boundary.center.longitude]}
+                radius={boundary.radiusMeters}
+                pathOptions={{
+                  color: '#10B981', // Green boundary
+                  fillColor: '#10B981',
+                  fillOpacity: 0.1,
+                  weight: 3,
+                  dashArray: '10, 5', // Dashed line
+                }}
+              />
+            )}
           </MapContainer>
         </div>
 
@@ -376,6 +394,14 @@ export default function InteractiveGameMap({
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-red-400 border-2 border-white"></div>
               <span>Other Killers</span>
+            </div>
+          )}
+          
+          {/* Game boundary indicator */}
+          {boundary && (
+            <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-200">
+              <div className="w-3 h-3 rounded-full border-2 border-green-500" style={{backgroundColor: 'rgba(16, 185, 129, 0.1)'}}></div>
+              <span className="text-green-700">Game Boundary ({boundary.radiusMeters}m)</span>
             </div>
           )}
           
