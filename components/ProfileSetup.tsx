@@ -74,7 +74,7 @@ export default function ProfileSetup({ onComplete }: ProfileSetupProps) {
             ) : (
               <div className="w-24 h-24 rounded-full mx-auto bg-gray-200 flex items-center justify-center border-4 border-gray-200">
                 <span className="text-2xl text-gray-500">
-                  {user?.displayName?.[0]?.toUpperCase()}
+                  {user?.user_metadata?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase()}
                 </span>
               </div>
             )}
@@ -99,7 +99,7 @@ export default function ProfileSetup({ onComplete }: ProfileSetupProps) {
             type="text"
             value={customUsername}
             onChange={(e) => setCustomUsername(e.target.value)}
-            placeholder={`Default: ${user?.displayName}`}
+            placeholder={`Default: ${user?.user_metadata?.full_name || user?.email}`}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             maxLength={20}
           />
