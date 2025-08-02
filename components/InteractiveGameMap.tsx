@@ -60,6 +60,9 @@ interface InteractiveGameMapProps {
   isKiller: boolean;
   isEliminated?: boolean;
   boundary?: GameBoundary;
+  selectedPlayerId?: string | null;
+  onPlayerClick?: (playerId: string) => void;
+  onMapClick?: () => void;
   className?: string;
 }
 
@@ -119,6 +122,9 @@ export default function InteractiveGameMap({
   isKiller,
   isEliminated = false,
   boundary,
+  selectedPlayerId,
+  onPlayerClick,
+  onMapClick,
   className = '' 
 }: InteractiveGameMapProps) {
   const [map, setMap] = useState<L.Map | null>(null);
@@ -168,9 +174,21 @@ export default function InteractiveGameMap({
     }
   }, [currentPlayer?.location, playersWithLocation]);
 
-  // Auto-fit map to show all players
+  // Auto-fit map to show all players or center on selected player
   useEffect(() => {
-    if (!map || playersWithLocation.length === 0) return;
+    if (!map) return;
+
+    // If a player is selected, center on them
+    if (selectedPlayerId) {
+      const selectedPlayer = playersWithLocation.find(p => p.uid === selectedPlayerId);
+      if (selectedPlayer?.location) {
+        map.setView([selectedPlayer.location.latitude, selectedPlayer.location.longitude], 18);
+        return;
+      }
+    }
+
+    // Otherwise, fit all players
+    if (playersWithLocation.length === 0) return;
 
     if (playersWithLocation.length === 1) {
       // Single player - just center on them
@@ -183,7 +201,7 @@ export default function InteractiveGameMap({
       );
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 18 });
     }
-  }, [map, playersWithLocation]);
+  }, [map, playersWithLocation, selectedPlayerId]);
 
   // Calculate distance for display
   const getDistance = (loc1: PlayerLocation, loc2: PlayerLocation): number => {
@@ -203,15 +221,29 @@ export default function InteractiveGameMap({
     if (!player.location) return null;
 
     const isCurrentPlayer = player.uid === currentPlayerUid;
+    const isSelected = selectedPlayerId === player.uid;
     const distance = currentPlayer?.location && !isCurrentPlayer
       ? getDistance(currentPlayer.location, player.location)
       : null;
+
+    // Check if current player can click on this player
+    const canClick = onPlayerClick && (
+      // Eliminated players can see everyone
+      isEliminated ||
+      // Killers can see everyone  
+      isKiller ||
+      // Survivors can see other survivors but not killers
+      (!isKiller && player.role === 'survivor')
+    );
 
     return (
       <Marker
         key={player.uid}
         position={[player.location.latitude, player.location.longitude]}
-        icon={createCustomIcon(player, isCurrentPlayer)}
+        icon={createCustomIcon(player, isCurrentPlayer || isSelected)}
+        eventHandlers={canClick ? {
+          click: () => onPlayerClick(player.uid)
+        } : undefined}
       >
         <Popup>
           <div className="text-sm">
@@ -318,7 +350,10 @@ export default function InteractiveGameMap({
       </div>
 
       <div className="relative">
-        <div style={{ height: '400px', width: '100%' }}>
+        <div 
+          style={{ height: '400px', width: '100%' }}
+          onClick={onMapClick}
+        >
           <MapContainer
             center={center}
             zoom={zoom}
@@ -405,10 +440,24 @@ export default function InteractiveGameMap({
             </div>
           )}
           
+          {/* Selected player info */}
+          {selectedPlayerId && (
+            <div className="text-xs text-blue-600 mt-2 pt-2 border-t border-gray-200">
+              📍 Viewing: {playersWithLocation.find(p => p.uid === selectedPlayerId)?.displayName}
+            </div>
+          )}
+          
           {/* Note for survivors */}
           {!isKiller && !isEliminated && (
             <div className="text-xs text-gray-600 mt-2 italic">
               Killers are hidden from your view
+            </div>
+          )}
+          
+          {/* Click instruction */}
+          {(onPlayerClick || onMapClick) && (
+            <div className="text-xs text-gray-500 mt-2 italic">
+              Click players to view • Click map to reset view
             </div>
           )}
         </div>

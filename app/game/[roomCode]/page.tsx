@@ -36,6 +36,112 @@ function GamePage({ params }: PageProps) {
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [locationError, setLocationError] = useState('');
   const [showMap, setShowMap] = useState(false);
+  const [boundaryViolation, setBoundaryViolation] = useState(false);
+  const [boundaryTimer, setBoundaryTimer] = useState(0);
+  const [boundaryWarningShown, setBoundaryWarningShown] = useState(false);
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
+
+  // Handle clicking on a player to view their location
+  const handlePlayerClick = (playerId: string) => {
+    const clickedPlayer = players.find(p => p.uid === playerId);
+    
+    // Check if current player can view this player
+    const canView = currentPlayer?.isAlive && (
+      // Eliminated players can see everyone
+      !currentPlayer.isAlive ||
+      // Killers can see everyone
+      currentPlayer.role === 'killer' ||
+      // Survivors can see other survivors but not killers
+      (currentPlayer.role === 'survivor' && clickedPlayer?.role === 'survivor')
+    );
+
+    if (canView && clickedPlayer?.location) {
+      setSelectedPlayerId(playerId);
+      // The map will handle centering on this player
+    }
+  };
+
+  // Check if player is within game boundary
+  const isWithinBoundary = (playerLocation: any, boundary: any) => {
+    if (!playerLocation || !boundary) return true;
+    
+    const distance = locationService.calculateDistance(
+      playerLocation,
+      boundary.center
+    );
+    
+    return distance <= boundary.radiusMeters;
+  };
+
+  // Get current player for boundary checking
+  const currentPlayer = room ? room.players[user?.id || ''] : null;
+
+  const handleEliminate = async () => {
+    if (!user || !room) return;
+
+    setEliminating(true);
+    try {
+      await eliminatePlayer(params.roomCode, user.id);
+      playElimination();
+      vibrate([300, 100, 300, 100, 300]);
+    } catch (error) {
+      console.error('Error eliminating player:', error);
+      setEliminating(false);
+    }
+  };
+
+  // Boundary violation timer effect
+  useEffect(() => {
+    if (!room?.settings.boundary || !currentPlayer?.location || !currentPlayer?.isAlive) {
+      setBoundaryViolation(false);
+      setBoundaryTimer(0);
+      return;
+    }
+
+    const withinBoundary = isWithinBoundary(currentPlayer.location, room.settings.boundary);
+    
+    if (!withinBoundary && !boundaryViolation) {
+      // Player just left boundary - start timer
+      setBoundaryViolation(true);
+      setBoundaryTimer(30);
+      setBoundaryWarningShown(true);
+      playCountdown();
+      vibrate([200, 100, 200]);
+    } else if (withinBoundary && boundaryViolation) {
+      // Player returned to boundary - clear violation
+      setBoundaryViolation(false);
+      setBoundaryTimer(0);
+      setBoundaryWarningShown(false);
+    }
+  }, [currentPlayer?.location, room?.settings.boundary, currentPlayer?.isAlive, boundaryViolation, playCountdown, vibrate]);
+
+  // Boundary timer countdown
+  useEffect(() => {
+    if (!boundaryViolation || boundaryTimer <= 0) return;
+
+    const interval = setInterval(() => {
+      setBoundaryTimer(prev => {
+        if (prev <= 1) {
+          // Timer expired - eliminate player
+          if (currentPlayer?.isAlive && user) {
+            handleEliminate();
+          }
+          setBoundaryViolation(false);
+          return 0;
+        }
+        
+        // Play warning sounds at specific intervals
+        if (prev <= 10) {
+          playCountdown();
+          vibrate(100);
+        }
+        
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [boundaryViolation, boundaryTimer, currentPlayer?.isAlive, handleEliminate, user, playCountdown, vibrate]);
 
   useEffect(() => {
     if (!user || !profile) return;
@@ -133,20 +239,6 @@ function GamePage({ params }: PageProps) {
     return () => clearInterval(interval);
   }, [room]);
 
-  const handleEliminate = async () => {
-    if (!user || !room) return;
-
-    setEliminating(true);
-    try {
-      await eliminatePlayer(params.roomCode, user.id);
-      playElimination();
-      vibrate([300, 100, 300, 100, 300]);
-    } catch (error) {
-      console.error('Error eliminating player:', error);
-      setEliminating(false);
-    }
-  };
-
   const handleLocationPermissionGranted = () => {
     console.log('Location permission granted');
     setLocationEnabled(true);
@@ -232,7 +324,6 @@ function GamePage({ params }: PageProps) {
     );
   }
 
-  const currentPlayer = room.players[user?.id || ''];
   const players = Object.values(room.players);
   const aliveKillers = players.filter(p => p.role === 'killer' && p.isAlive);
   const aliveSurvivors = players.filter(p => p.role === 'survivor' && p.isAlive);
@@ -352,6 +443,9 @@ function GamePage({ params }: PageProps) {
                 currentPlayerUid={user?.id || ''}
                 isKiller={currentPlayer?.role === 'killer'}
                 boundary={room.settings.boundary}
+                selectedPlayerId={selectedPlayerId}
+                onPlayerClick={handlePlayerClick}
+                onMapClick={() => setSelectedPlayerId(null)}
                 className="mb-4"
               />
             )}
@@ -403,6 +497,9 @@ function GamePage({ params }: PageProps) {
                     isKiller={false}
                     isEliminated={true} // Spectators can see everyone
                     boundary={room.settings.boundary}
+                    selectedPlayerId={selectedPlayerId}
+                    onPlayerClick={handlePlayerClick}
+                    onMapClick={() => setSelectedPlayerId(null)}
                     className="mb-4"
                   />
                 )}
@@ -417,9 +514,17 @@ function GamePage({ params }: PageProps) {
               Killers ({aliveKillers.length})
             </h2>
             <div className="space-y-2">
-              {players.filter(p => p.role === 'killer').map((player) => (
-                <PlayerCard key={player.uid} player={player} />
-              ))}
+              {players.filter(p => p.role === 'killer').map((player) => {
+                const canClick = currentPlayer?.role === 'killer' || !currentPlayer?.isAlive;
+                return (
+                  <PlayerCard 
+                    key={player.uid} 
+                    player={player} 
+                    onClick={handlePlayerClick}
+                    canClick={canClick}
+                  />
+                );
+              })}
             </div>
           </div>
 
@@ -428,9 +533,17 @@ function GamePage({ params }: PageProps) {
               Survivors ({aliveSurvivors.length})
             </h2>
             <div className="space-y-2">
-              {players.filter(p => p.role === 'survivor').map((player) => (
-                <PlayerCard key={player.uid} player={player} />
-              ))}
+              {players.filter(p => p.role === 'survivor').map((player) => {
+                const canClick = true; // Everyone can click on survivors
+                return (
+                  <PlayerCard 
+                    key={player.uid} 
+                    player={player} 
+                    onClick={handlePlayerClick}
+                    canClick={canClick}
+                  />
+                );
+              })}
             </div>
           </div>
         </div>
@@ -443,9 +556,17 @@ function GamePage({ params }: PageProps) {
             <div className="space-y-2">
               {deadPlayers
                 .sort((a, b) => (a.eliminatedAt || 0) - (b.eliminatedAt || 0))
-                .map((player) => (
-                  <PlayerCard key={player.uid} player={player} />
-                ))}
+                .map((player) => {
+                  const canClick = !currentPlayer?.isAlive; // Only eliminated players can click on eliminated players
+                  return (
+                    <PlayerCard 
+                      key={player.uid} 
+                      player={player} 
+                      onClick={handlePlayerClick}
+                      canClick={canClick}
+                    />
+                  );
+                })}
             </div>
           </div>
         )}
@@ -474,6 +595,26 @@ function GamePage({ params }: PageProps) {
         </div>
       )}
 
+      {/* Boundary Violation Warning */}
+      {boundaryViolation && (
+        <div className="mt-4 p-4 bg-red-50 border-2 border-red-300 rounded-lg animate-pulse">
+          <div className="text-center">
+            <div className="text-red-800 font-bold text-lg mb-2">
+              ⚠️ BOUNDARY VIOLATION
+            </div>
+            <div className="text-red-700 mb-2">
+              You are outside the game boundary!
+            </div>
+            <div className="text-3xl font-mono font-bold text-red-600 mb-2">
+              {boundaryTimer}s
+            </div>
+            <div className="text-red-600 text-sm">
+              Return to the boundary immediately or you will be eliminated!
+            </div>
+          </div>
+        </div>
+      )}
+
       <LocationPermissionModal
         isOpen={showLocationModal}
         onPermissionGranted={handleLocationPermissionGranted}
@@ -496,11 +637,18 @@ function GamePage({ params }: PageProps) {
   );
 }
 
-function PlayerCard({ player }: { player: Player }) {
+function PlayerCard({ player, onClick, canClick }: { 
+  player: Player; 
+  onClick?: (playerId: string) => void;
+  canClick?: boolean;
+}) {
   return (
-    <div className={`flex items-center gap-3 p-3 rounded-lg ${
-      player.isAlive ? 'bg-gray-50' : 'bg-gray-200 opacity-75'
-    }`}>
+    <div 
+      className={`flex items-center gap-3 p-3 rounded-lg ${
+        player.isAlive ? 'bg-gray-50' : 'bg-gray-200 opacity-75'
+      } ${canClick && player.location ? 'cursor-pointer hover:bg-gray-100 transition-colors' : ''}`}
+      onClick={() => canClick && player.location && onClick?.(player.uid)}
+    >
       {player.profilePictureUrl ? (
         <img
           src={player.profilePictureUrl}
