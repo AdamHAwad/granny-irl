@@ -61,22 +61,89 @@ export async function uploadProfilePicture(
   uid: string,
   file: File
 ): Promise<string> {
+  console.log('uploadProfilePicture: Starting upload for user:', uid);
+  
+  // Compress image if needed
+  const compressedFile = await compressImage(file);
+  
   const fileExt = file.name.split('.').pop();
   const fileName = `${uid}.${fileExt}`;
   
+  console.log('uploadProfilePicture: Uploading file:', fileName, 'Size:', compressedFile.size);
+  
   const { error: uploadError } = await supabase.storage
     .from('profile-pictures')
-    .upload(fileName, file, { upsert: true });
+    .upload(fileName, compressedFile, { 
+      upsert: true,
+      contentType: compressedFile.type
+    });
 
-  if (uploadError) throw uploadError;
+  if (uploadError) {
+    console.error('uploadProfilePicture: Upload error:', uploadError);
+    throw uploadError;
+  }
 
   const { data } = supabase.storage
     .from('profile-pictures')
     .getPublicUrl(fileName);
 
+  console.log('uploadProfilePicture: Public URL:', data.publicUrl);
+  
   await updateUserProfile(uid, { profile_picture_url: data.publicUrl });
   
   return data.publicUrl;
+}
+
+// Helper function to compress images
+async function compressImage(file: File): Promise<File> {
+  // If file is already small, return as-is
+  if (file.size < 100000) { // 100KB
+    return file;
+  }
+
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d')!;
+        
+        // Calculate new dimensions (max 500x500)
+        let width = img.width;
+        let height = img.height;
+        const maxSize = 500;
+        
+        if (width > height && width > maxSize) {
+          height = (height * maxSize) / width;
+          width = maxSize;
+        } else if (height > maxSize) {
+          width = (width * maxSize) / height;
+          height = maxSize;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw and compress
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob(
+          (blob) => {
+            const compressedFile = new File([blob!], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            });
+            resolve(compressedFile);
+          },
+          'image/jpeg',
+          0.8 // 80% quality
+        );
+      };
+    };
+  });
 }
 
 export async function deleteProfilePicture(uid: string): Promise<void> {
