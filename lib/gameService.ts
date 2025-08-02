@@ -506,10 +506,11 @@ export async function getGameResult(roomCode: string): Promise<GameResult | null
     .from('game_results')
     .select('*')
     .eq('room_id', roomCode)
-    .single();
+    .order('game_ended_at', { ascending: false })
+    .limit(1);
 
-  if (error && error.code !== 'PGRST116') throw error;
-  return data;
+  if (error) throw error;
+  return data && data.length > 0 ? data[0] : null;
 }
 
 export async function getCurrentUserRooms(uid: string): Promise<Room[]> {
