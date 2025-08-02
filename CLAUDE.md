@@ -169,6 +169,12 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd
 - Only visible to killers during active phase
 - Privacy consideration: Auto-disable after game ends
 - Show distance/direction indicators on killer's screen
+- Show map (similar to Splashin app) with:
+  - Survivors' profile pictures at their last pinged locations (1-minute updates)
+  - Killer's profile picture in bold red circle (real-time updates)
+  - Killer uses map to track survivors during hunt
+  - Survivors cannot see map while alive (no unfair advantage)
+  - Dead players can spectate the map to watch the action
 
 ## Development Commands
 ```bash
