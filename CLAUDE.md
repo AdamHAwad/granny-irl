@@ -175,6 +175,14 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd
   - Killer uses map to track survivors during hunt
   - Survivors cannot see map while alive (no unfair advantage)
   - Dead players can spectate the map to watch the action
+- **Proximity Direction Feature** (like Find My app):
+  - When killer is within ~50 meters of a survivor
+  - Dynamic arrow appears pointing toward nearest survivor
+  - Arrow updates in real-time using device compass/orientation
+  - Uses Web APIs: Geolocation + DeviceOrientationEvent
+  - Shows approximate distance (e.g., "~30m away")
+  - Could pulse/change color as killer gets closer
+  - Note: Requires HTTPS and device compass support
 
 ## Development Commands
 ```bash
