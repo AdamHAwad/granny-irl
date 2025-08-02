@@ -6,6 +6,15 @@ export interface Player {
   isAlive: boolean;
   eliminatedAt?: number;
   eliminatedBy?: string;
+  location?: PlayerLocation;
+  lastLocationUpdate?: number;
+}
+
+export interface PlayerLocation {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+  heading?: number; // Device compass heading in degrees (0-360)
 }
 
 export interface RoomSettings {

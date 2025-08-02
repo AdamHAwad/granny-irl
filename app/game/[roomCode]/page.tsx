@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useSoundNotifications } from '@/hooks/useSoundNotifications';
-import { subscribeToRoom, eliminatePlayer } from '@/lib/gameService';
+import { subscribeToRoom, eliminatePlayer, updatePlayerLocation, clearPlayerLocation } from '@/lib/gameService';
 import { Room, Player } from '@/types/game';
+import { locationService } from '@/lib/locationService';
 import AuthGuard from '@/components/AuthGuard';
+import LocationPermissionModal from '@/components/LocationPermissionModal';
 
 interface PageProps {
   params: {
@@ -27,6 +29,9 @@ function GamePage({ params }: PageProps) {
   const [headstartRemaining, setHeadstartRemaining] = useState(0);
   const [eliminating, setEliminating] = useState(false);
   const [gameStartSoundPlayed, setGameStartSoundPlayed] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [locationEnabled, setLocationEnabled] = useState(false);
+  const [locationError, setLocationError] = useState('');
 
   useEffect(() => {
     if (!user || !profile) return;
@@ -49,15 +54,22 @@ function GamePage({ params }: PageProps) {
       setRoom(roomData);
       setLoading(false);
 
+      // Show location modal when game starts (headstart phase)
+      if (roomData.status === 'headstart' && !showLocationModal && !locationEnabled) {
+        setShowLocationModal(true);
+      }
+
       if (roomData.status === 'waiting') {
         router.push(`/room/${params.roomCode}`);
       } else if (roomData.status === 'finished') {
+        // Clear location when game ends
+        handleGameEnd();
         router.push(`/results/${params.roomCode}`);
       }
     });
 
     return unsubscribe;
-  }, [user, profile, params.roomCode, router]);
+  }, [user, profile, params.roomCode, router, showLocationModal, locationEnabled]);
 
   useEffect(() => {
     if (!room) return;
@@ -118,6 +130,58 @@ function GamePage({ params }: PageProps) {
       setEliminating(false);
     }
   };
+
+  const handleLocationPermissionGranted = () => {
+    console.log('Location permission granted');
+    setLocationEnabled(true);
+    setShowLocationModal(false);
+    setLocationError('');
+  };
+
+  const handleLocationPermissionDenied = (error: string) => {
+    console.log('Location permission denied:', error);
+    setLocationError(error);
+    setShowLocationModal(false);
+  };
+
+  const handleLocationSkip = () => {
+    console.log('Location permission skipped');
+    setShowLocationModal(false);
+  };
+
+  const handleGameEnd = async () => {
+    if (!user) return;
+    
+    console.log('Game ending, clearing location tracking');
+    locationService.stopWatching();
+    await clearPlayerLocation(params.roomCode, user.id);
+    setLocationEnabled(false);
+  };
+
+  // Location tracking effect
+  useEffect(() => {
+    if (!user || !room || !locationEnabled) return;
+    if (room.status !== 'active' && room.status !== 'headstart') return;
+
+    console.log('Starting location tracking for user:', user.id);
+
+    // Start watching location changes
+    locationService.startWatching(
+      async (location) => {
+        await updatePlayerLocation(params.roomCode, user.id, location);
+      },
+      (error) => {
+        console.error('Location tracking error:', error);
+        setLocationError(`Location error: ${error}`);
+      }
+    );
+
+    // Cleanup when component unmounts or dependencies change
+    return () => {
+      console.log('Stopping location tracking');
+      locationService.stopWatching();
+    };
+  }, [user, room, locationEnabled, params.roomCode]);
 
   const formatTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -283,6 +347,27 @@ function GamePage({ params }: PageProps) {
           Back to Room
         </button>
       </div>
+
+      {/* Location Error Display */}
+      {locationError && (
+        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-yellow-800 text-sm">📍 {locationError}</p>
+        </div>
+      )}
+
+      {/* Location Status */}
+      {locationEnabled && (
+        <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <p className="text-green-800 text-sm">📍 Location sharing enabled</p>
+        </div>
+      )}
+
+      <LocationPermissionModal
+        isOpen={showLocationModal}
+        onPermissionGranted={handleLocationPermissionGranted}
+        onPermissionDenied={handleLocationPermissionDenied}
+        onSkip={handleLocationSkip}
+      />
     </main>
   );
 }

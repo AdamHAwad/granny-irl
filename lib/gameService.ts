@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { Room, Player, RoomSettings, GameResult, PlayerGameStats, GameHistoryEntry } from '@/types/game';
+import { Room, Player, RoomSettings, GameResult, PlayerGameStats, GameHistoryEntry, PlayerLocation } from '@/types/game';
 
 export function generateRoomCode(): string {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -623,5 +623,98 @@ export async function getPlayerGameStats(uid: string): Promise<PlayerGameStats> 
       avgPlacement: 0,
       totalEliminations: 0,
     };
+  }
+}
+
+export async function updatePlayerLocation(
+  roomCode: string,
+  playerUid: string,
+  location: PlayerLocation
+): Promise<void> {
+  try {
+    console.log('updatePlayerLocation: Updating location for player:', playerUid, 'in room:', roomCode);
+    
+    const { data: room, error } = await supabase
+      .from('rooms')
+      .select('*')
+      .eq('id', roomCode)
+      .single();
+
+    if (error) {
+      console.error('updatePlayerLocation: Error fetching room:', error);
+      return;
+    }
+
+    if (!room.players[playerUid]) {
+      console.error('updatePlayerLocation: Player not found in room');
+      return;
+    }
+
+    // Only update location during active games
+    if (room.status !== 'active' && room.status !== 'headstart') {
+      console.log('updatePlayerLocation: Not updating location - game not active');
+      return;
+    }
+
+    // Update player's location and timestamp
+    const updatedPlayers = { ...room.players };
+    updatedPlayers[playerUid] = {
+      ...updatedPlayers[playerUid],
+      location,
+      lastLocationUpdate: Date.now(),
+    };
+
+    const { error: updateError } = await supabase
+      .from('rooms')
+      .update({ players: updatedPlayers })
+      .eq('id', roomCode);
+
+    if (updateError) {
+      console.error('updatePlayerLocation: Error updating room:', updateError);
+    } else {
+      console.log('updatePlayerLocation: Successfully updated location for player:', playerUid);
+    }
+  } catch (error) {
+    console.error('updatePlayerLocation: Error:', error);
+  }
+}
+
+export async function clearPlayerLocation(
+  roomCode: string,
+  playerUid: string
+): Promise<void> {
+  try {
+    console.log('clearPlayerLocation: Clearing location for player:', playerUid);
+    
+    const { data: room, error } = await supabase
+      .from('rooms')
+      .select('*')
+      .eq('id', roomCode)
+      .single();
+
+    if (error || !room.players[playerUid]) {
+      return;
+    }
+
+    // Clear player's location data
+    const updatedPlayers = { ...room.players };
+    updatedPlayers[playerUid] = {
+      ...updatedPlayers[playerUid],
+      location: undefined,
+      lastLocationUpdate: undefined,
+    };
+
+    const { error: updateError } = await supabase
+      .from('rooms')
+      .update({ players: updatedPlayers })
+      .eq('id', roomCode);
+
+    if (updateError) {
+      console.error('clearPlayerLocation: Error updating room:', updateError);
+    } else {
+      console.log('clearPlayerLocation: Successfully cleared location for player:', playerUid);
+    }
+  } catch (error) {
+    console.error('clearPlayerLocation: Error:', error);
   }
 }
