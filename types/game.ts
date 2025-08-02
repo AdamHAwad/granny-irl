@@ -37,3 +37,24 @@ export interface GameResult {
 }
 
 export type GameStatus = 'waiting' | 'headstart' | 'active' | 'finished';
+
+export interface PlayerGameStats {
+  gamesPlayed: number;
+  wins: number;
+  losses: number;
+  killerWins: number;
+  survivorWins: number;
+  avgPlacement: number;
+  totalEliminations: number; // times this player was eliminated
+}
+
+export interface GameHistoryEntry {
+  room_id: string;
+  winners: 'killers' | 'survivors';
+  game_started_at: number;
+  game_ended_at: number;
+  playerRole: 'killer' | 'survivor';
+  playerWon: boolean;
+  placement: number; // 1st place = winner, 2nd = first eliminated, etc.
+  gameDurationMinutes: number;
+}
