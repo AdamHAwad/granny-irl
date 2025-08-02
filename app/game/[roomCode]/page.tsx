@@ -11,6 +11,7 @@ import { locationService } from '@/lib/locationService';
 import AuthGuard from '@/components/AuthGuard';
 import LocationPermissionModal from '@/components/LocationPermissionModal';
 import GameMap from '@/components/GameMap';
+import ProximityArrow from '@/components/ProximityArrow';
 
 interface PageProps {
   params: {
@@ -223,6 +224,26 @@ function GamePage({ params }: PageProps) {
   const aliveSurvivors = players.filter(p => p.role === 'survivor' && p.isAlive);
   const deadPlayers = players.filter(p => !p.isAlive);
 
+  // Find nearest survivor for proximity arrow (killers only)
+  const nearestSurvivor = currentPlayer?.role === 'killer' && currentPlayer?.location ? 
+    aliveSurvivors
+      .filter(survivor => survivor.location)
+      .reduce((closest, survivor) => {
+        if (!closest) return survivor;
+        
+        const closestDistance = locationService.calculateDistance(
+          currentPlayer.location!,
+          closest.location!
+        );
+        const survivorDistance = locationService.calculateDistance(
+          currentPlayer.location!,
+          survivor.location!
+        );
+        
+        return survivorDistance < closestDistance ? survivor : closest;
+      }, null as Player | null)
+    : null;
+
   const isHeadstart = room.status === 'headstart';
   const isActive = room.status === 'active';
 
@@ -426,6 +447,18 @@ function GamePage({ params }: PageProps) {
         onPermissionDenied={handleLocationPermissionDenied}
         onSkip={handleLocationSkip}
       />
+
+      {/* Proximity Arrow for Killers */}
+      {currentPlayer?.role === 'killer' && 
+       currentPlayer?.isAlive && 
+       isActive && 
+       nearestSurvivor && 
+       currentPlayer?.location && (
+        <ProximityArrow
+          currentPlayer={currentPlayer}
+          nearestSurvivor={nearestSurvivor}
+        />
+      )}
     </main>
   );
 }
