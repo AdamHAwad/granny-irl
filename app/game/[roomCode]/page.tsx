@@ -93,6 +93,12 @@ function GamePage({ params }: PageProps) {
 
   // Boundary violation detection effect
   useEffect(() => {
+    // Don't check boundary if player is being eliminated
+    if (eliminating) {
+      console.log('Player is being eliminated, skipping boundary check');
+      return;
+    }
+
     if (!room?.settings.boundary || !currentPlayer?.location || !currentPlayer?.isAlive) {
       if (boundaryViolation) {
         console.log('Clearing boundary violation - no boundary/location/alive');
@@ -123,7 +129,7 @@ function GamePage({ params }: PageProps) {
       setBoundaryWarningShown(false);
       setBoundaryViolationStartTime(null);
     }
-  }, [currentPlayer?.location, room?.settings.boundary, currentPlayer?.isAlive, boundaryViolation, playCountdown, vibrate]);
+  }, [currentPlayer?.location, room?.settings.boundary, currentPlayer?.isAlive, boundaryViolation, eliminating, playCountdown, vibrate]);
 
   useEffect(() => {
     if (!user || !profile) return;
@@ -235,13 +241,15 @@ function GamePage({ params }: PageProps) {
         }
         
         // Check if timer expired
-        if (remaining <= 0 && boundaryViolation) {
+        if (remaining <= 0 && boundaryViolation && !eliminating) {
           console.log('Boundary timer expired, eliminating player');
-          handleEliminate();
+          // Clear boundary violation state immediately to prevent restart
           setBoundaryViolation(false);
           setBoundaryWarningShown(false);
           setBoundaryViolationStartTime(null);
           setBoundaryTimer(0);
+          // Then eliminate player
+          handleEliminate();
         }
       }
     };
@@ -250,7 +258,7 @@ function GamePage({ params }: PageProps) {
     const interval = setInterval(updateTimers, 1000);
 
     return () => clearInterval(interval);
-  }, [room, boundaryViolation, boundaryViolationStartTime, gameStartSoundPlayed, playGameStart, playCountdown, vibrate, handleEliminate]);
+  }, [room, boundaryViolation, boundaryViolationStartTime, eliminating, gameStartSoundPlayed, playGameStart, playCountdown, vibrate, handleEliminate]);
 
   const handleLocationPermissionGranted = () => {
     console.log('Location permission granted');
