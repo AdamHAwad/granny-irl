@@ -92,9 +92,9 @@ export default function CreateRoomModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md text-black">
-        <div className="flex justify-between items-center mb-6">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center p-4 z-50 overflow-y-auto">
+      <div className="bg-white rounded-lg w-full max-w-md text-black my-8 max-h-[90vh] flex flex-col">
+        <div className="flex justify-between items-center p-6 pb-0">
           <h2 className="text-2xl font-bold">Create Room</h2>
           <button
             onClick={onClose}
@@ -104,7 +104,7 @@ export default function CreateRoomModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 pt-4 space-y-4 overflow-y-auto flex-1">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Number of Killers
@@ -206,8 +206,8 @@ export default function CreateRoomModal({
               </label>
             </div>
             
-            <p className="text-xs text-gray-500 mb-3">
-              Survivors must complete skillcheck objectives while avoiding killers. Adds strategic depth to gameplay.
+            <p className="text-xs text-gray-500 mb-2">
+              Survivors must complete objectives while avoiding killers.
             </p>
 
             {skillchecksEnabled && (
@@ -259,38 +259,40 @@ export default function CreateRoomModal({
                   </p>
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <h4 className="font-medium text-blue-800 mb-2">📋 Skillcheck Rules:</h4>
-                  <ul className="text-xs text-blue-700 space-y-1">
-                    <li>• Survivors must complete ALL skillchecks AND survive the timer to win</li>
-                    <li>• Each skillcheck takes 30 seconds of perfect timing to complete</li>
-                    <li>• Failed skillchecks add 30 seconds to the round timer</li>
-                    <li>• Multiple survivors can work together on the same skillcheck</li>
-                    <li>• Killers cannot see skillcheck locations on their map</li>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-2">
+                  <h4 className="font-medium text-blue-800 mb-1 text-sm">📋 Rules:</h4>
+                  <ul className="text-xs text-blue-700 space-y-0.5">
+                    <li>• Complete ALL skillchecks + survive timer</li>
+                    <li>• 30s timing challenge per skillcheck</li>
+                    <li>• Failures add +30s to round timer</li>
+                    <li>• Co-op: work together allowed</li>
+                    <li>• Hidden from killer maps</li>
                   </ul>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 py-2 px-4 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-              disabled={loading}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="flex-1 py-2 px-4 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
-              disabled={loading}
-            >
-              {loading ? 'Creating...' : 'Create Room'}
-            </button>
-          </div>
         </form>
+        
+        <div className="flex gap-3 p-6 pt-4 border-t border-gray-200 bg-gray-50">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 py-2 px-4 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 bg-white"
+            disabled={loading}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            onClick={handleSubmit}
+            className="flex-1 py-2 px-4 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
+            disabled={loading}
+          >
+            {loading ? 'Creating...' : 'Create Room'}
+          </button>
+        </div>
       </div>
     </div>
   );
