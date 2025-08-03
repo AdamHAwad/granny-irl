@@ -100,9 +100,6 @@ const createSkillcheckIcon = (skillcheck: Skillcheck) => {
 
 // Custom icon for escape area (purple circle)
 const createEscapeAreaIcon = () => {
-  if (typeof window === 'undefined') return null;
-  
-  const L = require('leaflet');
   const baseSize = 45;
   
   const html = `<div style="
@@ -615,6 +612,13 @@ function InteractiveGameMap({
             </>
           )}
           
+          {/* Escape Area (only visible to survivors and eliminated players) */}
+          {visibleEscapeArea && (
+            <div className="flex items-center gap-2 mt-1">
+              <div className="w-3 h-3 rounded-full bg-purple-500 border-2 border-white"></div>
+              <span>Escape Area (🚪)</span>
+            </div>
+          )}
           
           {/* Selected player info */}
           {selectedPlayerId && (
