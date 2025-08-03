@@ -617,25 +617,25 @@ export async function checkGameEnd(roomCode: string): Promise<void> {
   let gameEnded = false;
   let winners: 'killers' | 'survivors' | null = null;
 
-  // Check if all survivors are either eliminated or escaped (no one alive and trying to escape)
+  // Game only ends when ALL survivors are either eliminated OR escaped (no one still alive and trying)
   if (aliveSurvivors.length === 0) {
+    // All survivors have either escaped or been eliminated - now determine winner
+    gameEnded = true;
+    
     if (room.settings.skillchecks?.enabled) {
-      // DBD-style win condition: Killers win if they eliminated 75% or more of survivors
+      // DBD-style: Killers win if they eliminated 75%+ of survivors, regardless of escapes
       const survivorEliminationRate = eliminatedSurvivors.length / allSurvivors.length;
       
       if (survivorEliminationRate >= 0.75) {
-        console.log('checkGameEnd: Killers won - eliminated', Math.round(survivorEliminationRate * 100) + '% of survivors');
-        gameEnded = true;
+        console.log('checkGameEnd: All survivors accounted for. Killers won - eliminated', Math.round(survivorEliminationRate * 100) + '% of survivors');
         winners = 'killers';
       } else {
-        console.log('checkGameEnd: Survivors won - enough escaped (', escapedSurvivors.length, '/', allSurvivors.length, ')');
-        gameEnded = true;
+        console.log('checkGameEnd: All survivors accounted for. Survivors won - only', Math.round(survivorEliminationRate * 100) + '% eliminated, enough escaped');
         winners = 'survivors';
       }
     } else {
       // Original game logic: if no survivors alive, killers win
       console.log('checkGameEnd: Game ended - no survivors left (original mode)');
-      gameEnded = true;
       winners = 'killers';
     }
   } else if (room.game_started_at && room.status === 'active') {
