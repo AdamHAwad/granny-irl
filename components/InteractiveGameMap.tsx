@@ -212,23 +212,21 @@ function InteractiveGameMap({
 
   // Memoized escape area visibility - only survivors and eliminated players can see it
   const visibleEscapeArea = useMemo(() => {
-    console.log('🗺️ MAP ESCAPE CHECK:', {
-      escapeArea,
-      isKiller,
-      isEliminated,
-      escapeAreaExists: !!escapeArea,
-      escapeAreaRevealed: escapeArea?.isRevealed
-    });
-    
     // Killers cannot see escape area (per game rules)
     if (isKiller && !isEliminated) {
-      console.log('🗺️ MAP: Hiding escape area from killer');
+      console.log('🗺️ DEBUG: Hiding escape area from killer');
       return null;
     }
     
     // Only show if escape area exists and is revealed
     const result = escapeArea?.isRevealed ? escapeArea : null;
-    console.log('🗺️ MAP RESULT:', result);
+    console.log('🗺️ DEBUG: Escape area visibility check:', {
+      escapeAreaExists: !!escapeArea,
+      isRevealed: escapeArea?.isRevealed,
+      isKiller,
+      isEliminated,
+      willShow: !!result
+    });
     return result;
   }, [escapeArea, isKiller, isEliminated]);
 
@@ -418,6 +416,12 @@ function InteractiveGameMap({
 
   // Create escape area marker
   const createEscapeAreaMarker = (escapeArea: EscapeArea) => {
+    console.log('🗺️ DEBUG: Creating escape area marker:', {
+      id: escapeArea.id,
+      location: escapeArea.location,
+      isRevealed: escapeArea.isRevealed
+    });
+    
     const escapedPlayerNames = escapeArea.escapedPlayers.length > 0 
       ? escapeArea.escapedPlayers.map(uid => {
           const player = players.find(p => p.uid === uid);
@@ -558,7 +562,10 @@ function InteractiveGameMap({
             {visibleSkillchecks.map(skillcheck => createSkillcheckMarker(skillcheck))}
 
             {/* Render escape area marker (hidden from killers) */}
-            {visibleEscapeArea && createEscapeAreaMarker(visibleEscapeArea)}
+            {visibleEscapeArea && (() => {
+              console.log('🗺️ DEBUG: Rendering escape area marker NOW');
+              return createEscapeAreaMarker(visibleEscapeArea);
+            })()}
 
             {/* Add accuracy circles for players */}
             {playersWithLocation.map(player => {

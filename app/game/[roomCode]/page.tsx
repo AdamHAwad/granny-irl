@@ -176,16 +176,12 @@ function GamePage({ params }: PageProps) {
       setError('');
       setLastSuccessfulRoom(roomData);
 
-      // Log room updates for debugging - using distinctive prefix
-      console.log('🎮 GAME UPDATE:', { 
-        status: roomData.status, 
-        players: Object.keys(roomData.players).length,
-        skillchecks: roomData.skillchecks?.length || 0,
-        completedSkillchecks: roomData.skillchecks?.filter(sc => sc.isCompleted).length || 0,
-        escapeArea: !!roomData.escapeArea,
-        escapeAreaRevealed: roomData.escapeArea?.isRevealed,
-        allSkillchecksCompleted: roomData.allSkillchecksCompleted
-      });
+      // Check if escape area was just revealed - force map refresh
+      if (roomData.escapeArea?.isRevealed && (!room?.escapeArea?.isRevealed)) {
+        // Force component re-render by updating map key
+        setShowMap(false);
+        setTimeout(() => setShowMap(true), 100);
+      }
 
       // Check if current user has been kicked from the room
       if (!roomData.players[user.id]) {
@@ -938,6 +934,23 @@ function GamePage({ params }: PageProps) {
         <div className="fixed bottom-4 right-4 bg-yellow-100 border-2 border-yellow-400 rounded-lg p-4 max-w-xs z-50">
           <div className="text-sm font-bold text-yellow-800 mb-2">🛠️ Host Debug Panel</div>
           
+          {/* Visual Status Indicators */}
+          <div className="text-xs mb-3 p-2 bg-white rounded border">
+            <div>Skillchecks: {room.skillchecks?.filter(sc => sc.isCompleted).length || 0}/{room.skillchecks?.length || 0}</div>
+            <div>All Complete: {room.allSkillchecksCompleted ? '✅' : '❌'}</div>
+            <div>Escape Area Exists: {room.escapeArea ? '✅' : '❌'}</div>
+            <div>Escape Area Revealed: {room.escapeArea?.isRevealed ? '✅' : '❌'}</div>
+            <div>Escape Timer: {room.escape_timer_started_at ? '✅' : '❌'}</div>
+            {room.escapeArea && (
+              <div className="mt-2 pt-2 border-t border-gray-200">
+                <div>Escape Area ID: {room.escapeArea.id}</div>
+                <div>Escape Area Coords: {room.escapeArea.location?.latitude?.toFixed(6)}, {room.escapeArea.location?.longitude?.toFixed(6)}</div>
+                <div>Revealed At: {room.escapeArea.revealedAt ? new Date(room.escapeArea.revealedAt).toLocaleTimeString() : 'Not set'}</div>
+                <div>Escaped Players: {room.escapeArea.escapedPlayers?.length || 0}</div>
+              </div>
+            )}
+          </div>
+          
           {/* Skillcheck Testing */}
           {room.skillchecks && room.skillchecks.length > 0 && (
             <div className="mb-3">
@@ -982,6 +995,20 @@ function GamePage({ params }: PageProps) {
               🚪 Force Reveal Escape Area
             </button>
           )}
+          
+          {/* Map Debug Info */}
+          <div className="text-xs bg-gray-100 p-2 rounded mb-2">
+            <div className="font-bold mb-1">Map Debug:</div>
+            <div>escapeArea prop: {room.escapeArea ? 'Present' : 'Missing'}</div>
+            <div>Map visibility: {showMap ? 'Visible' : 'Hidden'}</div>
+            <div>Current role: {currentPlayer?.role || 'unknown'}</div>
+            <div>Is eliminated: {currentPlayer?.isAlive === false ? 'Yes' : 'No'}</div>
+            {room.escapeArea && currentPlayer?.role === 'survivor' && (
+              <div className="mt-1 pt-1 border-t border-gray-300">
+                <div>Should see escape area: {room.escapeArea.isRevealed && (currentPlayer?.role === 'survivor' || !currentPlayer?.isAlive) ? 'YES' : 'NO'}</div>
+              </div>
+            )}
+          </div>
 
           {/* Manual Escape (for testing win conditions) */}
           {room.escapeArea?.isRevealed && currentPlayer?.role === 'survivor' && currentPlayer?.isAlive && !currentPlayer?.hasEscaped && (
