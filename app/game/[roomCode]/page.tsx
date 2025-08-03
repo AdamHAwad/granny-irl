@@ -951,6 +951,7 @@ function GamePage({ params }: PageProps) {
               <div className="mt-2 pt-2 border-t border-gray-200 text-black">
                 {(() => {
                   const escapeArea = room.escapearea || room.escapeArea;
+                  if (!escapeArea) return null;
                   return (
                     <>
                       <div>Escape Area ID: {escapeArea.id}</div>
