@@ -17,7 +17,7 @@
  */
 
 import { supabase } from './supabase';
-import { Room, Player, RoomSettings, GameResult, PlayerGameStats, GameHistoryEntry, PlayerLocation, Skillcheck } from '@/types/game';
+import { Room, Player, RoomSettings, GameResult, PlayerGameStats, GameHistoryEntry, PlayerLocation, Skillcheck, EscapeArea } from '@/types/game';
 import { locationService } from './locationService';
 
 /**
@@ -66,6 +66,208 @@ export function generateSkillcheckPositions(
   
   console.log(`Generated ${skillchecks.length} skillchecks within ${maxDistance}m of host`);
   return skillchecks;
+}
+
+/**
+ * Generates a random escape area position around center location
+ * Uses the same vicinity rules as skillchecks
+ */
+export function generateEscapeArea(
+  centerLocation: PlayerLocation,
+  maxDistance: number
+): EscapeArea {
+  // Generate random position within circle using proper random distribution
+  const distance = Math.sqrt(Math.random()) * maxDistance;
+  const angle = Math.random() * 2 * Math.PI;
+  
+  // Convert polar coordinates to lat/lng offset
+  const deltaLat = (distance / 111320) * Math.cos(angle); // 111320 meters per degree lat
+  const deltaLng = (distance / (111320 * Math.cos(centerLocation.latitude * Math.PI / 180))) * Math.sin(angle);
+  
+  const escapeLocation: PlayerLocation = {
+    latitude: centerLocation.latitude + deltaLat,
+    longitude: centerLocation.longitude + deltaLng,
+  };
+  
+  const escapeArea: EscapeArea = {
+    id: `escape_area_${Date.now()}`,
+    location: escapeLocation,
+    isRevealed: true,
+    revealedAt: Date.now(),
+    escapedPlayers: [],
+  };
+  
+  console.log(`Generated escape area within ${maxDistance}m of center location`);
+  return escapeArea;
+}
+
+/**
+ * Checks if all skillchecks are completed and reveals escape area
+ */
+export async function checkSkillcheckCompletion(roomCode: string): Promise<void> {
+  const { data: room, error } = await supabase
+    .from('rooms')
+    .select('*')
+    .eq('id', roomCode)
+    .single();
+
+  if (error || !room) return;
+
+  // Only check if skillchecks are enabled and not already completed
+  if (!room.settings.skillchecks?.enabled || room.allSkillchecksCompleted || room.escapeArea) {
+    return;
+  }
+
+  const skillchecks = room.skillchecks || [];
+  const allCompleted = skillchecks.length > 0 && skillchecks.every((sc: Skillcheck) => sc.isCompleted);
+
+  if (allCompleted) {
+    console.log('All skillchecks completed! Revealing escape area for room:', roomCode);
+    
+    // Generate escape area using same center location as skillchecks
+    const centerLocation = room.skillcheckcenterlocation || room.players[room.host_uid]?.location;
+    
+    if (centerLocation) {
+      const escapeArea = generateEscapeArea(
+        centerLocation,
+        room.settings.skillchecks.maxDistanceFromHost
+      );
+
+      await supabase
+        .from('rooms')
+        .update({
+          allSkillchecksCompleted: true,
+          escapeArea: escapeArea,
+        })
+        .eq('id', roomCode);
+
+      console.log('Escape area revealed due to skillcheck completion');
+    }
+  }
+}
+
+/**
+ * Reveals escape area when timer expires (called from existing timer logic)
+ */
+export async function revealEscapeAreaOnTimer(roomCode: string): Promise<void> {
+  const { data: room, error } = await supabase
+    .from('rooms')
+    .select('*')
+    .eq('id', roomCode)
+    .single();
+
+  if (error || !room || room.escapeArea) return; // Don't reveal if already revealed
+
+  console.log('Timer expired! Revealing escape area for room:', roomCode);
+  
+  // Use skillcheck center location or host location
+  const centerLocation = room.skillcheckcenterlocation || room.players[room.host_uid]?.location;
+  
+  if (centerLocation) {
+    const maxDistance = room.settings.skillchecks?.maxDistanceFromHost || 500; // Default 500m
+    const escapeArea = generateEscapeArea(centerLocation, maxDistance);
+
+    await supabase
+      .from('rooms')
+      .update({
+        escapeArea: escapeArea,
+      })
+      .eq('id', roomCode);
+
+    console.log('Escape area revealed due to timer expiration');
+  }
+}
+
+/**
+ * Mark a survivor as escaped when they reach the escape area
+ */
+export async function markPlayerEscaped(roomCode: string, playerUid: string): Promise<void> {
+  const { data: room, error } = await supabase
+    .from('rooms')
+    .select('*')
+    .eq('id', roomCode)
+    .single();
+
+  if (error || !room || !room.escapeArea) return;
+
+  const player = room.players[playerUid];
+  if (!player || player.role !== 'survivor' || !player.isAlive || player.hasEscaped) {
+    return;
+  }
+
+  console.log('Player escaped!', playerUid);
+
+  // Update player status
+  const updatedPlayers = { ...room.players };
+  updatedPlayers[playerUid] = {
+    ...player,
+    hasEscaped: true,
+    escapedAt: Date.now(),
+  };
+
+  // Add to escape area's escaped players list
+  const updatedEscapeArea = {
+    ...room.escapeArea,
+    escapedPlayers: [...room.escapeArea.escapedPlayers, playerUid],
+  };
+
+  await supabase
+    .from('rooms')
+    .update({
+      players: updatedPlayers,
+      escapeArea: updatedEscapeArea,
+    })
+    .eq('id', roomCode);
+
+  // Check if survivors won (any survivor escaped)
+  setTimeout(() => checkGameEnd(roomCode), 1000);
+}
+
+/**
+ * Complete a skillcheck when a player successfully completes it
+ */
+export async function completeSkillcheck(
+  roomCode: string, 
+  skillcheckId: string, 
+  playerUid: string
+): Promise<void> {
+  const { data: room, error } = await supabase
+    .from('rooms')
+    .select('*')
+    .eq('id', roomCode)
+    .single();
+
+  if (error || !room || !room.skillchecks) return;
+
+  const player = room.players[playerUid];
+  if (!player || player.role !== 'survivor' || !player.isAlive || player.hasEscaped) {
+    return;
+  }
+
+  // Find and update the skillcheck
+  const updatedSkillchecks = room.skillchecks.map((sc: Skillcheck) => {
+    if (sc.id === skillcheckId && !sc.isCompleted) {
+      return {
+        ...sc,
+        isCompleted: true,
+        completedBy: [...sc.completedBy, playerUid],
+        completedAt: Date.now(),
+      };
+    }
+    return sc;
+  });
+
+  await supabase
+    .from('rooms')
+    .update({
+      skillchecks: updatedSkillchecks,
+    })
+    .eq('id', roomCode);
+
+  console.log('Skillcheck completed:', skillcheckId, 'by player:', playerUid);
+
+  // Check if all skillchecks are now completed
+  setTimeout(() => checkSkillcheckCompletion(roomCode), 500);
 }
 
 export async function createRoom(
@@ -406,13 +608,19 @@ export async function checkGameEnd(roomCode: string): Promise<void> {
   const players = Object.values(room.players);
   const aliveKillers = players.filter((p: any) => p.role === 'killer' && p.isAlive);
   const aliveSurvivors = players.filter((p: any) => p.role === 'survivor' && p.isAlive);
+  const escapedSurvivors = players.filter((p: any) => p.role === 'survivor' && p.hasEscaped);
 
-  console.log('checkGameEnd: Alive killers:', aliveKillers.length, 'Alive survivors:', aliveSurvivors.length);
+  console.log('checkGameEnd: Alive killers:', aliveKillers.length, 'Alive survivors:', aliveSurvivors.length, 'Escaped survivors:', escapedSurvivors.length);
 
   let gameEnded = false;
   let winners: 'killers' | 'survivors' | null = null;
 
-  if (aliveSurvivors.length === 0) {
+  // New win condition: Any survivor escaped = survivors win
+  if (escapedSurvivors.length > 0) {
+    console.log('checkGameEnd: Game ended - survivor(s) escaped!');
+    gameEnded = true;
+    winners = 'survivors';
+  } else if (aliveSurvivors.length === 0) {
     console.log('checkGameEnd: Game ended - no survivors left');
     gameEnded = true;
     winners = 'killers';
@@ -424,12 +632,12 @@ export async function checkGameEnd(roomCode: string): Promise<void> {
     
     console.log('checkGameEnd: Game length:', gameLength, 'ms, End time:', gameEndTime, 'Current time:', now, 'Time elapsed:', timeElapsed, 'Time remaining:', gameEndTime - now);
     
-    // Only check for time-based ending if the game has been active for at least 5 seconds
-    // This prevents premature ending during transitions
+    // Timer expired - reveal escape area and continue game (don't end immediately)
     if (timeElapsed >= 5000 && now >= gameEndTime) {
-      console.log('checkGameEnd: Game ended - time expired');
-      gameEnded = true;
-      winners = 'survivors';
+      console.log('checkGameEnd: Timer expired - revealing escape area');
+      await revealEscapeAreaOnTimer(roomCode);
+      // Don't end the game here - let survivors try to escape
+      // The game only ends when someone escapes or all survivors are eliminated
     }
   } else {
     console.log('checkGameEnd: Game not ending - status:', room.status, 'game_started_at:', room.game_started_at);

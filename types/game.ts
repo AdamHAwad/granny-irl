@@ -8,6 +8,8 @@ export interface Player {
   eliminatedBy?: string;
   location?: PlayerLocation;
   lastLocationUpdate?: number;
+  hasEscaped?: boolean; // New: survivor has reached escape area
+  escapedAt?: number; // When they escaped
 }
 
 export interface PlayerLocation {
@@ -23,6 +25,14 @@ export interface Skillcheck {
   isCompleted: boolean;
   completedBy: string[]; // UIDs of players who completed this skillcheck
   completedAt?: number;
+}
+
+export interface EscapeArea {
+  id: string;
+  location: PlayerLocation;
+  isRevealed: boolean;
+  revealedAt?: number;
+  escapedPlayers: string[]; // UIDs of players who have escaped
 }
 
 export interface SkillcheckSettings {
@@ -50,8 +60,10 @@ export interface Room {
   game_started_at?: number;
   game_ended_at?: number;
   skillchecks?: Skillcheck[]; // Skillchecks for this room
-  skillcheckTimeExtensions?: number; // Additional seconds added due to failed skillchecks
+  skillcheckTimeExtensions?: number; // Additional seconds added due to failed skillchecks (deprecated)
   skillcheckcenterlocation?: PlayerLocation; // Pinned location for skillcheck generation
+  escapeArea?: EscapeArea; // Escape area revealed after timer or all skillchecks complete
+  allSkillchecksCompleted?: boolean; // Whether all skillchecks have been completed
 }
 
 export interface GameResult {
