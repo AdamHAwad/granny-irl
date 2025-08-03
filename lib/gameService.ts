@@ -95,12 +95,12 @@ export async function createRoom(
           displayName: hostProfile.displayName,
           profilePictureUrl: hostProfile.profilePictureUrl,
           isAlive: true,
+          location: hostLocation, // Store host location in player data
         },
       },
       settings,
       status: 'waiting',
       created_at: Date.now(),
-      skillcheckHostLocation: hostLocation, // Store host location for skillcheck generation
     };
 
     const { error } = await supabase
@@ -313,10 +313,11 @@ export async function startGame(roomCode: string): Promise<void> {
       // Generate skillchecks if enabled
       let skillchecks: Skillcheck[] = [];
       if (currentRoom.settings.skillchecks?.enabled) {
-        // Use stored host location for skillcheck generation
-        if (currentRoom.skillcheckHostLocation) {
+        // Use host's location from player data
+        const hostPlayer = currentRoom.players[currentRoom.host_uid];
+        if (hostPlayer?.location) {
           skillchecks = generateSkillcheckPositions(
-            currentRoom.skillcheckHostLocation,
+            hostPlayer.location,
             currentRoom.settings.skillchecks.count,
             currentRoom.settings.skillchecks.maxDistanceFromHost
           );
@@ -504,7 +505,6 @@ export async function resetRoomForNewGame(roomCode: string): Promise<void> {
         game_ended_at: null,
         skillchecks: null, // Reset skillchecks for new game
         skillcheckTimeExtensions: null, // Reset time extensions
-        skillcheckHostLocation: null, // Reset host location
       })
       .eq('id', roomCode);
 

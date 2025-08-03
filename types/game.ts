@@ -51,7 +51,6 @@ export interface Room {
   game_ended_at?: number;
   skillchecks?: Skillcheck[]; // Skillchecks for this room
   skillcheckTimeExtensions?: number; // Additional seconds added due to failed skillchecks
-  skillcheckHostLocation?: PlayerLocation; // Host location for skillcheck generation
 }
 
 export interface GameResult {
