@@ -180,7 +180,7 @@ class LocationService {
     onError?: (error: string) => void,
     options: LocationWatchOptions = DEFAULT_LOCATION_OPTIONS
   ): void {
-    console.log('LocationService: Starting location watch');
+    // console.log('LocationService: Starting location watch'); // Disabled to reduce console noise
 
     if (!this.isSupported()) {
       onError?.('Geolocation is not supported');
@@ -188,7 +188,7 @@ class LocationService {
     }
 
     if (this.isWatching) {
-      console.log('LocationService: Already watching location');
+      // console.log('LocationService: Already watching location'); // Disabled to reduce console noise
       return;
     }
 
@@ -200,7 +200,7 @@ class LocationService {
           accuracy: position.coords.accuracy,
         };
 
-        console.log('LocationService: Location updated:', location);
+        // console.log('LocationService: Location updated:', location); // Disabled to reduce console noise
         this.lastKnownLocation = location;
         onLocationUpdate(location);
       },
@@ -212,7 +212,7 @@ class LocationService {
     );
 
     this.isWatching = true;
-    console.log('LocationService: Started watching with ID:', this.watchId);
+    // console.log('LocationService: Started watching with ID:', this.watchId); // Disabled to reduce console noise
   }
 
   /**

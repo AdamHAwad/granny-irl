@@ -176,8 +176,8 @@ function GamePage({ params }: PageProps) {
       setError('');
       setLastSuccessfulRoom(roomData);
 
-      // Log room updates for debugging
-      console.log('Room update received:', { 
+      // Log room updates for debugging - using distinctive prefix
+      console.log('🎮 GAME UPDATE:', { 
         status: roomData.status, 
         players: Object.keys(roomData.players).length,
         skillchecks: roomData.skillchecks?.length || 0,
@@ -948,8 +948,10 @@ function GamePage({ params }: PageProps) {
                     key={skillcheck.id}
                     onClick={async () => {
                       if (!skillcheck.isCompleted) {
+                        console.log('🛠️ DEBUG: Completing skillcheck', skillcheck.id);
                         const { completeSkillcheck } = await import('@/lib/gameService');
                         await completeSkillcheck(room.id, skillcheck.id, user.id);
+                        console.log('🛠️ DEBUG: Skillcheck completion request sent');
                       }
                     }}
                     disabled={skillcheck.isCompleted}
@@ -970,8 +972,10 @@ function GamePage({ params }: PageProps) {
           {!room.escapeArea && (isActive || room.status === 'active') && (
             <button
               onClick={async () => {
+                console.log('🛠️ DEBUG: Force revealing escape area');
                 const { revealEscapeAreaOnTimer } = await import('@/lib/gameService');
                 await revealEscapeAreaOnTimer(room.id);
+                console.log('🛠️ DEBUG: Escape area reveal request sent');
               }}
               className="w-full mb-2 px-3 py-2 bg-purple-200 text-purple-800 text-xs rounded hover:bg-purple-300"
             >
