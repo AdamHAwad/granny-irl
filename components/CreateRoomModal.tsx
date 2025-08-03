@@ -6,6 +6,23 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { createRoom } from '@/lib/gameService';
 import { RoomSettings, PlayerLocation } from '@/types/game';
 import { locationService } from '@/lib/locationService';
+import dynamic from 'next/dynamic';
+import { useMapEvents } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Dynamically import map components to avoid SSR issues
+const MapContainer = dynamic(
+  () => import('react-leaflet').then((mod) => mod.MapContainer),
+  { ssr: false }
+);
+const TileLayer = dynamic(
+  () => import('react-leaflet').then((mod) => mod.TileLayer),
+  { ssr: false }
+);
+const Marker = dynamic(
+  () => import('react-leaflet').then((mod) => mod.Marker),
+  { ssr: false }
+);
 
 interface CreateRoomModalProps {
   isOpen: boolean;
@@ -30,9 +47,23 @@ export default function CreateRoomModal({
   const [skillchecksEnabled, setSkillchecksEnabled] = useState(false);
   const [skillcheckCount, setSkillcheckCount] = useState(3);
   const [skillcheckDistance, setSkillcheckDistance] = useState(200); // 200 meters default
-  const [hostLocation, setHostLocation] = useState<PlayerLocation | null>(null);
+  const [pinnedLocation, setPinnedLocation] = useState<PlayerLocation | null>(null);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [mapCenter, setMapCenter] = useState<[number, number]>([37.7749, -122.4194]); // Default to SF
   const [locationError, setLocationError] = useState<string>('');
 
+  // Get user's current location for initial map center
+  useEffect(() => {
+    if (skillchecksEnabled && showLocationPicker) {
+      locationService.getCurrentLocation()
+        .then((location) => {
+          setMapCenter([location.latitude, location.longitude]);
+        })
+        .catch(() => {
+          // Keep default location if GPS fails
+        });
+    }
+  }, [skillchecksEnabled, showLocationPicker]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,17 +74,11 @@ export default function CreateRoomModal({
       console.log('CreateRoom: Starting room creation for user:', user.id);
       console.log('CreateRoom: Profile data:', profile);
       
-      // Get host location if skillchecks are enabled
-      let hostLoc = hostLocation;
-      if (skillchecksEnabled && !hostLocation) {
-        try {
-          hostLoc = await locationService.getCurrentLocation();
-          setHostLocation(hostLoc);
-        } catch (error) {
-          setLocationError('Unable to get your location for skillcheck placement');
-          setLoading(false);
-          return;
-        }
+      // Check if location is required for skillchecks
+      if (skillchecksEnabled && !pinnedLocation) {
+        setLocationError('Please pin a location for skillcheck placement');
+        setLoading(false);
+        return;
       }
 
       const finalSettings: RoomSettings = {
@@ -74,7 +99,7 @@ export default function CreateRoomModal({
           profilePictureUrl: profile.profile_picture_url,
         },
         finalSettings,
-        hostLoc || undefined // Pass host location for skillcheck generation
+        pinnedLocation || undefined // Pass pinned location for skillcheck generation
       );
       
       console.log('CreateRoom: Room created successfully with code:', roomCode);
@@ -87,6 +112,25 @@ export default function CreateRoomModal({
     } finally {
       setLoading(false);
     }
+  };
+
+  // Map click handler component
+  const MapClickHandler = ({ onLocationSelect }: { onLocationSelect: (location: PlayerLocation) => void }) => {
+    useMapEvents({
+      click: (e) => {
+        const { lat, lng } = e.latlng;
+        onLocationSelect({
+          latitude: lat,
+          longitude: lng,
+        });
+      },
+    });
+    return null;
+  };
+
+  const handleLocationSelect = (location: PlayerLocation) => {
+    setPinnedLocation(location);
+    setLocationError('');
   };
 
   if (!isOpen) return null;
@@ -218,6 +262,64 @@ export default function CreateRoomModal({
                   </div>
                 )}
 
+                {/* Location Picker */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Skillcheck Center Location
+                  </label>
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowLocationPicker(!showLocationPicker)}
+                      className={`w-full p-3 rounded-lg border-2 text-left ${
+                        pinnedLocation 
+                          ? 'border-green-300 bg-green-50' 
+                          : 'border-gray-300 bg-gray-50'
+                      }`}
+                    >
+                      {pinnedLocation ? (
+                        <div>
+                          <div className="text-green-700 font-medium">📍 Location Selected</div>
+                          <div className="text-xs text-green-600">
+                            {pinnedLocation.latitude.toFixed(6)}, {pinnedLocation.longitude.toFixed(6)}
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="text-gray-700 font-medium">🗺️ Click to Pin Location</div>
+                          <div className="text-xs text-gray-500">
+                            Choose where skillchecks will be centered
+                          </div>
+                        </div>
+                      )}
+                    </button>
+                    
+                    {showLocationPicker && (
+                      <div className="border rounded-lg overflow-hidden">
+                        <div style={{ height: '200px', width: '100%' }}>
+                          <MapContainer
+                            center={mapCenter}
+                            zoom={13}
+                            style={{ height: '100%', width: '100%' }}
+                          >
+                            <TileLayer
+                              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            />
+                            <MapClickHandler onLocationSelect={handleLocationSelect} />
+                            {pinnedLocation && (
+                              <Marker position={[pinnedLocation.latitude, pinnedLocation.longitude]} />
+                            )}
+                          </MapContainer>
+                        </div>
+                        <div className="bg-blue-50 p-2 text-xs text-blue-700">
+                          Click anywhere on the map to pin the skillcheck center location
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Number of Skillchecks: {skillcheckCount}
@@ -239,7 +341,7 @@ export default function CreateRoomModal({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Max Distance from Host: {skillcheckDistance}m
+                    Max Distance from Pinned Location: {skillcheckDistance}m
                   </label>
                   <input
                     type="range"
@@ -255,7 +357,7 @@ export default function CreateRoomModal({
                     <span>1000m (spread out)</span>
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
-                    Skillchecks will be randomly placed within this distance from your current location.
+                    Skillchecks will be randomly placed within this distance from the pinned location.
                   </p>
                 </div>
 
