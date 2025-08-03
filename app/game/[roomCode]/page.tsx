@@ -372,7 +372,7 @@ function GamePage({ params }: PageProps) {
       console.log('Stopping location tracking');
       locationService.stopWatching();
     };
-  }, [user, room, locationEnabled, params.roomCode]);
+  }, [user, room, locationEnabled, params.roomCode, currentPlayer?.isAlive, currentPlayer?.role, checkProximity]);
 
   // Memoized time formatting function
   const formatTime = useCallback((ms: number) => {
@@ -532,7 +532,7 @@ function GamePage({ params }: PageProps) {
                 <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                   <div className="text-sm font-medium text-green-800">🎉 You Escaped!</div>
                   <div className="text-xs text-green-600 mt-1">
-                    Congratulations! You've won the game for all survivors.
+                    Congratulations! You&apos;ve won the game for all survivors.
                   </div>
                 </div>
               )}
@@ -814,7 +814,7 @@ function GamePage({ params }: PageProps) {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
           <div className="bg-white rounded-lg p-6 text-black max-w-sm mx-4 text-center">
             <div className="text-2xl mb-4">⚡ Skillcheck Detected!</div>
-            <p className="mb-6">You're near a skillcheck. Complete it to help your team progress!</p>
+            <p className="mb-6">You&apos;re near a skillcheck. Complete it to help your team progress!</p>
             <div className="flex gap-3">
               <button
                 onClick={() => {
@@ -841,7 +841,7 @@ function GamePage({ params }: PageProps) {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
           <div className="bg-white rounded-lg p-6 text-black max-w-sm mx-4 text-center">
             <div className="text-2xl mb-4">🚪 Escape Area Found!</div>
-            <p className="mb-6">You've reached the escape zone! Escape now to win the game for all survivors!</p>
+            <p className="mb-6">You&apos;ve reached the escape zone! Escape now to win the game for all survivors!</p>
             <div className="flex gap-3">
               <button
                 onClick={handleEscape}
