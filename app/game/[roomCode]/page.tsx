@@ -445,6 +445,7 @@ function GamePage({ params }: PageProps) {
                 onPlayerClick={handlePlayerClick}
                 onMapClick={() => setSelectedPlayerId(null)}
                 skillchecks={room?.skillchecks}
+                escapeArea={room?.escapeArea}
                 className="mb-4"
               />
             )}
@@ -499,6 +500,7 @@ function GamePage({ params }: PageProps) {
                     onPlayerClick={handlePlayerClick}
                     onMapClick={() => setSelectedPlayerId(null)}
                     skillchecks={room?.skillchecks}
+                    escapeArea={room?.escapeArea}
                     className="mb-4"
                   />
                 )}

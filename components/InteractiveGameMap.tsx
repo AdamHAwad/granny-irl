@@ -24,7 +24,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
-import { Player, PlayerLocation, Skillcheck } from '@/types/game';
+import { Player, PlayerLocation, Skillcheck, EscapeArea } from '@/types/game';
 import { locationService } from '@/lib/locationService';
 import dynamic from 'next/dynamic';
 import 'leaflet/dist/leaflet.css';
@@ -64,6 +64,7 @@ interface InteractiveGameMapProps {
   onMapClick?: () => void;
   className?: string;
   skillchecks?: Skillcheck[]; // Optional skillchecks to display
+  escapeArea?: EscapeArea; // Optional escape area to display (survivors only)
 }
 
 // Custom icon for skillchecks
@@ -91,6 +92,43 @@ const createSkillcheckIcon = (skillcheck: Skillcheck) => {
 
   return L.divIcon({
     className: 'custom-skillcheck-icon',
+    html,
+    iconSize: [baseSize, baseSize],
+    iconAnchor: [baseSize/2, baseSize/2],
+  });
+};
+
+// Custom icon for escape area (purple circle)
+const createEscapeAreaIcon = () => {
+  if (typeof window === 'undefined') return null;
+  
+  const L = require('leaflet');
+  const baseSize = 45;
+  
+  const html = `<div style="
+    width: ${baseSize}px;
+    height: ${baseSize}px;
+    border-radius: 50%;
+    border: 4px solid white;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+    background-color: #8B5CF6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: ${baseSize * 0.4}px;
+    animation: escapeAreaPulse 2s infinite;
+  ">🚪</div>
+  <style>
+    @keyframes escapeAreaPulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 3px 8px rgba(0,0,0,0.4); }
+      50% { transform: scale(1.1); box-shadow: 0 4px 12px rgba(139,92,246,0.6); }
+    }
+  </style>`;
+
+  return L.divIcon({
+    className: 'custom-escape-area-icon',
     html,
     iconSize: [baseSize, baseSize],
     iconAnchor: [baseSize/2, baseSize/2],
@@ -156,7 +194,8 @@ function InteractiveGameMap({
   onPlayerClick,
   onMapClick,
   className = '',
-  skillchecks = []
+  skillchecks = [],
+  escapeArea
 }: InteractiveGameMapProps) {
   const [map, setMap] = useState<L.Map | null>(null);
   const [center, setCenter] = useState<[number, number]>([37.7749, -122.4194]); // Default to SF
@@ -173,6 +212,17 @@ function InteractiveGameMap({
     // Survivors and eliminated players can see skillchecks
     return skillchecks;
   }, [skillchecks, isKiller, isEliminated]);
+
+  // Memoized escape area visibility - only survivors and eliminated players can see it
+  const visibleEscapeArea = useMemo(() => {
+    // Killers cannot see escape area (per game rules)
+    if (isKiller && !isEliminated) {
+      return null;
+    }
+    
+    // Only show if escape area exists and is revealed
+    return escapeArea?.isRevealed ? escapeArea : null;
+  }, [escapeArea, isKiller, isEliminated]);
 
   // Memoized filter for players with location (expensive operation)
   const playersWithLocation = useMemo(() => {
@@ -358,6 +408,47 @@ function InteractiveGameMap({
     );
   };
 
+  // Create escape area marker
+  const createEscapeAreaMarker = (escapeArea: EscapeArea) => {
+    const escapedPlayerNames = escapeArea.escapedPlayers.length > 0 
+      ? escapeArea.escapedPlayers.map(uid => {
+          const player = players.find(p => p.uid === uid);
+          return player?.displayName || 'Unknown Player';
+        }).join(', ')
+      : 'None yet';
+
+    return (
+      <Marker
+        key={escapeArea.id}
+        position={[escapeArea.location.latitude, escapeArea.location.longitude]}
+        icon={createEscapeAreaIcon()}
+      >
+        <Popup>
+          <div className="text-sm">
+            <div className="font-bold flex items-center gap-2">
+              <span>🚪 Escape Area</span>
+              <span className="text-purple-600">✨</span>
+            </div>
+            <div className="text-xs text-gray-600 mt-1">
+              Status: Escape zone active!
+            </div>
+            {escapeArea.revealedAt && (
+              <div className="text-xs text-gray-500">
+                Revealed: {new Date(escapeArea.revealedAt).toLocaleTimeString()}
+              </div>
+            )}
+            <div className="text-xs text-gray-500 mt-1">
+              Escaped players: {escapedPlayerNames}
+            </div>
+            <div className="text-xs text-purple-600 mt-2">
+              📍 Get close to escape and win the game!
+            </div>
+          </div>
+        </Popup>
+      </Marker>
+    );
+  };
+
   // Map is now available to all players during active games
   // No access restriction needed
 
@@ -457,6 +548,9 @@ function InteractiveGameMap({
 
             {/* Render skillcheck markers (hidden from killers) */}
             {visibleSkillchecks.map(skillcheck => createSkillcheckMarker(skillcheck))}
+
+            {/* Render escape area marker (hidden from killers) */}
+            {visibleEscapeArea && createEscapeAreaMarker(visibleEscapeArea)}
 
             {/* Add accuracy circles for players */}
             {playersWithLocation.map(player => {
