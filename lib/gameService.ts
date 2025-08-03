@@ -379,7 +379,7 @@ export async function completeSkillcheck(
     .eq('id', roomCode);
 
   console.log('🔍 DEBUG: Skillcheck completed:', skillcheckId, 'by player:', playerUid);
-  console.log('🔍 DEBUG: Updated skillchecks:', updatedSkillchecks.map(sc => ({ 
+  console.log('🔍 DEBUG: Updated skillchecks:', updatedSkillchecks.map((sc: Skillcheck) => ({ 
     id: sc.id, 
     isCompleted: sc.isCompleted 
   })));
