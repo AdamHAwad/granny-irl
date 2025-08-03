@@ -676,15 +676,26 @@ export async function getPlayerGameStats(uid: string): Promise<PlayerGameStats> 
 const roomStatusCache = new Map<string, { status: string, timestamp: number }>();
 const CACHE_DURATION = 10000; // 10 seconds
 
+// Clear room status cache (useful when game state changes)
+export function clearRoomStatusCache(roomCode?: string): void {
+  if (roomCode) {
+    roomStatusCache.delete(roomCode);
+    console.log('Cleared room status cache for:', roomCode);
+  } else {
+    roomStatusCache.clear();
+    console.log('Cleared all room status cache');
+  }
+}
+
 export async function updatePlayerLocation(
   roomCode: string,
   playerUid: string,
   location: PlayerLocation
 ): Promise<void> {
   try {
-    // Check cache first to avoid unnecessary database calls
-    const cached = roomStatusCache.get(roomCode);
+    // Clear cache at start of new game sessions to avoid stale data
     const now = Date.now();
+    const cached = roomStatusCache.get(roomCode);
     
     let roomStatus = cached?.status;
     if (!cached || (now - cached.timestamp) > CACHE_DURATION) {
@@ -717,54 +728,59 @@ export async function updatePlayerLocation(
       return;
     }
 
-    // Optimized update: use PostgreSQL jsonb_set to update only the specific player
-    const { error: updateError } = await supabase
-      .from('rooms')
-      .update({
-        players: supabase.rpc('update_player_location', {
-          room_id: roomCode,
-          player_uid: playerUid,
-          new_location: location,
-          update_timestamp: now
-        })
-      })
-      .eq('id', roomCode);
-
-    if (updateError) {
-      console.error('updatePlayerLocation: Error updating location:', updateError);
-      // Fallback to full room update if RPC fails
-      await updatePlayerLocationFallback(roomCode, playerUid, location);
-    }
+    // Direct update using fallback method (RPC function doesn't exist)
+    await updatePlayerLocationFallback(roomCode, playerUid, location, now);
   } catch (error) {
     console.error('updatePlayerLocation: Error:', error);
   }
 }
 
-// Fallback function for location updates
+// Improved fallback function for location updates with error handling
 async function updatePlayerLocationFallback(
   roomCode: string,
   playerUid: string,
-  location: PlayerLocation
+  location: PlayerLocation,
+  timestamp?: number
 ): Promise<void> {
-  const { data: room, error } = await supabase
-    .from('rooms')
-    .select('players')
-    .eq('id', roomCode)
-    .single();
+  try {
+    const { data: room, error } = await supabase
+      .from('rooms')
+      .select('players')
+      .eq('id', roomCode)
+      .single();
 
-  if (error || !room.players[playerUid]) return;
+    if (error) {
+      console.error('updatePlayerLocationFallback: Error fetching room:', error);
+      throw new Error('Failed to fetch room data');
+    }
 
-  const updatedPlayers = { ...room.players };
-  updatedPlayers[playerUid] = {
-    ...updatedPlayers[playerUid],
-    location,
-    lastLocationUpdate: Date.now(),
-  };
+    if (!room.players[playerUid]) {
+      console.error('updatePlayerLocationFallback: Player not found in room:', playerUid);
+      throw new Error('Player not found in room');
+    }
 
-  await supabase
-    .from('rooms')
-    .update({ players: updatedPlayers })
-    .eq('id', roomCode);
+    const updatedPlayers = { ...room.players };
+    updatedPlayers[playerUid] = {
+      ...updatedPlayers[playerUid],
+      location,
+      lastLocationUpdate: timestamp || Date.now(),
+    };
+
+    const { error: updateError } = await supabase
+      .from('rooms')
+      .update({ players: updatedPlayers })
+      .eq('id', roomCode);
+
+    if (updateError) {
+      console.error('updatePlayerLocationFallback: Error updating players:', updateError);
+      throw updateError;
+    }
+
+    console.log('updatePlayerLocationFallback: Successfully updated location for player:', playerUid);
+  } catch (error) {
+    console.error('updatePlayerLocationFallback: Error:', error);
+    throw error;
+  }
 }
 
 export async function clearPlayerLocation(

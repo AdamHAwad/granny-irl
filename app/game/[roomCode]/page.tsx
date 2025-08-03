@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useSoundNotifications } from '@/hooks/useSoundNotifications';
-import { subscribeToRoom, eliminatePlayer, updatePlayerLocation, clearPlayerLocation } from '@/lib/gameService';
+import { subscribeToRoom, eliminatePlayer, updatePlayerLocation, clearPlayerLocation, clearRoomStatusCache } from '@/lib/gameService';
 import { Room, Player } from '@/types/game';
 import { locationService, HIGH_FREQUENCY_LOCATION_OPTIONS } from '@/lib/locationService';
 import AuthGuard from '@/components/AuthGuard';
@@ -237,6 +237,10 @@ function GamePage({ params }: PageProps) {
     }
 
     console.log('Starting optimized location tracking for user:', user.id);
+    
+    // Clear room status cache to ensure fresh data
+    clearRoomStatusCache(params.roomCode);
+    
     let isTracking = true;
     let isFirstUpdate = true;
 
@@ -248,7 +252,15 @@ function GamePage({ params }: PageProps) {
       // First update is immediate for instant visibility
       if (isFirstUpdate) {
         isFirstUpdate = false;
-        updatePlayerLocation(params.roomCode, user.id, location);
+        updatePlayerLocation(params.roomCode, user.id, location)
+          .then(() => {
+            console.log('First location update successful');
+            setLocationError(''); // Clear any previous errors
+          })
+          .catch((error) => {
+            console.error('First location update failed:', error);
+            setLocationError(`Location update failed: ${error.message}`);
+          });
         return;
       }
 
@@ -258,7 +270,14 @@ function GamePage({ params }: PageProps) {
       }
       locationUpdateTimeout = setTimeout(async () => {
         if (isTracking) {
-          await updatePlayerLocation(params.roomCode, user.id, location);
+          try {
+            await updatePlayerLocation(params.roomCode, user.id, location);
+            console.log('Location update successful');
+            setLocationError(''); // Clear any previous errors
+          } catch (error) {
+            console.error('Location update failed:', error);
+            setLocationError(`Location update failed: ${(error as Error).message}`);
+          }
         }
       }, 1000); // 1 second debounce for subsequent updates
     };
