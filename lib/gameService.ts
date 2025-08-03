@@ -105,24 +105,43 @@ export function generateEscapeArea(
  * Checks if all skillchecks are completed and reveals escape area
  */
 export async function checkSkillcheckCompletion(roomCode: string): Promise<void> {
+  console.log('🔍 DEBUG: checkSkillcheckCompletion called for room:', roomCode);
+  
   const { data: room, error } = await supabase
     .from('rooms')
     .select('*')
     .eq('id', roomCode)
     .single();
 
-  if (error || !room) return;
+  if (error || !room) {
+    console.log('🔍 DEBUG: Error or no room found:', error);
+    return;
+  }
+
+  console.log('🔍 DEBUG: Room data:', {
+    skillchecksEnabled: room.settings.skillchecks?.enabled,
+    allSkillchecksCompleted: room.allSkillchecksCompleted,
+    escapeAreaExists: !!room.escapeArea,
+    skillchecksCount: room.skillchecks?.length
+  });
 
   // Only check if skillchecks are enabled and not already completed
   if (!room.settings.skillchecks?.enabled || room.allSkillchecksCompleted || room.escapeArea) {
+    console.log('🔍 DEBUG: Exiting early - conditions not met');
     return;
   }
 
   const skillchecks = room.skillchecks || [];
   const allCompleted = skillchecks.length > 0 && skillchecks.every((sc: Skillcheck) => sc.isCompleted);
+  
+  console.log('🔍 DEBUG: Skillcheck completion check:', {
+    skillchecksLength: skillchecks.length,
+    allCompleted,
+    completedCount: skillchecks.filter((sc: Skillcheck) => sc.isCompleted).length
+  });
 
   if (allCompleted) {
-    console.log('All skillchecks completed! Revealing escape area for room:', roomCode);
+    console.log('🔍 DEBUG: All skillchecks completed! Revealing escape area for room:', roomCode);
     
     // Generate escape area using same center location as skillchecks
     const centerLocation = room.skillcheckcenterlocation || room.players[room.host_uid]?.location;
@@ -135,7 +154,14 @@ export async function checkSkillcheckCompletion(roomCode: string): Promise<void>
 
       const escapeTimerStarted = Date.now();
       
-      await supabase
+      console.log('🔍 DEBUG: Updating room with escape area:', {
+        roomCode,
+        escapeArea,
+        allSkillchecksCompleted: true,
+        escape_timer_started_at: escapeTimerStarted
+      });
+      
+      const { error: updateError } = await supabase
         .from('rooms')
         .update({
           allSkillchecksCompleted: true,
@@ -143,6 +169,12 @@ export async function checkSkillcheckCompletion(roomCode: string): Promise<void>
           escape_timer_started_at: escapeTimerStarted,
         })
         .eq('id', roomCode);
+        
+      if (updateError) {
+        console.error('🔍 DEBUG: Error updating room:', updateError);
+      } else {
+        console.log('🔍 DEBUG: Room updated successfully');
+      }
 
       console.log('Escape area revealed due to skillcheck completion. 10-minute escape timer started.');
       
@@ -346,9 +378,14 @@ export async function completeSkillcheck(
     })
     .eq('id', roomCode);
 
-  console.log('Skillcheck completed:', skillcheckId, 'by player:', playerUid);
+  console.log('🔍 DEBUG: Skillcheck completed:', skillcheckId, 'by player:', playerUid);
+  console.log('🔍 DEBUG: Updated skillchecks:', updatedSkillchecks.map(sc => ({ 
+    id: sc.id, 
+    isCompleted: sc.isCompleted 
+  })));
 
   // Check if all skillchecks are now completed
+  console.log('🔍 DEBUG: Setting timeout to check skillcheck completion in 500ms');
   setTimeout(() => checkSkillcheckCompletion(roomCode), 500);
 }
 
