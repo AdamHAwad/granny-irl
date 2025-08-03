@@ -20,20 +20,19 @@ export default function SkillcheckMinigame({
   const [angle, setAngle] = useState(0);
   const [successZoneStart, setSuccessZoneStart] = useState(0);
   const [successZoneSize, setSuccessZoneSize] = useState(30);
+  const [needleSpeed, setNeedleSpeed] = useState(180);
   const [isAnimating, setIsAnimating] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(30);
   const [hits, setHits] = useState(0);
   const [misses, setMisses] = useState(0);
   const animationRef = useRef<number>();
-  const gameTimerRef = useRef<NodeJS.Timeout>();
-  const countdownRef = useRef<NodeJS.Timeout>();
 
   // Game parameters
   const MIN_SUCCESS_ZONE_SIZE = 20; // degrees
   const MAX_SUCCESS_ZONE_SIZE = 40; // degrees
-  const NEEDLE_SPEED = 180; // degrees per second
-  const TOTAL_GAME_TIME = 30; // seconds
+  const MIN_NEEDLE_SPEED = 120; // degrees per second
+  const MAX_NEEDLE_SPEED = 300; // degrees per second
+  const REQUIRED_HITS = 15; // hits needed to complete
   const MAX_MISSES = 3; // fail after 3 misses
 
   // Randomize success zone position and size
@@ -42,6 +41,12 @@ export default function SkillcheckMinigame({
     const newStart = Math.random() * (360 - newSize);
     setSuccessZoneSize(newSize);
     setSuccessZoneStart(newStart);
+  }, []);
+
+  // Randomize needle speed
+  const randomizeNeedleSpeed = useCallback(() => {
+    const newSpeed = MIN_NEEDLE_SPEED + Math.random() * (MAX_NEEDLE_SPEED - MIN_NEEDLE_SPEED);
+    setNeedleSpeed(newSpeed);
   }, []);
 
   const handleSuccess = useCallback(() => {
@@ -63,12 +68,12 @@ export default function SkillcheckMinigame({
     if (isOpen && !gameStarted) {
       // Reset state
       setAngle(0);
-      setTimeRemaining(TOTAL_GAME_TIME);
       setHits(0);
       setMisses(0);
       
-      // Generate initial random success zone
+      // Generate initial random success zone and speed
       randomizeSuccessZone();
+      randomizeNeedleSpeed();
       
       // Start the game
       setGameStarted(true);
@@ -76,33 +81,17 @@ export default function SkillcheckMinigame({
       
       console.log('Skillcheck minigame started for:', skillcheckId);
     }
-  }, [isOpen, gameStarted, skillcheckId, randomizeSuccessZone]);
+  }, [isOpen, gameStarted, skillcheckId, randomizeSuccessZone, randomizeNeedleSpeed]);
 
-  // Countdown timer and game completion check
+  // Check for game completion
   useEffect(() => {
-    if (!isOpen || !gameStarted) return;
+    if (!gameStarted) return;
 
-    countdownRef.current = setInterval(() => {
-      setTimeRemaining(prev => {
-        if (prev <= 1) {
-          // Time's up - check if player succeeded
-          if (hits >= 15) { // Require at least 15 hits in 30 seconds
-            handleSuccess();
-          } else {
-            handleFailure();
-          }
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => {
-      if (countdownRef.current) {
-        clearInterval(countdownRef.current);
-      }
-    };
-  }, [isOpen, gameStarted, hits, handleSuccess, handleFailure]);
+    // Check if player has reached required hits
+    if (hits >= REQUIRED_HITS) {
+      handleSuccess();
+    }
+  }, [hits, gameStarted, handleSuccess]);
 
   // Animation loop
   useEffect(() => {
@@ -110,7 +99,7 @@ export default function SkillcheckMinigame({
 
     const animate = () => {
       setAngle(prev => {
-        const newAngle = (prev + NEEDLE_SPEED / 60) % 360; // 60 FPS
+        const newAngle = (prev + needleSpeed / 60) % 360; // 60 FPS
         return newAngle;
       });
       animationRef.current = requestAnimationFrame(animate);
@@ -123,7 +112,7 @@ export default function SkillcheckMinigame({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isAnimating]);
+  }, [isAnimating, needleSpeed]);
 
   const handleSpacePress = useCallback((event: KeyboardEvent) => {
     if (event.code === 'Space' && isAnimating) {
@@ -142,10 +131,11 @@ export default function SkillcheckMinigame({
       }
       
       if (isInZone) {
-        // Hit! Increment counter and randomize zone
+        // Hit! Increment counter and randomize zone and speed
         setHits(prev => prev + 1);
         randomizeSuccessZone();
-        console.log('Hit! Total hits:', hits + 1);
+        randomizeNeedleSpeed();
+        console.log('Hit! Total hits:', hits + 1, 'New speed:', needleSpeed);
       } else {
         // Miss! Increment miss counter
         setMisses(prev => {
@@ -158,7 +148,7 @@ export default function SkillcheckMinigame({
         console.log('Miss! Total misses:', misses + 1);
       }
     }
-  }, [angle, successZoneStart, successZoneSize, isAnimating, hits, misses, randomizeSuccessZone, handleFailure]);
+  }, [angle, successZoneStart, successZoneSize, isAnimating, hits, misses, needleSpeed, randomizeSuccessZone, randomizeNeedleSpeed, handleFailure]);
 
   const handleTouchStart = useCallback((event: TouchEvent) => {
     if (isAnimating) {
@@ -186,12 +176,6 @@ export default function SkillcheckMinigame({
     return () => {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
-      }
-      if (gameTimerRef.current) {
-        clearTimeout(gameTimerRef.current);
-      }
-      if (countdownRef.current) {
-        clearInterval(countdownRef.current);
       }
     };
   }, []);
@@ -226,21 +210,17 @@ export default function SkillcheckMinigame({
       <div className="bg-gray-900 rounded-xl p-8 text-white text-center max-w-md w-full mx-4">
         <div className="mb-4">
           <h2 className="text-2xl font-bold mb-2">⚡ SKILLCHECK</h2>
-          <p className="text-sm text-gray-300 mb-4">Keep hitting the green zone as it moves!</p>
+          <p className="text-sm text-gray-300 mb-4">Hit the moving zones with varying speeds!</p>
           
           {/* Stats */}
-          <div className="flex justify-center gap-6 mb-4">
+          <div className="flex justify-center gap-8 mb-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-400">{hits}</div>
+              <div className="text-3xl font-bold text-green-400">{hits}/{REQUIRED_HITS}</div>
               <div className="text-xs text-gray-400">Hits</div>
             </div>
             <div className="text-center">
-              <div className="text-lg font-mono">
-                <span className={`${timeRemaining <= 10 ? 'text-red-400' : 'text-yellow-400'}`}>
-                  {timeRemaining}s
-                </span>
-              </div>
-              <div className="text-xs text-gray-400">Time</div>
+              <div className="text-2xl font-bold text-amber-400">{Math.round(needleSpeed)}°/s</div>
+              <div className="text-xs text-gray-400">Speed</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-red-400">{misses}/{MAX_MISSES}</div>
@@ -249,13 +229,13 @@ export default function SkillcheckMinigame({
           </div>
           
           {/* Progress bar */}
-          <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
+          <div className="w-full bg-gray-700 rounded-full h-3 mb-2">
             <div 
-              className="bg-green-500 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${Math.min(100, (hits / 15) * 100)}%` }}
+              className="bg-green-500 h-3 rounded-full transition-all duration-300"
+              style={{ width: `${Math.min(100, (hits / REQUIRED_HITS) * 100)}%` }}
             />
           </div>
-          <p className="text-xs text-gray-400">Need 15 hits to complete</p>
+          <p className="text-xs text-gray-400">Get {REQUIRED_HITS} hits to complete</p>
         </div>
 
         {/* Skillcheck Circle */}
@@ -313,9 +293,9 @@ export default function SkillcheckMinigame({
 
         {/* Instructions */}
         <div className="space-y-2 text-sm text-gray-300">
-          <p>🎯 Hit the green zone repeatedly as it moves and changes size</p>
+          <p>🎯 Green zones change position, size, and needle speed varies</p>
           <p>⌨️ Press SPACE or tap when the red needle is in the green zone</p>
-          <p>⚠️ {MAX_MISSES} misses = fail! Need 15 hits in 30 seconds to succeed!</p>
+          <p>⚠️ {MAX_MISSES} misses = fail! Get {REQUIRED_HITS} hits to complete!</p>
         </div>
 
         {/* Close button (hidden during active game) */}
