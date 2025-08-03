@@ -31,6 +31,7 @@ function GamePage({ params }: PageProps) {
   const [lastSuccessfulRoom, setLastSuccessfulRoom] = useState<Room | null>(null);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [headstartRemaining, setHeadstartRemaining] = useState(0);
+  const [escapeTimerRemaining, setEscapeTimerRemaining] = useState(0);
   const [eliminating, setEliminating] = useState(false);
   const [gameStartSoundPlayed, setGameStartSoundPlayed] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
@@ -248,6 +249,35 @@ function GamePage({ params }: PageProps) {
             checkGameEnd(params.roomCode);
           });
         }
+      }
+
+      // Handle escape timer (10 minutes after escape area revealed)
+      if (room.status === 'active' && room.escape_timer_started_at && room.escapeArea?.isRevealed) {
+        const escapeEnd = room.escape_timer_started_at + (10 * 60 * 1000); // 10 minutes
+        const escapeRemaining = Math.max(0, escapeEnd - now);
+        setEscapeTimerRemaining(escapeRemaining);
+
+        // Play warning sounds in final 60 seconds
+        if (escapeRemaining <= 60000 && escapeRemaining > 0 && Math.floor(escapeRemaining / 1000) !== Math.floor((escapeRemaining - 1000) / 1000)) {
+          const secondsLeft = Math.floor(escapeRemaining / 1000);
+          if (secondsLeft <= 10) {
+            playCountdown();
+            vibrate([200, 100, 200]); // More intense vibration for escape timer
+          } else if (secondsLeft % 10 === 0) {
+            playGameStart(); // Warning sound every 10 seconds in final minute
+            vibrate(150);
+          }
+        }
+
+        // Auto-eliminate when escape timer expires
+        if (escapeRemaining <= 0 && room.escape_timer_started_at && (now - room.escape_timer_started_at) > (10 * 60 * 1000)) {
+          console.log('Escape timer expired on client side, triggering auto-elimination');
+          import('@/lib/gameService').then(({ checkEscapeTimerExpired }) => {
+            checkEscapeTimerExpired(params.roomCode);
+          });
+        }
+      } else {
+        setEscapeTimerRemaining(0);
       }
 
     };
@@ -474,6 +504,17 @@ function GamePage({ params }: PageProps) {
             </div>
           )}
 
+          {/* Escape Timer - only show when escape area is revealed */}
+          {isActive && room?.escapeArea?.isRevealed && room?.settings.skillchecks?.enabled && escapeTimerRemaining > 0 && (
+            <div className="mb-4 border-2 border-purple-300 bg-purple-50 rounded-lg p-4">
+              <div className="text-3xl font-mono font-bold text-purple-700">
+                ⏰ {formatTime(escapeTimerRemaining)}
+              </div>
+              <p className="text-purple-600 font-medium">ESCAPE TIMER - Reach the escape area!</p>
+              <p className="text-xs text-purple-500 mt-1">Auto-elimination if time expires</p>
+            </div>
+          )}
+
           <div className="flex justify-center gap-4 text-sm">
             <span className="font-medium">
               Your role: <span className={`${currentPlayer?.role === 'killer' ? 'text-red-600' : 'text-blue-600'}`}>
@@ -522,7 +563,8 @@ function GamePage({ params }: PageProps) {
                     )}
                   </div>
                   <div className="text-xs text-purple-600 mt-1">
-                    Find the purple door on the map to escape and win!
+                    Find the purple door on the map to escape! 
+                    {escapeTimerRemaining > 0 && ` ${Math.ceil(escapeTimerRemaining / 60000)} min left!`}
                   </div>
                 </div>
               )}
@@ -841,7 +883,7 @@ function GamePage({ params }: PageProps) {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
           <div className="bg-white rounded-lg p-6 text-black max-w-sm mx-4 text-center">
             <div className="text-2xl mb-4">🚪 Escape Area Found!</div>
-            <p className="mb-6">You&apos;ve reached the escape zone! Escape now to win the game for all survivors!</p>
+            <p className="mb-6">You&apos;ve reached the escape zone! Escape now to save yourself! {escapeTimerRemaining > 0 && `Time left: ${Math.ceil(escapeTimerRemaining / 1000)}s`}</p>
             <div className="flex gap-3">
               <button
                 onClick={handleEscape}

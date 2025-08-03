@@ -64,6 +64,7 @@ export interface Room {
   skillcheckcenterlocation?: PlayerLocation; // Pinned location for skillcheck generation
   escapeArea?: EscapeArea; // Escape area revealed after timer or all skillchecks complete
   allSkillchecksCompleted?: boolean; // Whether all skillchecks have been completed
+  escape_timer_started_at?: number; // When the 10-minute escape timer started
 }
 
 export interface GameResult {

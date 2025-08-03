@@ -133,15 +133,23 @@ export async function checkSkillcheckCompletion(roomCode: string): Promise<void>
         room.settings.skillchecks.maxDistanceFromHost
       );
 
+      const escapeTimerStarted = Date.now();
+      
       await supabase
         .from('rooms')
         .update({
           allSkillchecksCompleted: true,
           escapeArea: escapeArea,
+          escape_timer_started_at: escapeTimerStarted,
         })
         .eq('id', roomCode);
 
-      console.log('Escape area revealed due to skillcheck completion');
+      console.log('Escape area revealed due to skillcheck completion. 10-minute escape timer started.');
+      
+      // Start 10-minute escape timer
+      setTimeout(async () => {
+        await checkEscapeTimerExpired(roomCode);
+      }, 10 * 60 * 1000); // 10 minutes
     }
   }
 }
@@ -166,15 +174,89 @@ export async function revealEscapeAreaOnTimer(roomCode: string): Promise<void> {
   if (centerLocation) {
     const maxDistance = room.settings.skillchecks?.maxDistanceFromHost || 500; // Default 500m
     const escapeArea = generateEscapeArea(centerLocation, maxDistance);
+    const escapeTimerStarted = Date.now();
 
     await supabase
       .from('rooms')
       .update({
         escapeArea: escapeArea,
+        escape_timer_started_at: escapeTimerStarted,
       })
       .eq('id', roomCode);
 
-    console.log('Escape area revealed due to timer expiration');
+    console.log('Escape area revealed due to timer expiration. 10-minute escape timer started.');
+    
+    // Start 10-minute escape timer
+    setTimeout(async () => {
+      await checkEscapeTimerExpired(roomCode);
+    }, 10 * 60 * 1000); // 10 minutes
+  }
+}
+
+/**
+ * Check if escape timer has expired and auto-eliminate remaining survivors
+ */
+export async function checkEscapeTimerExpired(roomCode: string): Promise<void> {
+  console.log('checkEscapeTimerExpired: Checking 10-minute escape timer for room:', roomCode);
+  
+  const { data: room, error } = await supabase
+    .from('rooms')
+    .select('*')
+    .eq('id', roomCode)
+    .single();
+
+  if (error || !room || !room.escape_timer_started_at) {
+    console.log('checkEscapeTimerExpired: Room not found or no escape timer:', error);
+    return;
+  }
+
+  // Check if game is still active and escape area exists
+  if (room.status !== 'active' || !room.escapeArea) {
+    console.log('checkEscapeTimerExpired: Game no longer active or no escape area');
+    return;
+  }
+
+  const now = Date.now();
+  const timerExpired = now >= (room.escape_timer_started_at + (10 * 60 * 1000)); // 10 minutes
+
+  if (timerExpired) {
+    console.log('checkEscapeTimerExpired: 10-minute escape timer expired! Auto-eliminating remaining survivors');
+    
+    // Find all alive survivors who haven't escaped yet
+    const players = Object.values(room.players);
+    const aliveSurvivorsNotEscaped = players.filter((p: any) => 
+      p.role === 'survivor' && p.isAlive && !p.hasEscaped
+    );
+
+    if (aliveSurvivorsNotEscaped.length > 0) {
+      // Auto-eliminate all remaining survivors
+      const updatedPlayers = { ...room.players };
+      
+      aliveSurvivorsNotEscaped.forEach((survivor: any) => {
+        updatedPlayers[survivor.uid] = {
+          ...survivor,
+          isAlive: false,
+          eliminatedAt: now,
+          eliminatedBy: 'escape_timer_expired', // Special elimination reason
+        };
+        console.log('checkEscapeTimerExpired: Auto-eliminated survivor:', survivor.displayName);
+      });
+
+      await supabase
+        .from('rooms')
+        .update({
+          players: updatedPlayers,
+        })
+        .eq('id', roomCode);
+
+      // Check if game should end now
+      setTimeout(() => checkGameEnd(roomCode), 1000);
+    } else {
+      console.log('checkEscapeTimerExpired: No survivors to auto-eliminate (all escaped or already eliminated)');
+    }
+  } else {
+    console.log('checkEscapeTimerExpired: Timer not yet expired, remaining time:', 
+                Math.round((room.escape_timer_started_at + (10 * 60 * 1000) - now) / 1000), 'seconds');
   }
 }
 
@@ -741,6 +823,7 @@ export async function resetRoomForNewGame(roomCode: string): Promise<void> {
         skillcheckTimeExtensions: null, // Reset time extensions
         escapeArea: null, // Reset escape area for new game
         allSkillchecksCompleted: false, // Reset skillcheck completion status
+        escape_timer_started_at: null, // Reset escape timer
       })
       .eq('id', roomCode);
 
