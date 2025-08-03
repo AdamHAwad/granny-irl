@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useSoundNotifications } from '@/hooks/useSoundNotifications';
-import { subscribeToRoom, eliminatePlayer, updatePlayerLocation, clearPlayerLocation } from '@/lib/gameService';
+import { subscribeToRoom, eliminatePlayer, updatePlayerLocation, clearPlayerLocation, completeSkillcheck, markPlayerEscaped } from '@/lib/gameService';
 import { Room, Player } from '@/types/game';
 import { locationService, HIGH_FREQUENCY_LOCATION_OPTIONS } from '@/lib/locationService';
 import AuthGuard from '@/components/AuthGuard';
@@ -39,6 +39,10 @@ function GamePage({ params }: PageProps) {
   const [showMap, setShowMap] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [showPracticeSkillcheck, setShowPracticeSkillcheck] = useState(false);
+  const [activeSkillcheck, setActiveSkillcheck] = useState<string | null>(null);
+  const [nearbyEscapeArea, setNearbyEscapeArea] = useState(false);
+  const [showSkillcheckPrompt, setShowSkillcheckPrompt] = useState<string | null>(null);
+  const [showEscapePrompt, setShowEscapePrompt] = useState(false);
 
   // Handle practice skillcheck
   const handlePracticeSkillcheckSuccess = () => {
@@ -53,6 +57,43 @@ function GamePage({ params }: PageProps) {
     setShowPracticeSkillcheck(false);
     // You could add a failure sound/vibration here
     vibrate([100, 50, 100]);
+  };
+
+  // Handle real skillcheck completion
+  const handleSkillcheckSuccess = async (skillcheckId: string) => {
+    if (!user) return;
+    console.log('Real skillcheck succeeded!', skillcheckId);
+    setActiveSkillcheck(null);
+    setShowSkillcheckPrompt(null);
+    vibrate(200);
+    
+    try {
+      await completeSkillcheck(params.roomCode, skillcheckId, user.id);
+    } catch (error) {
+      console.error('Error completing skillcheck:', error);
+    }
+  };
+
+  const handleSkillcheckFailure = (skillcheckId: string) => {
+    console.log('Real skillcheck failed!', skillcheckId);
+    setActiveSkillcheck(null);
+    setShowSkillcheckPrompt(null);
+    vibrate([100, 50, 100]);
+  };
+
+  // Handle escape area interaction
+  const handleEscape = async () => {
+    if (!user) return;
+    console.log('Player attempting escape!');
+    setShowEscapePrompt(false);
+    setNearbyEscapeArea(false);
+    
+    try {
+      await markPlayerEscaped(params.roomCode, user.id);
+      vibrate([200, 100, 200, 100, 200]);
+    } catch (error) {
+      console.error('Error escaping:', error);
+    }
   };
 
   // Handle clicking on a player to view their location
@@ -235,6 +276,73 @@ function GamePage({ params }: PageProps) {
     setShowLocationModal(false);
   };
 
+  // Proximity checking function
+  const checkProximity = useCallback((playerLocation: any) => {
+    if (!room || !currentPlayer?.isAlive || currentPlayer.role !== 'survivor') return;
+
+    const PROXIMITY_DISTANCE = 50; // 50 meters
+
+    // Check skillcheck proximity
+    if (room.skillchecks && room.settings.skillchecks?.enabled) {
+      const incompleteSkillchecks = room.skillchecks.filter(sc => !sc.isCompleted);
+      
+      for (const skillcheck of incompleteSkillchecks) {
+        const distance = locationService.calculateDistance(
+          playerLocation,
+          skillcheck.location
+        );
+        
+        if (distance <= PROXIMITY_DISTANCE) {
+          // Player is near an incomplete skillcheck
+          if (!showSkillcheckPrompt && !activeSkillcheck) {
+            console.log('Near skillcheck:', skillcheck.id, 'distance:', distance);
+            setShowSkillcheckPrompt(skillcheck.id);
+            vibrate(100);
+          }
+          return; // Only show one prompt at a time
+        }
+      }
+    }
+
+    // Check escape area proximity
+    if (room.escapeArea?.isRevealed && !currentPlayer.hasEscaped) {
+      const distance = locationService.calculateDistance(
+        playerLocation,
+        room.escapeArea.location
+      );
+      
+      if (distance <= PROXIMITY_DISTANCE) {
+        // Player is near escape area
+        if (!showEscapePrompt && !nearbyEscapeArea) {
+          console.log('Near escape area, distance:', distance);
+          setNearbyEscapeArea(true);
+          setShowEscapePrompt(true);
+          vibrate([100, 50, 100]);
+        }
+      } else {
+        // Player moved away from escape area
+        if (nearbyEscapeArea) {
+          setNearbyEscapeArea(false);
+          setShowEscapePrompt(false);
+        }
+      }
+    }
+
+    // Clear skillcheck prompt if player moved away
+    if (showSkillcheckPrompt && room.skillchecks) {
+      const skillcheck = room.skillchecks.find(sc => sc.id === showSkillcheckPrompt);
+      if (skillcheck) {
+        const distance = locationService.calculateDistance(
+          playerLocation,
+          skillcheck.location
+        );
+        if (distance > PROXIMITY_DISTANCE) {
+          setShowSkillcheckPrompt(null);
+        }
+      }
+    }
+  }, [room, currentPlayer, showSkillcheckPrompt, activeSkillcheck, showEscapePrompt, nearbyEscapeArea, vibrate]);
+
   // Location tracking effect
   useEffect(() => {
     if (!user || !room || !locationEnabled) return;
@@ -246,6 +354,11 @@ function GamePage({ params }: PageProps) {
     locationService.startWatching(
       async (location) => {
         await updatePlayerLocation(params.roomCode, user.id, location);
+        
+        // Check proximity to skillchecks and escape area (survivors only)
+        if (currentPlayer?.role === 'survivor' && currentPlayer?.isAlive) {
+          checkProximity(location);
+        }
       },
       (error) => {
         console.error('Location tracking error:', error);
@@ -368,6 +481,63 @@ function GamePage({ params }: PageProps) {
               </span>
             </span>
           </div>
+
+          {/* Game Status Indicators */}
+          {room.settings.skillchecks?.enabled && currentPlayer?.role === 'survivor' && isActive && (
+            <div className="mt-4 space-y-2">
+              {/* Skillcheck Progress */}
+              {room.skillchecks && room.skillchecks.length > 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-blue-800">⚡ Skillcheck Progress</span>
+                    <span className="text-xs text-blue-600">
+                      {room.skillchecks.filter(sc => sc.isCompleted).length} / {room.skillchecks.length}
+                    </span>
+                  </div>
+                  <div className="w-full bg-blue-200 rounded-full h-2">
+                    <div 
+                      className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                      style={{ 
+                        width: `${(room.skillchecks.filter(sc => sc.isCompleted).length / room.skillchecks.length) * 100}%` 
+                      }}
+                    />
+                  </div>
+                  {room.allSkillchecksCompleted && (
+                    <div className="text-xs text-green-600 mt-1 font-medium">
+                      ✓ All skillchecks completed! Escape area revealed.
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Escape Area Status */}
+              {room.escapeArea?.isRevealed && (
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-purple-800">🚪 Escape Area Active</span>
+                    {room.escapeArea.escapedPlayers.length > 0 && (
+                      <span className="text-xs text-purple-600">
+                        {room.escapeArea.escapedPlayers.length} escaped
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xs text-purple-600 mt-1">
+                    Find the purple door on the map to escape and win!
+                  </div>
+                </div>
+              )}
+
+              {/* Player Escaped Status */}
+              {currentPlayer.hasEscaped && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                  <div className="text-sm font-medium text-green-800">🎉 You Escaped!</div>
+                  <div className="text-xs text-green-600 mt-1">
+                    Congratulations! You've won the game for all survivors.
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {currentPlayer?.isAlive && currentPlayer?.role === 'survivor' && isActive && (
@@ -624,6 +794,71 @@ function GamePage({ params }: PageProps) {
         onClose={() => setShowPracticeSkillcheck(false)}
         skillcheckId="practice"
       />
+
+      {/* Real Skillcheck Minigame */}
+      {activeSkillcheck && (
+        <SkillcheckMinigame
+          isOpen={true}
+          onSuccess={() => handleSkillcheckSuccess(activeSkillcheck)}
+          onFailure={() => handleSkillcheckFailure(activeSkillcheck)}
+          onClose={() => {
+            setActiveSkillcheck(null);
+            setShowSkillcheckPrompt(null);
+          }}
+          skillcheckId={activeSkillcheck}
+        />
+      )}
+
+      {/* Skillcheck Proximity Prompt */}
+      {showSkillcheckPrompt && !activeSkillcheck && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
+          <div className="bg-white rounded-lg p-6 text-black max-w-sm mx-4 text-center">
+            <div className="text-2xl mb-4">⚡ Skillcheck Detected!</div>
+            <p className="mb-6">You're near a skillcheck. Complete it to help your team progress!</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setActiveSkillcheck(showSkillcheckPrompt);
+                  setShowSkillcheckPrompt(null);
+                }}
+                className="flex-1 bg-blue-500 text-white py-3 px-4 rounded-lg font-bold hover:bg-blue-600"
+              >
+                Start Skillcheck
+              </button>
+              <button
+                onClick={() => setShowSkillcheckPrompt(null)}
+                className="flex-1 bg-gray-300 text-gray-700 py-3 px-4 rounded-lg font-bold hover:bg-gray-400"
+              >
+                Later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Escape Area Proximity Prompt */}
+      {showEscapePrompt && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
+          <div className="bg-white rounded-lg p-6 text-black max-w-sm mx-4 text-center">
+            <div className="text-2xl mb-4">🚪 Escape Area Found!</div>
+            <p className="mb-6">You've reached the escape zone! Escape now to win the game for all survivors!</p>
+            <div className="flex gap-3">
+              <button
+                onClick={handleEscape}
+                className="flex-1 bg-purple-500 text-white py-3 px-4 rounded-lg font-bold hover:bg-purple-600"
+              >
+                🏃 ESCAPE NOW!
+              </button>
+              <button
+                onClick={() => setShowEscapePrompt(false)}
+                className="flex-1 bg-gray-300 text-gray-700 py-3 px-4 rounded-lg font-bold hover:bg-gray-400"
+              >
+                Not Yet
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

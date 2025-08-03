@@ -632,12 +632,20 @@ export async function checkGameEnd(roomCode: string): Promise<void> {
     
     console.log('checkGameEnd: Game length:', gameLength, 'ms, End time:', gameEndTime, 'Current time:', now, 'Time elapsed:', timeElapsed, 'Time remaining:', gameEndTime - now);
     
-    // Timer expired - reveal escape area and continue game (don't end immediately)
+    // Timer expired - different behavior based on skillcheck settings
     if (timeElapsed >= 5000 && now >= gameEndTime) {
-      console.log('checkGameEnd: Timer expired - revealing escape area');
-      await revealEscapeAreaOnTimer(roomCode);
-      // Don't end the game here - let survivors try to escape
-      // The game only ends when someone escapes or all survivors are eliminated
+      if (room.settings.skillchecks?.enabled) {
+        // Skillcheck game: Timer expired - reveal escape area and continue game
+        console.log('checkGameEnd: Timer expired in skillcheck game - revealing escape area');
+        await revealEscapeAreaOnTimer(roomCode);
+        // Don't end the game here - let survivors try to escape
+        // The game only ends when someone escapes or all survivors are eliminated
+      } else {
+        // Original game: Timer expired - survivors win
+        console.log('checkGameEnd: Timer expired in original game - survivors win');
+        gameEnded = true;
+        winners = 'survivors';
+      }
     }
   } else {
     console.log('checkGameEnd: Game not ending - status:', room.status, 'game_started_at:', room.game_started_at);
