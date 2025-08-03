@@ -39,6 +39,7 @@ function GamePage({ params }: PageProps) {
   const [boundaryViolation, setBoundaryViolation] = useState(false);
   const [boundaryTimer, setBoundaryTimer] = useState(0);
   const [boundaryWarningShown, setBoundaryWarningShown] = useState(false);
+  const [boundaryViolationStartTime, setBoundaryViolationStartTime] = useState<number | null>(null);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
 
   // Handle clicking on a player to view their location
@@ -90,13 +91,15 @@ function GamePage({ params }: PageProps) {
     }
   }, [user, room, params.roomCode, playElimination, vibrate]);
 
-  // Boundary violation timer effect
+  // Boundary violation detection effect
   useEffect(() => {
     if (!room?.settings.boundary || !currentPlayer?.location || !currentPlayer?.isAlive) {
       if (boundaryViolation) {
+        console.log('Clearing boundary violation - no boundary/location/alive');
         setBoundaryViolation(false);
         setBoundaryTimer(0);
         setBoundaryWarningShown(false);
+        setBoundaryViolationStartTime(null);
       }
       return;
     }
@@ -106,8 +109,9 @@ function GamePage({ params }: PageProps) {
     if (!withinBoundary && !boundaryViolation) {
       // Player just left boundary - start timer
       console.log('Player left boundary, starting timer');
+      const now = Date.now();
       setBoundaryViolation(true);
-      setBoundaryTimer(30);
+      setBoundaryViolationStartTime(now);
       setBoundaryWarningShown(true);
       playCountdown();
       vibrate([200, 100, 200]);
@@ -117,46 +121,9 @@ function GamePage({ params }: PageProps) {
       setBoundaryViolation(false);
       setBoundaryTimer(0);
       setBoundaryWarningShown(false);
+      setBoundaryViolationStartTime(null);
     }
   }, [currentPlayer?.location, room?.settings.boundary, currentPlayer?.isAlive, boundaryViolation, playCountdown, vibrate]);
-
-  // Boundary timer countdown - only depends on boundaryViolation to start/stop
-  useEffect(() => {
-    if (!boundaryViolation) {
-      return;
-    }
-
-    console.log('Starting boundary countdown timer');
-    
-    const interval = setInterval(() => {
-      setBoundaryTimer(prev => {
-        const newValue = prev - 1;
-        console.log('Boundary timer countdown:', newValue);
-        
-        if (newValue <= 0) {
-          // Timer expired - eliminate player
-          console.log('Boundary timer expired, eliminating player');
-          handleEliminate();
-          setBoundaryViolation(false);
-          setBoundaryWarningShown(false);
-          return 0;
-        }
-        
-        // Play warning sounds at specific intervals
-        if (newValue <= 10 && newValue > 0) {
-          playCountdown();
-          vibrate(100);
-        }
-        
-        return newValue;
-      });
-    }, 1000);
-
-    return () => {
-      console.log('Cleaning up boundary timer interval');
-      clearInterval(interval);
-    };
-  }, [boundaryViolation, handleEliminate, playCountdown, vibrate]);
 
   useEffect(() => {
     if (!user || !profile) return;
@@ -246,13 +213,44 @@ function GamePage({ params }: PageProps) {
           });
         }
       }
+
+      // Boundary violation timer (30 seconds)
+      if (boundaryViolation && boundaryViolationStartTime) {
+        const violationEnd = boundaryViolationStartTime + 30000; // 30 seconds
+        const remaining = Math.max(0, violationEnd - now);
+        const remainingSeconds = Math.ceil(remaining / 1000);
+        
+        setBoundaryTimer(remainingSeconds);
+        
+        console.log('Boundary timer update:', remainingSeconds);
+        
+        // Play warning sounds in final 10 seconds
+        if (remainingSeconds <= 10 && remainingSeconds > 0 && remaining > 0) {
+          // Only play sound once per second
+          const prevSeconds = Math.ceil((remaining + 1000) / 1000);
+          if (remainingSeconds !== prevSeconds) {
+            playCountdown();
+            vibrate(100);
+          }
+        }
+        
+        // Check if timer expired
+        if (remaining <= 0 && boundaryViolation) {
+          console.log('Boundary timer expired, eliminating player');
+          handleEliminate();
+          setBoundaryViolation(false);
+          setBoundaryWarningShown(false);
+          setBoundaryViolationStartTime(null);
+          setBoundaryTimer(0);
+        }
+      }
     };
 
     updateTimers();
     const interval = setInterval(updateTimers, 1000);
 
     return () => clearInterval(interval);
-  }, [room]);
+  }, [room, boundaryViolation, boundaryViolationStartTime, gameStartSoundPlayed, playGameStart, playCountdown, vibrate, handleEliminate]);
 
   const handleLocationPermissionGranted = () => {
     console.log('Location permission granted');
