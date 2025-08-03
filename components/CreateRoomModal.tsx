@@ -28,7 +28,7 @@ export default function CreateRoomModal({
     maxPlayers: 15,
   });
   const [boundaryEnabled, setBoundaryEnabled] = useState(false);
-  const [boundaryRadius, setBoundaryRadius] = useState(200); // Default 200 meters
+  const [boundaryRadius, setBoundaryRadius] = useState(50); // Default 50 meters
   const [hostLocation, setHostLocation] = useState<PlayerLocation | null>(null);
   const [locationError, setLocationError] = useState<string>('');
 
@@ -238,22 +238,22 @@ export default function CreateRoomModal({
                   </label>
                   <input
                     type="range"
-                    min="50"
+                    min="5"
                     max="5000"
-                    step="50"
+                    step="5"
                     value={boundaryRadius}
                     onChange={(e) => setBoundaryRadius(parseInt(e.target.value))}
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                     style={{
-                      background: `linear-gradient(to right, #10B981 0%, #10B981 ${((boundaryRadius - 50) / (5000 - 50)) * 100}%, #E5E7EB ${((boundaryRadius - 50) / (5000 - 50)) * 100}%, #E5E7EB 100%)`
+                      background: `linear-gradient(to right, #10B981 0%, #10B981 ${((boundaryRadius - 5) / (5000 - 5)) * 100}%, #E5E7EB ${((boundaryRadius - 5) / (5000 - 5)) * 100}%, #E5E7EB 100%)`
                     }}
                   />
                   <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>50m</span>
+                    <span>5m (testing)</span>
                     <span>5000m (5km)</span>
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
-                    Recommended: 200-500m for neighborhood games, 1-5km for large areas
+                    Testing: 5-20m • Neighborhood: 200-500m • Large areas: 1-5km
                   </p>
                 </div>
               </div>
