@@ -12,6 +12,7 @@ import AuthGuard from '@/components/AuthGuard';
 import LocationPermissionModal from '@/components/LocationPermissionModal';
 import InteractiveGameMap from '@/components/InteractiveGameMap';
 import ProximityArrow from '@/components/ProximityArrow';
+import SkillcheckMinigame from '@/components/SkillcheckMinigame';
 
 interface PageProps {
   params: {
@@ -37,6 +38,22 @@ function GamePage({ params }: PageProps) {
   const [locationError, setLocationError] = useState('');
   const [showMap, setShowMap] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
+  const [showPracticeSkillcheck, setShowPracticeSkillcheck] = useState(false);
+
+  // Handle practice skillcheck
+  const handlePracticeSkillcheckSuccess = () => {
+    console.log('Practice skillcheck succeeded!');
+    setShowPracticeSkillcheck(false);
+    // You could add a success sound/vibration here
+    vibrate(200);
+  };
+
+  const handlePracticeSkillcheckFailure = () => {
+    console.log('Practice skillcheck failed!');
+    setShowPracticeSkillcheck(false);
+    // You could add a failure sound/vibration here
+    vibrate([100, 50, 100]);
+  };
 
   // Handle clicking on a player to view their location
   const handlePlayerClick = (playerId: string) => {
@@ -368,6 +385,22 @@ function GamePage({ params }: PageProps) {
                 Only press this if you were tagged by a killer
               </p>
             </div>
+            
+            {/* Practice Skillcheck Button (only if skillchecks are enabled) */}
+            {room?.settings.skillchecks?.enabled && (
+              <div className="bg-amber-100 border-2 border-amber-300 rounded-lg p-4">
+                <div className="text-amber-800 font-semibold mb-2">⚡ Skillcheck Practice</div>
+                <button
+                  onClick={() => setShowPracticeSkillcheck(true)}
+                  className="bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-6 rounded-lg disabled:opacity-50 shadow-lg transform active:scale-95 transition-transform"
+                >
+                  🎯 Practice Skillcheck
+                </button>
+                <p className="text-xs text-amber-700 mt-2">
+                  Practice the timing challenge before attempting real skillchecks
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -580,6 +613,15 @@ function GamePage({ params }: PageProps) {
           nearestSurvivor={nearestSurvivor}
         />
       )}
+      
+      {/* Practice Skillcheck Minigame */}
+      <SkillcheckMinigame
+        isOpen={showPracticeSkillcheck}
+        onSuccess={handlePracticeSkillcheckSuccess}
+        onFailure={handlePracticeSkillcheckFailure}
+        onClose={() => setShowPracticeSkillcheck(false)}
+        skillcheckId="practice"
+      />
     </main>
   );
 }
