@@ -72,7 +72,7 @@ export async function createRoom(
   hostUid: string,
   hostProfile: { displayName: string; profilePictureUrl?: string },
   settings: RoomSettings,
-  hostLocation?: PlayerLocation
+  skillcheckCenterLocation?: PlayerLocation
 ): Promise<string> {
   try {
     let roomCode: string;
@@ -95,12 +95,12 @@ export async function createRoom(
           displayName: hostProfile.displayName,
           profilePictureUrl: hostProfile.profilePictureUrl,
           isAlive: true,
-          location: hostLocation, // Store host location in player data
         },
       },
       settings,
       status: 'waiting',
       created_at: Date.now(),
+      skillcheckCenterLocation, // Store pinned location for skillcheck generation
     };
 
     const { error } = await supabase
@@ -313,17 +313,19 @@ export async function startGame(roomCode: string): Promise<void> {
       // Generate skillchecks if enabled
       let skillchecks: Skillcheck[] = [];
       if (currentRoom.settings.skillchecks?.enabled) {
-        // Use host's location from player data
-        const hostPlayer = currentRoom.players[currentRoom.host_uid];
-        if (hostPlayer?.location) {
+        // Use pinned skillcheck center location if available, otherwise fall back to host's location
+        const centerLocation = currentRoom.skillcheckCenterLocation || currentRoom.players[currentRoom.host_uid]?.location;
+        
+        if (centerLocation) {
           skillchecks = generateSkillcheckPositions(
-            hostPlayer.location,
+            centerLocation,
             currentRoom.settings.skillchecks.count,
             currentRoom.settings.skillchecks.maxDistanceFromHost
           );
-          console.log('Generated skillchecks for room:', roomCode, skillchecks.length);
+          console.log('Generated skillchecks for room:', roomCode, skillchecks.length, 'using', 
+                     currentRoom.skillcheckCenterLocation ? 'pinned location' : 'host GPS location');
         } else {
-          console.warn('Cannot generate skillchecks - host location not available');
+          console.warn('Cannot generate skillchecks - no center location available');
         }
       }
 
