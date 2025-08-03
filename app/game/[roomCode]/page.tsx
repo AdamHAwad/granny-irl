@@ -935,7 +935,7 @@ function GamePage({ params }: PageProps) {
           <div className="text-sm font-bold text-yellow-800 mb-2">🛠️ Host Debug Panel</div>
           
           {/* Visual Status Indicators */}
-          <div className="text-xs mb-3 p-2 bg-white rounded border">
+          <div className="text-xs mb-3 p-2 bg-white rounded border text-black">
             <div>Skillchecks: {room.skillchecks?.filter(sc => sc.isCompleted).length || 0}/{room.skillchecks?.length || 0}</div>
             <div>All Complete: {room.allSkillchecksCompleted ? '✅' : '❌'}</div>
             <div>Escape Area Exists: {room.escapeArea ? '✅' : '❌'}</div>
