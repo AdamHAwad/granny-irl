@@ -459,12 +459,12 @@ export function subscribeToRoom(
   roomCode: string,
   callback: (room: Room | null) => void
 ): () => void {
-  console.log('subscribeToRoom: Setting up subscription for room:', roomCode);
+  console.log('subscribeToRoom: Setting up optimized real-time subscription for room:', roomCode);
   
   let isActive = true;
   
-  // Polling fallback - fetch room data every 2 seconds
-  const fetchRoomData = async () => {
+  // Initial fetch
+  const fetchInitialData = async () => {
     if (!isActive) return;
     
     try {
@@ -475,26 +475,30 @@ export function subscribeToRoom(
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('subscribeToRoom: Error fetching room:', error);
+        console.error('subscribeToRoom: Error fetching initial room data:', error);
         callback(null);
       } else {
-        console.log('subscribeToRoom: Fetched room data:', data);
+        console.log('subscribeToRoom: Fetched initial room data');
         callback(data);
       }
     } catch (error) {
-      console.error('subscribeToRoom: Fetch error:', error);
+      console.error('subscribeToRoom: Initial fetch error:', error);
+      callback(null);
     }
   };
 
-  // Initial fetch
-  fetchRoomData();
-  
-  // Set up polling every 2 seconds
-  const pollInterval = setInterval(fetchRoomData, 2000);
-
-  // Also try to set up real-time subscription (in case it works)
+  // Set up optimized real-time subscription with paid plan features
   const channel = supabase
-    .channel(`room:${roomCode}`)
+    .channel(`room:${roomCode}`, {
+      config: {
+        presence: {
+          key: roomCode,
+        },
+        broadcast: {
+          self: false,
+        },
+      },
+    })
     .on('postgres_changes', 
       { 
         event: '*', 
@@ -503,7 +507,9 @@ export function subscribeToRoom(
         filter: `id=eq.${roomCode}`
       }, 
       (payload) => {
-        console.log('subscribeToRoom: Received realtime update:', payload);
+        console.log('subscribeToRoom: Received real-time update:', payload.eventType);
+        if (!isActive) return;
+        
         if (payload.eventType === 'DELETE') {
           callback(null);
         } else {
@@ -511,14 +517,21 @@ export function subscribeToRoom(
         }
       }
     )
-    .subscribe((status) => {
+    .subscribe(async (status) => {
       console.log('subscribeToRoom: Subscription status:', status);
+      
+      if (status === 'SUBSCRIBED') {
+        // Fetch initial data only after subscription is ready
+        await fetchInitialData();
+      } else if (status === 'CHANNEL_ERROR') {
+        console.error('subscribeToRoom: Channel error, attempting reconnect');
+        // Auto-reconnect handled by Supabase
+      }
     });
 
   return () => {
-    console.log('subscribeToRoom: Cleaning up subscription for room:', roomCode);
+    console.log('subscribeToRoom: Cleaning up optimized subscription for room:', roomCode);
     isActive = false;
-    clearInterval(pollInterval);
     supabase.removeChannel(channel);
   };
 }
@@ -537,20 +550,31 @@ export async function getGameResult(roomCode: string): Promise<GameResult | null
 
 export async function getCurrentUserRooms(uid: string): Promise<Room[]> {
   try {
+    // Optimized query: use PostgreSQL to filter on server side
     const { data, error } = await supabase
       .from('rooms')
       .select('*')
-      .in('status', ['waiting', 'headstart', 'active']);
+      .in('status', ['waiting', 'headstart', 'active'])
+      .contains('players', { [uid]: {} }); // Filter rooms containing the user
 
-    if (error) throw error;
+    if (error) {
+      // Fallback to client-side filtering if contains doesn't work
+      const { data: allData, error: fallbackError } = await supabase
+        .from('rooms')
+        .select('*')
+        .in('status', ['waiting', 'headstart', 'active']);
+        
+      if (fallbackError) throw fallbackError;
+      
+      const userRooms = (allData || []).filter((room: Room) => 
+        room.players && room.players[uid]
+      );
+      
+      return userRooms;
+    }
 
-    // Filter rooms where the user is a player
-    const userRooms = (data || []).filter((room: Room) => 
-      room.players && room.players[uid]
-    );
-
-    console.log('getCurrentUserRooms: Found rooms for user:', uid, userRooms);
-    return userRooms;
+    console.log('getCurrentUserRooms: Found rooms for user:', uid, data?.length || 0);
+    return data || [];
   } catch (error) {
     console.error('Error fetching user rooms:', error);
     return [];
@@ -648,57 +672,99 @@ export async function getPlayerGameStats(uid: string): Promise<PlayerGameStats> 
   }
 }
 
+// Cache for room status to avoid unnecessary fetches
+const roomStatusCache = new Map<string, { status: string, timestamp: number }>();
+const CACHE_DURATION = 10000; // 10 seconds
+
 export async function updatePlayerLocation(
   roomCode: string,
   playerUid: string,
   location: PlayerLocation
 ): Promise<void> {
   try {
-    console.log('updatePlayerLocation: Updating location for player:', playerUid, 'in room:', roomCode);
+    // Check cache first to avoid unnecessary database calls
+    const cached = roomStatusCache.get(roomCode);
+    const now = Date.now();
     
-    const { data: room, error } = await supabase
-      .from('rooms')
-      .select('*')
-      .eq('id', roomCode)
-      .single();
+    let roomStatus = cached?.status;
+    if (!cached || (now - cached.timestamp) > CACHE_DURATION) {
+      // Fetch only the status and check if player exists, not full room data
+      const { data, error } = await supabase
+        .from('rooms')
+        .select('status, players')
+        .eq('id', roomCode)
+        .single();
 
-    if (error) {
-      console.error('updatePlayerLocation: Error fetching room:', error);
-      return;
-    }
+      if (error) {
+        console.error('updatePlayerLocation: Error fetching room status:', error);
+        return;
+      }
 
-    if (!room.players[playerUid]) {
-      console.error('updatePlayerLocation: Player not found in room');
-      return;
+      if (!data.players[playerUid]) {
+        console.error('updatePlayerLocation: Player not found in room');
+        return;
+      }
+
+      roomStatus = data.status;
+      if (roomStatus) {
+        roomStatusCache.set(roomCode, { status: roomStatus, timestamp: now });
+      }
     }
 
     // Only update location during active games
-    if (room.status !== 'active' && room.status !== 'headstart') {
+    if (roomStatus !== 'active' && roomStatus !== 'headstart') {
       console.log('updatePlayerLocation: Not updating location - game not active');
       return;
     }
 
-    // Update player's location and timestamp
-    const updatedPlayers = { ...room.players };
-    updatedPlayers[playerUid] = {
-      ...updatedPlayers[playerUid],
-      location,
-      lastLocationUpdate: Date.now(),
-    };
-
+    // Optimized update: use PostgreSQL jsonb_set to update only the specific player
     const { error: updateError } = await supabase
       .from('rooms')
-      .update({ players: updatedPlayers })
+      .update({
+        players: supabase.rpc('update_player_location', {
+          room_id: roomCode,
+          player_uid: playerUid,
+          new_location: location,
+          update_timestamp: now
+        })
+      })
       .eq('id', roomCode);
 
     if (updateError) {
-      console.error('updatePlayerLocation: Error updating room:', updateError);
-    } else {
-      console.log('updatePlayerLocation: Successfully updated location for player:', playerUid);
+      console.error('updatePlayerLocation: Error updating location:', updateError);
+      // Fallback to full room update if RPC fails
+      await updatePlayerLocationFallback(roomCode, playerUid, location);
     }
   } catch (error) {
     console.error('updatePlayerLocation: Error:', error);
   }
+}
+
+// Fallback function for location updates
+async function updatePlayerLocationFallback(
+  roomCode: string,
+  playerUid: string,
+  location: PlayerLocation
+): Promise<void> {
+  const { data: room, error } = await supabase
+    .from('rooms')
+    .select('players')
+    .eq('id', roomCode)
+    .single();
+
+  if (error || !room.players[playerUid]) return;
+
+  const updatedPlayers = { ...room.players };
+  updatedPlayers[playerUid] = {
+    ...updatedPlayers[playerUid],
+    location,
+    lastLocationUpdate: Date.now(),
+  };
+
+  await supabase
+    .from('rooms')
+    .update({ players: updatedPlayers })
+    .eq('id', roomCode);
 }
 
 export async function clearPlayerLocation(

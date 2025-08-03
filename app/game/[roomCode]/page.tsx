@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -76,26 +76,44 @@ function GamePage({ params }: PageProps) {
     }
   }, [user, room, params.roomCode, playElimination, vibrate]);
 
+  const handleGameEnd = useCallback(async () => {
+    if (!user) return;
+    
+    console.log('Game ending, clearing location tracking');
+    locationService.stopWatching();
+    await clearPlayerLocation(params.roomCode, user.id);
+    setLocationEnabled(false);
+  }, [user, params.roomCode]);
 
   useEffect(() => {
     if (!user || !profile) return;
 
+    let isComponentMounted = true;
+    let errorTimeout: NodeJS.Timeout | null = null;
+    let redirectTimeout: NodeJS.Timeout | null = null;
+
     const unsubscribe = subscribeToRoom(params.roomCode, (roomData) => {
+      if (!isComponentMounted) return;
+
       if (!roomData) {
-        // If we have a recent successful room fetch, don't immediately show error
-        // This prevents temporary subscription failures during transitions
-        console.log('Room fetch failed, but may be temporary - not showing error immediately');
+        console.log('Room fetch failed, but may be temporary');
         if (!lastSuccessfulRoom) {
-          // Only show error if we've never successfully loaded the room
-          setTimeout(() => {
-            setError('Room not found');
-            setLoading(false);
-          }, 5000); // Wait 5 seconds before showing error
+          errorTimeout = setTimeout(() => {
+            if (isComponentMounted) {
+              setError('Room not found');
+              setLoading(false);
+            }
+          }, 3000); // Reduced timeout with paid plan
         }
         return;
       }
 
-      // Successful room fetch - clear any errors
+      // Clear any pending error timeouts
+      if (errorTimeout) {
+        clearTimeout(errorTimeout);
+        errorTimeout = null;
+      }
+
       setError('');
       setLastSuccessfulRoom(roomData);
 
@@ -103,7 +121,11 @@ function GamePage({ params }: PageProps) {
       if (!roomData.players[user.id]) {
         console.log('User has been kicked from game:', user.id);
         setError('You have been removed from this room');
-        setTimeout(() => router.push('/'), 2000);
+        redirectTimeout = setTimeout(() => {
+          if (isComponentMounted) {
+            router.push('/');
+          }
+        }, 2000);
         return;
       }
 
@@ -118,14 +140,18 @@ function GamePage({ params }: PageProps) {
       if (roomData.status === 'waiting') {
         router.push(`/room/${params.roomCode}`);
       } else if (roomData.status === 'finished') {
-        // Clear location when game ends
         handleGameEnd();
         router.push(`/results/${params.roomCode}`);
       }
     });
 
-    return unsubscribe;
-  }, [user, profile, params.roomCode, router, showLocationModal, locationEnabled, lastSuccessfulRoom]);
+    return () => {
+      isComponentMounted = false;
+      if (errorTimeout) clearTimeout(errorTimeout);
+      if (redirectTimeout) clearTimeout(redirectTimeout);
+      unsubscribe();
+    };
+  }, [user, profile, params.roomCode, router, showLocationModal, locationEnabled, lastSuccessfulRoom, handleGameEnd]);
 
   useEffect(() => {
     if (!room) return;
@@ -172,7 +198,7 @@ function GamePage({ params }: PageProps) {
     const interval = setInterval(updateTimers, 1000);
 
     return () => clearInterval(interval);
-  }, [room, gameStartSoundPlayed, playGameStart, playCountdown, vibrate, handleEliminate]);
+  }, [room, gameStartSoundPlayed, playGameStart, playCountdown, vibrate, params.roomCode]);
 
   const handleLocationPermissionGranted = () => {
     console.log('Location permission granted');
@@ -192,47 +218,93 @@ function GamePage({ params }: PageProps) {
     setShowLocationModal(false);
   };
 
-  const handleGameEnd = async () => {
-    if (!user) return;
-    
-    console.log('Game ending, clearing location tracking');
-    locationService.stopWatching();
-    await clearPlayerLocation(params.roomCode, user.id);
-    setLocationEnabled(false);
-  };
-
-  // Location tracking effect
+  // Location tracking effect with optimization
   useEffect(() => {
     if (!user || !room || !locationEnabled) return;
     if (room.status !== 'active' && room.status !== 'headstart') return;
 
-    console.log('Starting location tracking for user:', user.id);
+    console.log('Starting optimized location tracking for user:', user.id);
+    let isTracking = true;
 
-    // Start watching location changes with high frequency for active games
+    // Debounced location update function
+    let locationUpdateTimeout: NodeJS.Timeout | null = null;
+    const debouncedLocationUpdate = (location: any) => {
+      if (locationUpdateTimeout) {
+        clearTimeout(locationUpdateTimeout);
+      }
+      locationUpdateTimeout = setTimeout(async () => {
+        if (isTracking) {
+          await updatePlayerLocation(params.roomCode, user.id, location);
+        }
+      }, 2000); // Reduced update frequency for better performance
+    };
+
     locationService.startWatching(
-      async (location) => {
-        await updatePlayerLocation(params.roomCode, user.id, location);
-      },
+      debouncedLocationUpdate,
       (error) => {
-        console.error('Location tracking error:', error);
-        setLocationError(`Location error: ${error}`);
+        if (isTracking) {
+          console.error('Location tracking error:', error);
+          setLocationError(`Location error: ${error}`);
+        }
       },
-      HIGH_FREQUENCY_LOCATION_OPTIONS
+      { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }
     );
 
-    // Cleanup when component unmounts or dependencies change
     return () => {
-      console.log('Stopping location tracking');
+      console.log('Stopping optimized location tracking');
+      isTracking = false;
+      if (locationUpdateTimeout) {
+        clearTimeout(locationUpdateTimeout);
+      }
       locationService.stopWatching();
     };
   }, [user, room, locationEnabled, params.roomCode]);
 
-  const formatTime = (ms: number) => {
+  // Memoized time formatting function
+  const formatTime = useCallback((ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
+  }, []);
+
+  // Memoized player calculations for performance - moved before early returns
+  const playerData = useMemo(() => {
+    if (!room) return { players: [], aliveKillers: [], aliveSurvivors: [], deadPlayers: [] };
+    const players = Object.values(room.players);
+    return {
+      players,
+      aliveKillers: players.filter(p => p.role === 'killer' && p.isAlive),
+      aliveSurvivors: players.filter(p => p.role === 'survivor' && p.isAlive),
+      deadPlayers: players.filter(p => !p.isAlive)
+    };
+  }, [room]);
+
+  const { players, aliveKillers, aliveSurvivors, deadPlayers } = playerData;
+
+  // Memoized nearest survivor calculation for killers - moved before early returns
+  const nearestSurvivor = useMemo(() => {
+    if (currentPlayer?.role !== 'killer' || !currentPlayer?.location || !room) {
+      return null;
+    }
+    
+    return aliveSurvivors
+      .filter(survivor => survivor.location)
+      .reduce((closest, survivor) => {
+        if (!closest) return survivor;
+        
+        const closestDistance = locationService.calculateDistance(
+          currentPlayer.location!,
+          closest.location!
+        );
+        const survivorDistance = locationService.calculateDistance(
+          currentPlayer.location!,
+          survivor.location!
+        );
+        
+        return survivorDistance < closestDistance ? survivor : closest;
+      }, null as Player | null);
+  }, [currentPlayer?.role, currentPlayer?.location, aliveSurvivors, room]);
 
   if (loading) {
     return (
@@ -258,31 +330,6 @@ function GamePage({ params }: PageProps) {
       </main>
     );
   }
-
-  const players = Object.values(room.players);
-  const aliveKillers = players.filter(p => p.role === 'killer' && p.isAlive);
-  const aliveSurvivors = players.filter(p => p.role === 'survivor' && p.isAlive);
-  const deadPlayers = players.filter(p => !p.isAlive);
-
-  // Find nearest survivor for proximity arrow (killers only)
-  const nearestSurvivor = currentPlayer?.role === 'killer' && currentPlayer?.location ? 
-    aliveSurvivors
-      .filter(survivor => survivor.location)
-      .reduce((closest, survivor) => {
-        if (!closest) return survivor;
-        
-        const closestDistance = locationService.calculateDistance(
-          currentPlayer.location!,
-          closest.location!
-        );
-        const survivorDistance = locationService.calculateDistance(
-          currentPlayer.location!,
-          survivor.location!
-        );
-        
-        return survivorDistance < closestDistance ? survivor : closest;
-      }, null as Player | null)
-    : null;
 
   const isHeadstart = room.status === 'headstart';
   const isActive = room.status === 'active';
@@ -551,18 +598,31 @@ function GamePage({ params }: PageProps) {
   );
 }
 
-function PlayerCard({ player, onClick, canClick }: { 
+const PlayerCard = memo(function PlayerCard({ player, onClick, canClick }: { 
   player: Player; 
   onClick?: (playerId: string) => void;
   canClick?: boolean;
 }) {
+  const handleClick = useCallback(() => {
+    if (canClick && player.location && onClick) {
+      onClick(player.uid);
+    }
+  }, [canClick, player.location, player.uid, onClick]);
+
+  const cardStyles = useMemo(() => ({
+    container: `flex items-center gap-3 p-3 rounded-lg ${
+      player.isAlive ? 'bg-gray-50' : 'bg-gray-200 opacity-75'
+    } ${canClick && player.location ? 'cursor-pointer hover:bg-gray-100 transition-colors' : ''}`,
+    name: `font-medium ${!player.isAlive ? 'line-through text-gray-500' : ''}`
+  }), [player.isAlive, canClick, player.location]);
+
+  const eliminatedTime = useMemo(() => {
+    if (!player.eliminatedAt) return null;
+    return new Date(player.eliminatedAt).toLocaleTimeString();
+  }, [player.eliminatedAt]);
+
   return (
-    <div 
-      className={`flex items-center gap-3 p-3 rounded-lg ${
-        player.isAlive ? 'bg-gray-50' : 'bg-gray-200 opacity-75'
-      } ${canClick && player.location ? 'cursor-pointer hover:bg-gray-100 transition-colors' : ''}`}
-      onClick={() => canClick && player.location && onClick?.(player.uid)}
-    >
+    <div className={cardStyles.container} onClick={handleClick}>
       {player.profilePictureUrl ? (
         <img
           src={player.profilePictureUrl}
@@ -577,12 +637,12 @@ function PlayerCard({ player, onClick, canClick }: {
         </div>
       )}
       <div className="flex-1">
-        <p className={`font-medium ${!player.isAlive ? 'line-through text-gray-500' : ''}`}>
+        <p className={cardStyles.name}>
           {player.displayName}
         </p>
-        {!player.isAlive && player.eliminatedAt && (
+        {!player.isAlive && eliminatedTime && (
           <p className="text-xs text-gray-500">
-            Eliminated {new Date(player.eliminatedAt).toLocaleTimeString()}
+            Eliminated {eliminatedTime}
           </p>
         )}
       </div>
@@ -593,7 +653,7 @@ function PlayerCard({ player, onClick, canClick }: {
       )}
     </div>
   );
-}
+});
 
 export default function GamePageWrapper({ params }: PageProps) {
   return (

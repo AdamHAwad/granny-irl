@@ -23,7 +23,7 @@
 
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
 import { Player, PlayerLocation } from '@/types/game';
 import { locationService } from '@/lib/locationService';
 import dynamic from 'next/dynamic';
@@ -115,7 +115,7 @@ const createCustomIcon = (player: Player, isCurrentPlayer: boolean = false) => {
   });
 };
 
-export default function InteractiveGameMap({ 
+function InteractiveGameMap({ 
   players, 
   currentPlayerUid, 
   isKiller,
@@ -130,13 +130,14 @@ export default function InteractiveGameMap({
   const [zoom, setZoom] = useState(17); // Higher zoom for better detail
   const [isLoading, setIsLoading] = useState(true);
 
-  // Filter players based on role and visibility rules
-  const getVisiblePlayers = () => {
+  // Memoized filter for players with location (expensive operation)
+  const playersWithLocation = useMemo(() => {
+    const now = Date.now();
     const allPlayersWithLocation = players.filter(player => 
       player.location && 
       player.isAlive && 
       player.lastLocationUpdate && 
-      Date.now() - player.lastLocationUpdate < 30000 // Within 30 seconds
+      (now - player.lastLocationUpdate) < 30000 // Within 30 seconds
     );
 
     // Eliminated players (spectators) can see everyone
@@ -153,9 +154,7 @@ export default function InteractiveGameMap({
     return allPlayersWithLocation.filter(player => 
       player.role === 'survivor' || player.uid === currentPlayerUid
     );
-  };
-
-  const playersWithLocation = getVisiblePlayers();
+  }, [players, isEliminated, isKiller, currentPlayerUid]);
 
   const currentPlayer = players.find(p => p.uid === currentPlayerUid);
 
@@ -172,33 +171,36 @@ export default function InteractiveGameMap({
     }
   }, [currentPlayer?.location, playersWithLocation]);
 
-  // Auto-fit map to show all players or center on selected player
+  // Optimized map bounds calculation with debouncing
   useEffect(() => {
-    if (!map) return;
+    if (!map || playersWithLocation.length === 0) return;
 
-    // If a player is selected, center on them
-    if (selectedPlayerId) {
-      const selectedPlayer = playersWithLocation.find(p => p.uid === selectedPlayerId);
-      if (selectedPlayer?.location) {
-        map.setView([selectedPlayer.location.latitude, selectedPlayer.location.longitude], 18);
-        return;
+    const updateMapView = () => {
+      // If a player is selected, center on them
+      if (selectedPlayerId) {
+        const selectedPlayer = playersWithLocation.find(p => p.uid === selectedPlayerId);
+        if (selectedPlayer?.location) {
+          map.setView([selectedPlayer.location.latitude, selectedPlayer.location.longitude], 18, { animate: true });
+          return;
+        }
       }
-    }
 
-    // Otherwise, fit all players
-    if (playersWithLocation.length === 0) return;
+      if (playersWithLocation.length === 1) {
+        // Single player - just center on them
+        const player = playersWithLocation[0];
+        map.setView([player.location!.latitude, player.location!.longitude], 17, { animate: true });
+      } else {
+        // Multiple players - optimized bounds fitting
+        const bounds = L.latLngBounds(
+          playersWithLocation.map(p => [p.location!.latitude, p.location!.longitude])
+        );
+        map.fitBounds(bounds, { padding: [30, 30], maxZoom: 18, animate: true });
+      }
+    };
 
-    if (playersWithLocation.length === 1) {
-      // Single player - just center on them
-      const player = playersWithLocation[0];
-      map.setView([player.location!.latitude, player.location!.longitude], 17);
-    } else {
-      // Multiple players - fit bounds
-      const bounds = L.latLngBounds(
-        playersWithLocation.map(p => [p.location!.latitude, p.location!.longitude])
-      );
-      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 18 });
-    }
+    // Debounce map updates for better performance
+    const timeoutId = setTimeout(updateMapView, 150);
+    return () => clearTimeout(timeoutId);
   }, [map, playersWithLocation, selectedPlayerId]);
 
   // Calculate distance for display
@@ -453,3 +455,6 @@ export default function InteractiveGameMap({
     </div>
   );
 }
+
+// Export memoized component for performance
+export default memo(InteractiveGameMap);
