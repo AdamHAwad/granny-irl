@@ -33,6 +33,9 @@ git push origin main  # Auto-deploys
 - Proximity detection and directional arrows
 - Game history and player statistics
 - Mobile-optimized responsive design
+- **NEW: Dead by Daylight-style skillcheck system**
+- **NEW: Escape area mechanics with dual win conditions**
+- **NEW: Interactive map location picker for hosts**
 
 ### 🔧 Known Technical Details
 - **Supabase free tier**: Causes some slowness in transitions
@@ -41,10 +44,14 @@ git push origin main  # Auto-deploys
 - **Real-time**: Subscriptions + 2s polling fallback
 
 ### 🚧 Next Priority Features
-1. **Game Boundaries** - Host draws play area limits
+1. **Remove skillcheck penalties code** - Clean up deprecated timer extensions
 2. **Heat Maps** - Player movement density tracking
 3. **Trail History** - Path visualization (toggleable)
 4. **Native Mobile Apps** - iOS/Android wrappers
+
+### 🎯 New Game Modes
+- **Original Mode**: Classic timer-based tag game
+- **Skillcheck Mode**: Complete minigames → escape area appears → DBD-style win conditions (75% elimination rate)
 
 ## Quick Development Setup
 
@@ -99,11 +106,13 @@ git push         # Auto-deploy to production
 - Check console for debug logs
 
 ### Critical Test Cases:
-- Room creation/joining
+- Room creation/joining with skillcheck map picker
 - Location permission flow
-- Game state transitions
-- Player elimination
-- Map interactions
+- Game state transitions (headstart → active → escape)
+- Player elimination vs escape mechanics
+- Map interactions and proximity detection
+- Skillcheck minigame completion
+- Escape area appearance and victory conditions
 
 ## Debugging Guide
 
@@ -112,6 +121,10 @@ git push         # Auto-deploy to production
 2. **Location not working** → Browser permissions
 3. **Map not loading** → Network/Leaflet imports
 4. **Profile pics missing** → Supabase storage policies
+5. **Skillchecks using host GPS** → Check pinned location reference
+6. **Escape area not appearing** → Run SQL migration in Supabase
+7. **Column doesn't exist errors** → PostgreSQL case sensitivity
+8. **Build failures** → React hook dependencies or unescaped strings
 
 ### Debug Tools:
 - Console logs throughout services
@@ -131,6 +144,22 @@ git push         # Auto-deploy to production
 - Compass may not work on all devices
 - Location accuracy varies by device
 
+## Database Setup
+
+### Required SQL Migration:
+```sql
+-- Run ONCE in Supabase SQL Editor for escape area support
+ALTER TABLE rooms 
+ADD COLUMN escapeArea JSONB,
+ADD COLUMN allSkillchecksCompleted BOOLEAN DEFAULT false;
+```
+
+### Schema Notes:
+- Use lowercase column names: `skillcheckcenterlocation`
+- JSONB for complex objects: players, skillchecks, escapeArea
+- Players now include: hasEscaped, escapedAt fields
+
 ---
-**Updated**: Current session  
-**Next**: See CLAUDE.md for pending features
+**Updated**: August 2025 (Escape Area System)  
+**Status**: Production-ready with dual game modes  
+**Next**: See CLAUDE.md for complete implementation details

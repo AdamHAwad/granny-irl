@@ -1,6 +1,6 @@
 # Granny IRL 🎯
 
-Real-life outdoor tag game coordinator. Think "Friday the 13th" meets "Pokémon GO" - killers hunt survivors in the real world using GPS tracking.
+Real-life outdoor tag game coordinator. Think "Friday the 13th" meets "Pokémon GO" with Dead by Daylight-style mechanics - killers hunt survivors in the real world using GPS tracking.
 
 **🌐 Live App**: https://granny-irl.vercel.app
 
@@ -13,6 +13,8 @@ Real-life outdoor tag game coordinator. Think "Friday the 13th" meets "Pokémon 
 - **Interactive maps** showing real streets and terrain
 - **Proximity alerts** when killers get close
 - **Self-elimination system** for caught survivors
+- **NEW: Dead by Daylight-style skillcheck minigames** ⚡
+- **NEW: Escape area mechanics** - first survivor to escape wins! 🚪
 
 ### 🗺️ Location Features
 - **OpenStreetMap integration** (free, no API keys needed)
@@ -66,10 +68,18 @@ npm run dev  # Opens localhost:3000
 
 ## 🎯 Game Flow
 
+### Original Mode (Classic Tag)
 1. **Lobby Phase**: Players join room, host configures settings
 2. **Headstart Phase**: Survivors get time to hide (5s-5min)
 3. **Hunt Phase**: Killers track survivors on map (30s-30min)
-4. **Results**: Winners announced, stats recorded
+4. **Victory**: Survivors win if they survive the timer, killers win if they eliminate all survivors
+
+### Skillcheck Mode (Escape Challenge)
+1. **Lobby Phase**: Host enables skillchecks and pins locations on map
+2. **Headstart Phase**: Survivors hide while skillcheck positions are generated
+3. **Skillcheck Phase**: Survivors complete minigames at designated locations
+4. **Escape Phase**: Once timer expires OR all skillchecks are complete, escape area appears
+5. **Victory**: Dead by Daylight-style - Killers win if they eliminate 75%+ of survivors, Survivors win if enough escape (individual escapes matter!)
 
 ## 📝 Configuration
 
@@ -78,6 +88,11 @@ Game hosts can customize:
 - **Round length**: 30 seconds to 30 minutes
 - **Headstart time**: 5 seconds to 5 minutes
 - **Max players**: Up to 15 per room
+- **Skillcheck settings** (optional):
+  - Enable/disable skillcheck mode
+  - Number of skillchecks (1-5)
+  - Maximum distance from pinned location (100-1000m)
+  - Interactive map location picker
 
 ## 🔒 Privacy
 
@@ -88,6 +103,12 @@ Game hosts can customize:
 
 ## 🌟 Recent Updates
 
+- ✅ **Dead by Daylight-style skillcheck system** with proximity detection
+- ✅ **Escape area mechanics** with purple door markers
+- ✅ **Interactive map location picker** for skillcheck placement
+- ✅ **Dual win condition system** (original + escape modes)
+- ✅ **Performance optimizations** for real-time gameplay
+- ✅ **Mobile-friendly UI improvements** and touch controls
 - ✅ Interactive OpenStreetMap integration
 - ✅ Profile picture system with Supabase Storage
 - ✅ Proximity detection and directional arrows
@@ -96,7 +117,6 @@ Game hosts can customize:
 
 ## 🔮 Upcoming Features
 
-- **Game Boundaries**: Host-defined play areas
 - **Heat Maps**: Movement density visualization
 - **Trail History**: Player path tracking
 - **Mobile Apps**: Native iOS/Android versions

@@ -609,21 +609,35 @@ export async function checkGameEnd(roomCode: string): Promise<void> {
   const aliveKillers = players.filter((p: any) => p.role === 'killer' && p.isAlive);
   const aliveSurvivors = players.filter((p: any) => p.role === 'survivor' && p.isAlive);
   const escapedSurvivors = players.filter((p: any) => p.role === 'survivor' && p.hasEscaped);
+  const allSurvivors = players.filter((p: any) => p.role === 'survivor');
+  const eliminatedSurvivors = allSurvivors.filter((p: any) => !p.isAlive && !p.hasEscaped);
 
-  console.log('checkGameEnd: Alive killers:', aliveKillers.length, 'Alive survivors:', aliveSurvivors.length, 'Escaped survivors:', escapedSurvivors.length);
+  console.log('checkGameEnd: Alive killers:', aliveKillers.length, 'Alive survivors:', aliveSurvivors.length, 'Escaped survivors:', escapedSurvivors.length, 'Total survivors:', allSurvivors.length, 'Eliminated survivors:', eliminatedSurvivors.length);
 
   let gameEnded = false;
   let winners: 'killers' | 'survivors' | null = null;
 
-  // New win condition: Any survivor escaped = survivors win
-  if (escapedSurvivors.length > 0) {
-    console.log('checkGameEnd: Game ended - survivor(s) escaped!');
-    gameEnded = true;
-    winners = 'survivors';
-  } else if (aliveSurvivors.length === 0) {
-    console.log('checkGameEnd: Game ended - no survivors left');
-    gameEnded = true;
-    winners = 'killers';
+  // Check if all survivors are either eliminated or escaped (no one alive and trying to escape)
+  if (aliveSurvivors.length === 0) {
+    if (room.settings.skillchecks?.enabled) {
+      // DBD-style win condition: Killers win if they eliminated 75% or more of survivors
+      const survivorEliminationRate = eliminatedSurvivors.length / allSurvivors.length;
+      
+      if (survivorEliminationRate >= 0.75) {
+        console.log('checkGameEnd: Killers won - eliminated', Math.round(survivorEliminationRate * 100) + '% of survivors');
+        gameEnded = true;
+        winners = 'killers';
+      } else {
+        console.log('checkGameEnd: Survivors won - enough escaped (', escapedSurvivors.length, '/', allSurvivors.length, ')');
+        gameEnded = true;
+        winners = 'survivors';
+      }
+    } else {
+      // Original game logic: if no survivors alive, killers win
+      console.log('checkGameEnd: Game ended - no survivors left (original mode)');
+      gameEnded = true;
+      winners = 'killers';
+    }
   } else if (room.game_started_at && room.status === 'active') {
     const gameLength = room.settings.roundLengthMinutes * 60 * 1000;
     const gameEndTime = room.game_started_at + gameLength;
@@ -701,7 +715,7 @@ export async function resetRoomForNewGame(roomCode: string): Promise<void> {
       return;
     }
 
-    // Reset all players to alive with no roles
+    // Reset all players to alive with no roles and clear escape status
     const resetPlayers = { ...room.players };
     Object.keys(resetPlayers).forEach(uid => {
       resetPlayers[uid] = {
@@ -710,6 +724,8 @@ export async function resetRoomForNewGame(roomCode: string): Promise<void> {
         role: undefined,
         eliminatedAt: undefined,
         eliminatedBy: undefined,
+        hasEscaped: undefined,
+        escapedAt: undefined,
       };
     });
 
@@ -723,6 +739,8 @@ export async function resetRoomForNewGame(roomCode: string): Promise<void> {
         game_ended_at: null,
         skillchecks: null, // Reset skillchecks for new game
         skillcheckTimeExtensions: null, // Reset time extensions
+        escapeArea: null, // Reset escape area for new game
+        allSkillchecksCompleted: false, // Reset skillcheck completion status
       })
       .eq('id', roomCode);
 
