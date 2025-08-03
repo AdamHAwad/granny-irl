@@ -942,7 +942,7 @@ function GamePage({ params }: PageProps) {
             <div>Escape Area Revealed: {room.escapeArea?.isRevealed ? '✅' : '❌'}</div>
             <div>Escape Timer: {room.escape_timer_started_at ? '✅' : '❌'}</div>
             {room.escapeArea && (
-              <div className="mt-2 pt-2 border-t border-gray-200">
+              <div className="mt-2 pt-2 border-t border-gray-200 text-black">
                 <div>Escape Area ID: {room.escapeArea.id}</div>
                 <div>Escape Area Coords: {room.escapeArea.location?.latitude?.toFixed(6)}, {room.escapeArea.location?.longitude?.toFixed(6)}</div>
                 <div>Revealed At: {room.escapeArea.revealedAt ? new Date(room.escapeArea.revealedAt).toLocaleTimeString() : 'Not set'}</div>
@@ -997,7 +997,7 @@ function GamePage({ params }: PageProps) {
           )}
           
           {/* Map Debug Info */}
-          <div className="text-xs bg-gray-100 p-2 rounded mb-2">
+          <div className="text-xs bg-gray-100 p-2 rounded mb-2 text-black">
             <div className="font-bold mb-1">Map Debug:</div>
             <div>escapeArea prop: {room.escapeArea ? 'Present' : 'Missing'}</div>
             <div>Map visibility: {showMap ? 'Visible' : 'Hidden'}</div>
