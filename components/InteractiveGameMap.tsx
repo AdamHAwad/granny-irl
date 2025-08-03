@@ -212,13 +212,24 @@ function InteractiveGameMap({
 
   // Memoized escape area visibility - only survivors and eliminated players can see it
   const visibleEscapeArea = useMemo(() => {
+    console.log('InteractiveGameMap: Checking escape area visibility', {
+      escapeArea,
+      isKiller,
+      isEliminated,
+      escapeAreaExists: !!escapeArea,
+      escapeAreaRevealed: escapeArea?.isRevealed
+    });
+    
     // Killers cannot see escape area (per game rules)
     if (isKiller && !isEliminated) {
+      console.log('InteractiveGameMap: Hiding escape area from killer');
       return null;
     }
     
     // Only show if escape area exists and is revealed
-    return escapeArea?.isRevealed ? escapeArea : null;
+    const result = escapeArea?.isRevealed ? escapeArea : null;
+    console.log('InteractiveGameMap: Escape area visibility result:', result);
+    return result;
   }, [escapeArea, isKiller, isEliminated]);
 
   // Memoized filter for players with location (expensive operation)

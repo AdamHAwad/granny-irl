@@ -176,6 +176,17 @@ function GamePage({ params }: PageProps) {
       setError('');
       setLastSuccessfulRoom(roomData);
 
+      // Log room updates for debugging
+      console.log('Room update received:', { 
+        status: roomData.status, 
+        players: Object.keys(roomData.players).length,
+        skillchecks: roomData.skillchecks?.length || 0,
+        completedSkillchecks: roomData.skillchecks?.filter(sc => sc.isCompleted).length || 0,
+        escapeArea: !!roomData.escapeArea,
+        escapeAreaRevealed: roomData.escapeArea?.isRevealed,
+        allSkillchecksCompleted: roomData.allSkillchecksCompleted
+      });
+
       // Check if current user has been kicked from the room
       if (!roomData.players[user.id]) {
         console.log('User has been kicked from game:', user.id);
@@ -623,6 +634,26 @@ function GamePage({ params }: PageProps) {
               <p className="text-sm">
                 Hunt down the survivors! They have {Math.max(0, Math.floor(timeRemaining / 60000))} minutes left to hide.
               </p>
+              
+              {/* Killer notifications for skillcheck progress */}
+              {room?.settings.skillchecks?.enabled && room?.skillchecks && (
+                <div className="mt-3 pt-3 border-t border-red-400">
+                  <div className="text-xs font-medium">⚡ Skillcheck Progress</div>
+                  <div className="text-xs opacity-90 mt-1">
+                    {room.skillchecks.filter(sc => sc.isCompleted).length} / {room.skillchecks.length} completed by survivors
+                  </div>
+                  {room.allSkillchecksCompleted && (
+                    <div className="text-xs bg-red-500 px-2 py-1 rounded mt-2">
+                      🚨 ALL SKILLCHECKS COMPLETE - Escape area is now active!
+                    </div>
+                  )}
+                  {room.escapeArea?.isRevealed && !room.allSkillchecksCompleted && (
+                    <div className="text-xs bg-red-500 px-2 py-1 rounded mt-2">
+                      🚨 Timer expired - Escape area is now active!
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}
