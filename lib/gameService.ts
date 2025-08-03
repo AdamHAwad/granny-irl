@@ -211,13 +211,19 @@ export async function revealEscapeAreaOnTimer(roomCode: string): Promise<void> {
     const escapeArea = generateEscapeArea(centerLocation, maxDistance);
     const escapeTimerStarted = Date.now();
 
-    await supabase
+    const { error: updateError } = await supabase
       .from('rooms')
       .update({
-        escapeArea: escapeArea,
+        escapearea: escapeArea,  // PostgreSQL lowercase column name
         escape_timer_started_at: escapeTimerStarted,
       })
       .eq('id', roomCode);
+      
+    if (updateError) {
+      console.error('🔍 DEBUG: Error updating room in revealEscapeAreaOnTimer:', updateError);
+    } else {
+      console.log('🔍 DEBUG: Successfully updated room with escape area in revealEscapeAreaOnTimer');
+    }
 
     console.log('Escape area revealed due to timer expiration. 10-minute escape timer started.');
     

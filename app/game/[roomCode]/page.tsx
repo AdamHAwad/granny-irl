@@ -26,6 +26,10 @@ function GamePage({ params }: PageProps) {
   const router = useRouter();
   const { playGameStart, playGameEnd, playElimination, playCountdown, vibrate } = useSoundNotifications();
   const [room, setRoom] = useState<Room | null>(null);
+  
+  // Helper function to get escape area (handles PostgreSQL case sensitivity)
+  const getEscapeArea = (room: Room) => room.escapearea || room.escapeArea;
+  const getAllSkillchecksCompleted = (room: Room) => room.allskillcheckscompleted || room.allSkillchecksCompleted;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [lastSuccessfulRoom, setLastSuccessfulRoom] = useState<Room | null>(null);
@@ -259,7 +263,8 @@ function GamePage({ params }: PageProps) {
       }
 
       // Handle escape timer (10 minutes after escape area revealed)
-      if (room.status === 'active' && room.escape_timer_started_at && room.escapeArea?.isRevealed) {
+      const escapeArea = getEscapeArea(room);
+      if (room.status === 'active' && room.escape_timer_started_at && escapeArea?.isRevealed) {
         const escapeEnd = room.escape_timer_started_at + (10 * 60 * 1000); // 10 minutes
         const escapeRemaining = Math.max(0, escapeEnd - now);
         setEscapeTimerRemaining(escapeRemaining);
@@ -342,10 +347,11 @@ function GamePage({ params }: PageProps) {
     }
 
     // Check escape area proximity
-    if (room.escapeArea?.isRevealed && !currentPlayer.hasEscaped) {
+    const escapeArea = getEscapeArea(room);
+    if (escapeArea?.isRevealed && !currentPlayer.hasEscaped) {
       const distance = locationService.calculateDistance(
         playerLocation,
-        room.escapeArea.location
+        escapeArea.location
       );
       
       if (distance <= PROXIMITY_DISTANCE) {
@@ -684,7 +690,7 @@ function GamePage({ params }: PageProps) {
                 onPlayerClick={handlePlayerClick}
                 onMapClick={() => setSelectedPlayerId(null)}
                 skillchecks={room?.skillchecks}
-                escapeArea={room?.escapeArea}
+                escapeArea={getEscapeArea(room)}
                 className="mb-4"
               />
             )}
@@ -938,15 +944,22 @@ function GamePage({ params }: PageProps) {
           <div className="text-xs mb-3 p-2 bg-white rounded border text-black">
             <div>Skillchecks: {room.skillchecks?.filter(sc => sc.isCompleted).length || 0}/{room.skillchecks?.length || 0}</div>
             <div>All Complete: {(room.allskillcheckscompleted || room.allSkillchecksCompleted) ? '✅' : '❌'}</div>
-            <div>Escape Area Exists: {room.escapeArea ? '✅' : '❌'}</div>
-            <div>Escape Area Revealed: {room.escapeArea?.isRevealed ? '✅' : '❌'}</div>
+            <div>Escape Area Exists: {(room.escapearea || room.escapeArea) ? '✅' : '❌'}</div>
+            <div>Escape Area Revealed: {(room.escapearea?.isRevealed || room.escapeArea?.isRevealed) ? '✅' : '❌'}</div>
             <div>Escape Timer: {room.escape_timer_started_at ? '✅' : '❌'}</div>
-            {room.escapeArea && (
+            {(room.escapearea || room.escapeArea) && (
               <div className="mt-2 pt-2 border-t border-gray-200 text-black">
-                <div>Escape Area ID: {room.escapeArea.id}</div>
-                <div>Escape Area Coords: {room.escapeArea.location?.latitude?.toFixed(6)}, {room.escapeArea.location?.longitude?.toFixed(6)}</div>
-                <div>Revealed At: {room.escapeArea.revealedAt ? new Date(room.escapeArea.revealedAt).toLocaleTimeString() : 'Not set'}</div>
-                <div>Escaped Players: {room.escapeArea.escapedPlayers?.length || 0}</div>
+                {(() => {
+                  const escapeArea = room.escapearea || room.escapeArea;
+                  return (
+                    <>
+                      <div>Escape Area ID: {escapeArea.id}</div>
+                      <div>Escape Area Coords: {escapeArea.location?.latitude?.toFixed(6)}, {escapeArea.location?.longitude?.toFixed(6)}</div>
+                      <div>Revealed At: {escapeArea.revealedAt ? new Date(escapeArea.revealedAt).toLocaleTimeString() : 'Not set'}</div>
+                      <div>Escaped Players: {escapeArea.escapedPlayers?.length || 0}</div>
+                    </>
+                  );
+                })()}
               </div>
             )}
           </div>
