@@ -17,17 +17,11 @@ export interface PlayerLocation {
   heading?: number; // Device compass heading in degrees (0-360)
 }
 
-export interface GameBoundary {
-  center: PlayerLocation; // Host's location when boundary was set
-  radiusMeters: number; // Boundary radius in meters
-}
-
 export interface RoomSettings {
   killerCount: number; // 1-3
   roundLengthMinutes: number; // 0.5 (30s testing), 5, 10, 15, 20, 30
   headstartMinutes: number; // 0.083 (5s testing), 1, 3, 5
   maxPlayers: number; // default 15
-  boundary?: GameBoundary; // Optional game boundary
 }
 
 export interface Room {

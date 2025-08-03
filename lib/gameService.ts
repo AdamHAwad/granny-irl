@@ -353,10 +353,6 @@ export async function checkGameEnd(roomCode: string): Promise<void> {
     console.log('checkGameEnd: Game ended - no survivors left');
     gameEnded = true;
     winners = 'killers';
-  } else if (aliveKillers.length === 0) {
-    console.log('checkGameEnd: Game ended - no killers left');
-    gameEnded = true;
-    winners = 'survivors';
   } else if (room.game_started_at && room.status === 'active') {
     const gameLength = room.settings.roundLengthMinutes * 60 * 1000;
     const gameEndTime = room.game_started_at + gameLength;

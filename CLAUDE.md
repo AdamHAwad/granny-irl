@@ -163,10 +163,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=[your-key]
 - Location accuracy depends on device GPS
 
 ## Pending Features
-1. **Game Boundaries** - Host draws play area on map
-2. **Heat Maps** - Show player movement density
-3. **Trail History** - Track player paths
-4. **Mobile Apps** - Native iOS/Android wrappers
+1. **Heat Maps** - Show player movement density
+2. **Trail History** - Track player paths
+3. **Mobile Apps** - Native iOS/Android wrappers
 
 ## Development Workflow
 ```bash

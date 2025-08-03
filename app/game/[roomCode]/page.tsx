@@ -36,10 +36,6 @@ function GamePage({ params }: PageProps) {
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [locationError, setLocationError] = useState('');
   const [showMap, setShowMap] = useState(false);
-  const [boundaryViolation, setBoundaryViolation] = useState(false);
-  const [boundaryTimer, setBoundaryTimer] = useState(0);
-  const [boundaryWarningShown, setBoundaryWarningShown] = useState(false);
-  const [boundaryViolationStartTime, setBoundaryViolationStartTime] = useState<number | null>(null);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
 
   // Handle clicking on a player to view their location
@@ -62,17 +58,6 @@ function GamePage({ params }: PageProps) {
     }
   };
 
-  // Check if player is within game boundary
-  const isWithinBoundary = (playerLocation: any, boundary: any) => {
-    if (!playerLocation || !boundary) return true;
-    
-    const distance = locationService.calculateDistance(
-      playerLocation,
-      boundary.center
-    );
-    
-    return distance <= boundary.radiusMeters;
-  };
 
   // Get current player for boundary checking
   const currentPlayer = room ? room.players[user?.id || ''] : null;
@@ -91,45 +76,6 @@ function GamePage({ params }: PageProps) {
     }
   }, [user, room, params.roomCode, playElimination, vibrate]);
 
-  // Boundary violation detection effect
-  useEffect(() => {
-    // Don't check boundary if player is being eliminated
-    if (eliminating) {
-      console.log('Player is being eliminated, skipping boundary check');
-      return;
-    }
-
-    if (!room?.settings.boundary || !currentPlayer?.location || !currentPlayer?.isAlive) {
-      if (boundaryViolation) {
-        console.log('Clearing boundary violation - no boundary/location/alive');
-        setBoundaryViolation(false);
-        setBoundaryTimer(0);
-        setBoundaryWarningShown(false);
-        setBoundaryViolationStartTime(null);
-      }
-      return;
-    }
-
-    const withinBoundary = isWithinBoundary(currentPlayer.location, room.settings.boundary);
-    
-    if (!withinBoundary && !boundaryViolation) {
-      // Player just left boundary - start timer
-      console.log('Player left boundary, starting timer');
-      const now = Date.now();
-      setBoundaryViolation(true);
-      setBoundaryViolationStartTime(now);
-      setBoundaryWarningShown(true);
-      playCountdown();
-      vibrate([200, 100, 200]);
-    } else if (withinBoundary && boundaryViolation) {
-      // Player returned to boundary - clear violation
-      console.log('Player returned to boundary, clearing timer');
-      setBoundaryViolation(false);
-      setBoundaryTimer(0);
-      setBoundaryWarningShown(false);
-      setBoundaryViolationStartTime(null);
-    }
-  }, [currentPlayer?.location, room?.settings.boundary, currentPlayer?.isAlive, boundaryViolation, eliminating, playCountdown, vibrate]);
 
   useEffect(() => {
     if (!user || !profile) return;
@@ -220,45 +166,13 @@ function GamePage({ params }: PageProps) {
         }
       }
 
-      // Boundary violation timer (30 seconds)
-      if (boundaryViolation && boundaryViolationStartTime) {
-        const violationEnd = boundaryViolationStartTime + 30000; // 30 seconds
-        const remaining = Math.max(0, violationEnd - now);
-        const remainingSeconds = Math.ceil(remaining / 1000);
-        
-        setBoundaryTimer(remainingSeconds);
-        
-        console.log('Boundary timer update:', remainingSeconds);
-        
-        // Play warning sounds in final 10 seconds
-        if (remainingSeconds <= 10 && remainingSeconds > 0 && remaining > 0) {
-          // Only play sound once per second
-          const prevSeconds = Math.ceil((remaining + 1000) / 1000);
-          if (remainingSeconds !== prevSeconds) {
-            playCountdown();
-            vibrate(100);
-          }
-        }
-        
-        // Check if timer expired
-        if (remaining <= 0 && boundaryViolation && !eliminating) {
-          console.log('Boundary timer expired, eliminating player');
-          // Clear boundary violation state immediately to prevent restart
-          setBoundaryViolation(false);
-          setBoundaryWarningShown(false);
-          setBoundaryViolationStartTime(null);
-          setBoundaryTimer(0);
-          // Then eliminate player
-          handleEliminate();
-        }
-      }
     };
 
     updateTimers();
     const interval = setInterval(updateTimers, 1000);
 
     return () => clearInterval(interval);
-  }, [room, boundaryViolation, boundaryViolationStartTime, eliminating, gameStartSoundPlayed, playGameStart, playCountdown, vibrate, handleEliminate]);
+  }, [room, gameStartSoundPlayed, playGameStart, playCountdown, vibrate, handleEliminate]);
 
   const handleLocationPermissionGranted = () => {
     console.log('Location permission granted');
@@ -463,7 +377,6 @@ function GamePage({ params }: PageProps) {
                 players={players}
                 currentPlayerUid={user?.id || ''}
                 isKiller={currentPlayer?.role === 'killer'}
-                boundary={room.settings.boundary}
                 selectedPlayerId={selectedPlayerId}
                 onPlayerClick={handlePlayerClick}
                 onMapClick={() => setSelectedPlayerId(null)}
@@ -517,8 +430,7 @@ function GamePage({ params }: PageProps) {
                     currentPlayerUid={user?.id || ''}
                     isKiller={false}
                     isEliminated={true} // Spectators can see everyone
-                    boundary={room.settings.boundary}
-                    selectedPlayerId={selectedPlayerId}
+                        selectedPlayerId={selectedPlayerId}
                     onPlayerClick={handlePlayerClick}
                     onMapClick={() => setSelectedPlayerId(null)}
                     className="mb-4"
@@ -616,25 +528,6 @@ function GamePage({ params }: PageProps) {
         </div>
       )}
 
-      {/* Boundary Violation Warning */}
-      {boundaryViolation && (
-        <div className="mt-4 p-4 bg-red-50 border-2 border-red-300 rounded-lg animate-pulse">
-          <div className="text-center">
-            <div className="text-red-800 font-bold text-lg mb-2">
-              ⚠️ BOUNDARY VIOLATION
-            </div>
-            <div className="text-red-700 mb-2">
-              You are outside the game boundary!
-            </div>
-            <div className="text-3xl font-mono font-bold text-red-600 mb-2">
-              {boundaryTimer}s
-            </div>
-            <div className="text-red-600 text-sm">
-              Return to the boundary immediately or you will be eliminated!
-            </div>
-          </div>
-        </div>
-      )}
 
       <LocationPermissionModal
         isOpen={showLocationModal}
