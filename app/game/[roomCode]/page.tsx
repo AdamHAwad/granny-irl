@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -76,7 +76,7 @@ function GamePage({ params }: PageProps) {
   // Get current player for boundary checking
   const currentPlayer = room ? room.players[user?.id || ''] : null;
 
-  const handleEliminate = async () => {
+  const handleEliminate = useCallback(async () => {
     if (!user || !room) return;
 
     setEliminating(true);
@@ -88,13 +88,16 @@ function GamePage({ params }: PageProps) {
       console.error('Error eliminating player:', error);
       setEliminating(false);
     }
-  };
+  }, [user, room, params.roomCode, playElimination, vibrate]);
 
   // Boundary violation timer effect
   useEffect(() => {
     if (!room?.settings.boundary || !currentPlayer?.location || !currentPlayer?.isAlive) {
-      setBoundaryViolation(false);
-      setBoundaryTimer(0);
+      if (boundaryViolation) {
+        setBoundaryViolation(false);
+        setBoundaryTimer(0);
+        setBoundaryWarningShown(false);
+      }
       return;
     }
 
@@ -102,6 +105,7 @@ function GamePage({ params }: PageProps) {
     
     if (!withinBoundary && !boundaryViolation) {
       // Player just left boundary - start timer
+      console.log('Player left boundary, starting timer');
       setBoundaryViolation(true);
       setBoundaryTimer(30);
       setBoundaryWarningShown(true);
@@ -109,39 +113,50 @@ function GamePage({ params }: PageProps) {
       vibrate([200, 100, 200]);
     } else if (withinBoundary && boundaryViolation) {
       // Player returned to boundary - clear violation
+      console.log('Player returned to boundary, clearing timer');
       setBoundaryViolation(false);
       setBoundaryTimer(0);
       setBoundaryWarningShown(false);
     }
   }, [currentPlayer?.location, room?.settings.boundary, currentPlayer?.isAlive, boundaryViolation, playCountdown, vibrate]);
 
-  // Boundary timer countdown
+  // Boundary timer countdown - only depends on boundaryViolation to start/stop
   useEffect(() => {
-    if (!boundaryViolation || boundaryTimer <= 0) return;
+    if (!boundaryViolation) {
+      return;
+    }
 
+    console.log('Starting boundary countdown timer');
+    
     const interval = setInterval(() => {
       setBoundaryTimer(prev => {
-        if (prev <= 1) {
+        const newValue = prev - 1;
+        console.log('Boundary timer countdown:', newValue);
+        
+        if (newValue <= 0) {
           // Timer expired - eliminate player
-          if (currentPlayer?.isAlive && user) {
-            handleEliminate();
-          }
+          console.log('Boundary timer expired, eliminating player');
+          handleEliminate();
           setBoundaryViolation(false);
+          setBoundaryWarningShown(false);
           return 0;
         }
         
         // Play warning sounds at specific intervals
-        if (prev <= 10) {
+        if (newValue <= 10 && newValue > 0) {
           playCountdown();
           vibrate(100);
         }
         
-        return prev - 1;
+        return newValue;
       });
     }, 1000);
 
-    return () => clearInterval(interval);
-  }, [boundaryViolation, boundaryTimer, currentPlayer?.isAlive, handleEliminate, user, playCountdown, vibrate]);
+    return () => {
+      console.log('Cleaning up boundary timer interval');
+      clearInterval(interval);
+    };
+  }, [boundaryViolation, handleEliminate, playCountdown, vibrate]);
 
   useEffect(() => {
     if (!user || !profile) return;
