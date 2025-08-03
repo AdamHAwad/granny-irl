@@ -137,7 +137,7 @@ function InteractiveGameMap({
       player.location && 
       player.isAlive && 
       player.lastLocationUpdate && 
-      (now - player.lastLocationUpdate) < 60000 // Within 60 seconds
+      (now - player.lastLocationUpdate) < 30000 // Within 30 seconds
     );
 
     // Eliminated players (spectators) can see everyone

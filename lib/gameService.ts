@@ -672,98 +672,42 @@ export async function getPlayerGameStats(uid: string): Promise<PlayerGameStats> 
   }
 }
 
-// Cache for room status to avoid unnecessary fetches
-const roomStatusCache = new Map<string, { status: string, timestamp: number }>();
-const CACHE_DURATION = 10000; // 10 seconds
-
-// Clear room status cache (useful when game state changes)
-export function clearRoomStatusCache(roomCode?: string): void {
-  if (roomCode) {
-    roomStatusCache.delete(roomCode);
-    console.log('Cleared room status cache for:', roomCode);
-  } else {
-    roomStatusCache.clear();
-    console.log('Cleared all room status cache');
-  }
-}
-
 export async function updatePlayerLocation(
   roomCode: string,
   playerUid: string,
   location: PlayerLocation
 ): Promise<void> {
   try {
-    // Clear cache at start of new game sessions to avoid stale data
-    const now = Date.now();
-    const cached = roomStatusCache.get(roomCode);
+    console.log('updatePlayerLocation: Updating location for player:', playerUid, 'in room:', roomCode);
     
-    let roomStatus = cached?.status;
-    if (!cached || (now - cached.timestamp) > CACHE_DURATION) {
-      // Fetch only the status and check if player exists, not full room data
-      const { data, error } = await supabase
-        .from('rooms')
-        .select('status, players')
-        .eq('id', roomCode)
-        .single();
-
-      if (error) {
-        console.error('updatePlayerLocation: Error fetching room status:', error);
-        return;
-      }
-
-      if (!data.players[playerUid]) {
-        console.error('updatePlayerLocation: Player not found in room');
-        return;
-      }
-
-      roomStatus = data.status;
-      if (roomStatus) {
-        roomStatusCache.set(roomCode, { status: roomStatus, timestamp: now });
-      }
-    }
-
-    // Only update location during active games
-    if (roomStatus !== 'active' && roomStatus !== 'headstart') {
-      console.log('updatePlayerLocation: Not updating location - game not active');
-      return;
-    }
-
-    // Direct update using fallback method (RPC function doesn't exist)
-    await updatePlayerLocationFallback(roomCode, playerUid, location, now);
-  } catch (error) {
-    console.error('updatePlayerLocation: Error:', error);
-  }
-}
-
-// Improved fallback function for location updates with error handling
-async function updatePlayerLocationFallback(
-  roomCode: string,
-  playerUid: string,
-  location: PlayerLocation,
-  timestamp?: number
-): Promise<void> {
-  try {
     const { data: room, error } = await supabase
       .from('rooms')
-      .select('players')
+      .select('*')
       .eq('id', roomCode)
       .single();
 
     if (error) {
-      console.error('updatePlayerLocationFallback: Error fetching room:', error);
-      throw new Error('Failed to fetch room data');
+      console.error('updatePlayerLocation: Error fetching room:', error);
+      return;
     }
 
     if (!room.players[playerUid]) {
-      console.error('updatePlayerLocationFallback: Player not found in room:', playerUid);
-      throw new Error('Player not found in room');
+      console.error('updatePlayerLocation: Player not found in room');
+      return;
     }
 
+    // Only update location during active games
+    if (room.status !== 'active' && room.status !== 'headstart') {
+      console.log('updatePlayerLocation: Not updating location - game not active');
+      return;
+    }
+
+    // Update player's location and timestamp
     const updatedPlayers = { ...room.players };
     updatedPlayers[playerUid] = {
       ...updatedPlayers[playerUid],
       location,
-      lastLocationUpdate: timestamp || Date.now(),
+      lastLocationUpdate: Date.now(),
     };
 
     const { error: updateError } = await supabase
@@ -772,14 +716,12 @@ async function updatePlayerLocationFallback(
       .eq('id', roomCode);
 
     if (updateError) {
-      console.error('updatePlayerLocationFallback: Error updating players:', updateError);
-      throw updateError;
+      console.error('updatePlayerLocation: Error updating room:', updateError);
+    } else {
+      console.log('updatePlayerLocation: Successfully updated location for player:', playerUid);
     }
-
-    console.log('updatePlayerLocationFallback: Successfully updated location for player:', playerUid);
   } catch (error) {
-    console.error('updatePlayerLocationFallback: Error:', error);
-    throw error;
+    console.error('updatePlayerLocation: Error:', error);
   }
 }
 

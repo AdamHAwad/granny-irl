@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useSoundNotifications } from '@/hooks/useSoundNotifications';
-import { subscribeToRoom, eliminatePlayer, updatePlayerLocation, clearPlayerLocation, clearRoomStatusCache } from '@/lib/gameService';
+import { subscribeToRoom, eliminatePlayer, updatePlayerLocation, clearPlayerLocation } from '@/lib/gameService';
 import { Room, Player } from '@/types/game';
 import { locationService, HIGH_FREQUENCY_LOCATION_OPTIONS } from '@/lib/locationService';
 import AuthGuard from '@/components/AuthGuard';
@@ -218,87 +218,28 @@ function GamePage({ params }: PageProps) {
     setShowLocationModal(false);
   };
 
-  // Location tracking effect with optimization
+  // Location tracking effect
   useEffect(() => {
-    console.log('Location tracking effect triggered:', { 
-      user: !!user, 
-      room: !!room, 
-      locationEnabled, 
-      roomStatus: room?.status 
-    });
-    
-    if (!user || !room || !locationEnabled) {
-      console.log('Location tracking skipped - missing requirements');
-      return;
-    }
-    if (room.status !== 'active' && room.status !== 'headstart') {
-      console.log('Location tracking skipped - game not in active/headstart phase');
-      return;
-    }
+    if (!user || !room || !locationEnabled) return;
+    if (room.status !== 'active' && room.status !== 'headstart') return;
 
-    console.log('Starting optimized location tracking for user:', user.id);
-    
-    // Clear room status cache to ensure fresh data
-    clearRoomStatusCache(params.roomCode);
-    
-    let isTracking = true;
-    let isFirstUpdate = true;
+    console.log('Starting location tracking for user:', user.id);
 
-    // Optimized location update function with immediate first update
-    let locationUpdateTimeout: NodeJS.Timeout | null = null;
-    const optimizedLocationUpdate = (location: any) => {
-      if (!isTracking) return;
-
-      // First update is immediate for instant visibility
-      if (isFirstUpdate) {
-        isFirstUpdate = false;
-        updatePlayerLocation(params.roomCode, user.id, location)
-          .then(() => {
-            console.log('First location update successful');
-            setLocationError(''); // Clear any previous errors
-          })
-          .catch((error) => {
-            console.error('First location update failed:', error);
-            setLocationError(`Location update failed: ${error.message}`);
-          });
-        return;
-      }
-
-      // Subsequent updates are debounced for performance
-      if (locationUpdateTimeout) {
-        clearTimeout(locationUpdateTimeout);
-      }
-      locationUpdateTimeout = setTimeout(async () => {
-        if (isTracking) {
-          try {
-            await updatePlayerLocation(params.roomCode, user.id, location);
-            console.log('Location update successful');
-            setLocationError(''); // Clear any previous errors
-          } catch (error) {
-            console.error('Location update failed:', error);
-            setLocationError(`Location update failed: ${(error as Error).message}`);
-          }
-        }
-      }, 1000); // 1 second debounce for subsequent updates
-    };
-
+    // Start watching location changes with high frequency for active games
     locationService.startWatching(
-      optimizedLocationUpdate,
-      (error) => {
-        if (isTracking) {
-          console.error('Location tracking error:', error);
-          setLocationError(`Location error: ${error}`);
-        }
+      async (location) => {
+        await updatePlayerLocation(params.roomCode, user.id, location);
       },
-      { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }
+      (error) => {
+        console.error('Location tracking error:', error);
+        setLocationError(`Location error: ${error}`);
+      },
+      HIGH_FREQUENCY_LOCATION_OPTIONS
     );
 
+    // Cleanup when component unmounts or dependencies change
     return () => {
-      console.log('Stopping optimized location tracking');
-      isTracking = false;
-      if (locationUpdateTimeout) {
-        clearTimeout(locationUpdateTimeout);
-      }
+      console.log('Stopping location tracking');
       locationService.stopWatching();
     };
   }, [user, room, locationEnabled, params.roomCode]);

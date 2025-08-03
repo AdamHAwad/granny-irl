@@ -37,20 +37,17 @@ export const DEFAULT_LOCATION_OPTIONS: LocationWatchOptions = {
   maximumAge: 30000, // Accept location up to 30 seconds old
 };
 
-// Optimized location options for active games (balanced performance/accuracy)
+// High-frequency location options for active games (faster updates)
 export const HIGH_FREQUENCY_LOCATION_OPTIONS: LocationWatchOptions = {
   enableHighAccuracy: true, // Use GPS for better accuracy
-  timeout: 8000, // 8 seconds timeout (more reliable)
-  maximumAge: 3000, // Accept location up to 3 seconds old
+  timeout: 5000, // 5 seconds timeout
+  maximumAge: 5000, // Force fresh location every 5 seconds
 };
 
 class LocationService {
   private watchId: number | null = null;
   private lastKnownLocation: PlayerLocation | null = null;
   private isWatching = false;
-  private lastUpdateTime = 0;
-  private debounceTimeout: NodeJS.Timeout | null = null;
-  private updateCallbacks: Array<(location: PlayerLocation) => void> = [];
 
   /**
    * Check if geolocation is supported by the browser
@@ -176,14 +173,14 @@ class LocationService {
   }
 
   /**
-   * Start watching location changes with optimized debouncing
+   * Start watching location changes
    */
   startWatching(
     onLocationUpdate: (location: PlayerLocation) => void,
     onError?: (error: string) => void,
     options: LocationWatchOptions = DEFAULT_LOCATION_OPTIONS
   ): void {
-    console.log('LocationService: Starting optimized location watch');
+    console.log('LocationService: Starting location watch');
 
     if (!this.isSupported()) {
       onError?.('Geolocation is not supported');
@@ -191,60 +188,21 @@ class LocationService {
     }
 
     if (this.isWatching) {
-      // Add to existing callbacks instead of creating new watch
-      this.updateCallbacks.push(onLocationUpdate);
-      console.log('LocationService: Added callback to existing watch');
+      console.log('LocationService: Already watching location');
       return;
     }
 
-    this.updateCallbacks = [onLocationUpdate];
-
     this.watchId = navigator.geolocation.watchPosition(
       (position) => {
-        const now = Date.now();
-        
         const location: PlayerLocation = {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
           accuracy: position.coords.accuracy,
         };
 
-        // Allow first update immediately for instant visibility
-        const isFirstUpdate = this.lastUpdateTime === 0;
-        
-        if (!isFirstUpdate) {
-          // Throttle subsequent updates to max once every 2 seconds for performance
-          if (now - this.lastUpdateTime < 2000) {
-            return;
-          }
-
-          // Skip if location hasn't changed significantly (within 5 meters)
-          if (this.lastKnownLocation) {
-            const distance = this.calculateDistance(this.lastKnownLocation, location);
-            if (distance < 5 && location.accuracy && location.accuracy < 20) {
-              return;
-            }
-          }
-        }
-
-        console.log('LocationService: Location update:', isFirstUpdate ? '(FIRST)' : '(UPDATE)', location);
+        console.log('LocationService: Location updated:', location);
         this.lastKnownLocation = location;
-        this.lastUpdateTime = now;
-        
-        // Debounce multiple rapid updates
-        if (this.debounceTimeout) {
-          clearTimeout(this.debounceTimeout);
-        }
-        
-        this.debounceTimeout = setTimeout(() => {
-          this.updateCallbacks.forEach(callback => {
-            try {
-              callback(location);
-            } catch (error) {
-              console.error('LocationService: Error in callback:', error);
-            }
-          });
-        }, 500); // 500ms debounce
+        onLocationUpdate(location);
       },
       (error) => {
         console.error('LocationService: Watch error:', error);
@@ -254,28 +212,22 @@ class LocationService {
     );
 
     this.isWatching = true;
-    console.log('LocationService: Started optimized watching with ID:', this.watchId);
+    console.log('LocationService: Started watching with ID:', this.watchId);
   }
 
   /**
-   * Stop watching location changes with proper cleanup
+   * Stop watching location changes
    */
   stopWatching(): void {
-    console.log('LocationService: Stopping optimized location watch');
-
-    if (this.debounceTimeout) {
-      clearTimeout(this.debounceTimeout);
-      this.debounceTimeout = null;
-    }
+    console.log('LocationService: Stopping location watch');
 
     if (this.watchId !== null) {
       navigator.geolocation.clearWatch(this.watchId);
       this.watchId = null;
     }
 
-    this.updateCallbacks = [];
     this.isWatching = false;
-    console.log('LocationService: Stopped watching location with cleanup');
+    console.log('LocationService: Stopped watching location');
   }
 
   /**
