@@ -9,6 +9,44 @@ import { locationService } from '@/lib/locationService';
 import dynamic from 'next/dynamic';
 import { useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Configure default Leaflet icons
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
+// Create custom icons
+const pinIcon = new L.Icon({
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+// Create profile picture icon
+const createProfileIcon = (profilePictureUrl: string | null, displayName: string) => {
+  const initials = displayName[0]?.toUpperCase() || 'U';
+  
+  return new L.DivIcon({
+    html: profilePictureUrl 
+      ? `<div style="width: 40px; height: 40px; border-radius: 50%; border: 3px solid #3B82F6; overflow: hidden; background-color: white;">
+           <img src="${profilePictureUrl}" alt="Your location" style="width: 100%; height: 100%; object-fit: cover;" />
+         </div>`
+      : `<div style="width: 40px; height: 40px; border-radius: 50%; border: 3px solid #3B82F6; background-color: #9CA3AF; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; font-weight: bold;">
+           ${initials}
+         </div>`,
+    className: 'profile-marker',
+    iconSize: [40, 40],
+    iconAnchor: [20, 20]
+  });
+};
 
 // Dynamically import map components to avoid SSR issues
 const MapContainer = dynamic(
@@ -51,6 +89,7 @@ export default function CreateRoomModal({
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [mapCenter, setMapCenter] = useState<[number, number]>([37.7749, -122.4194]); // Default to SF
   const [locationError, setLocationError] = useState<string>('');
+  const [userLocation, setUserLocation] = useState<PlayerLocation | null>(null);
 
   // Get user's current location for initial map center
   useEffect(() => {
@@ -58,6 +97,7 @@ export default function CreateRoomModal({
       locationService.getCurrentLocation()
         .then((location) => {
           setMapCenter([location.latitude, location.longitude]);
+          setUserLocation(location);
         })
         .catch(() => {
           // Keep default location if GPS fails
@@ -307,13 +347,28 @@ export default function CreateRoomModal({
                               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                             />
                             <MapClickHandler onLocationSelect={handleLocationSelect} />
+                            {/* User's current location as reference */}
+                            {userLocation && profile && (
+                              <Marker 
+                                position={[userLocation.latitude, userLocation.longitude]}
+                                icon={createProfileIcon(
+                                  profile.profile_picture_url,
+                                  profile.custom_username || profile.display_name || 'User'
+                                )}
+                              />
+                            )}
+                            {/* Pin marker for skillcheck location */}
                             {pinnedLocation && (
-                              <Marker position={[pinnedLocation.latitude, pinnedLocation.longitude]} />
+                              <Marker 
+                                position={[pinnedLocation.latitude, pinnedLocation.longitude]} 
+                                icon={pinIcon}
+                              />
                             )}
                           </MapContainer>
                         </div>
                         <div className="bg-blue-50 p-2 text-xs text-blue-700">
-                          Click anywhere on the map to pin the skillcheck center location
+                          <p>🔵 Blue circle = Your current location (reference point)</p>
+                          <p>📍 Red pin = Click anywhere to set skillcheck center</p>
                         </div>
                       </div>
                     )}
