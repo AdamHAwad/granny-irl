@@ -550,7 +550,7 @@ function GamePage({ params }: PageProps) {
                       }}
                     />
                   </div>
-                  {room.allSkillchecksCompleted && (
+                  {(room.allskillcheckscompleted || room.allSkillchecksCompleted) && (
                     <div className="text-xs text-green-600 mt-1 font-medium">
                       ✓ All skillchecks completed! Escape area revealed.
                     </div>
@@ -638,12 +638,12 @@ function GamePage({ params }: PageProps) {
                   <div className="text-xs opacity-90 mt-1">
                     {room.skillchecks.filter(sc => sc.isCompleted).length} / {room.skillchecks.length} completed by survivors
                   </div>
-                  {room.allSkillchecksCompleted && (
+                  {(room.allskillcheckscompleted || room.allSkillchecksCompleted) && (
                     <div className="text-xs bg-red-500 px-2 py-1 rounded mt-2">
                       🚨 ALL SKILLCHECKS COMPLETE - Escape area is now active!
                     </div>
                   )}
-                  {room.escapeArea?.isRevealed && !room.allSkillchecksCompleted && (
+                  {room.escapeArea?.isRevealed && !(room.allskillcheckscompleted || room.allSkillchecksCompleted) && (
                     <div className="text-xs bg-red-500 px-2 py-1 rounded mt-2">
                       🚨 Timer expired - Escape area is now active!
                     </div>
@@ -937,7 +937,7 @@ function GamePage({ params }: PageProps) {
           {/* Visual Status Indicators */}
           <div className="text-xs mb-3 p-2 bg-white rounded border text-black">
             <div>Skillchecks: {room.skillchecks?.filter(sc => sc.isCompleted).length || 0}/{room.skillchecks?.length || 0}</div>
-            <div>All Complete: {room.allSkillchecksCompleted ? '✅' : '❌'}</div>
+            <div>All Complete: {(room.allskillcheckscompleted || room.allSkillchecksCompleted) ? '✅' : '❌'}</div>
             <div>Escape Area Exists: {room.escapeArea ? '✅' : '❌'}</div>
             <div>Escape Area Revealed: {room.escapeArea?.isRevealed ? '✅' : '❌'}</div>
             <div>Escape Timer: {room.escape_timer_started_at ? '✅' : '❌'}</div>

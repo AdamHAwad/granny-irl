@@ -120,13 +120,16 @@ export async function checkSkillcheckCompletion(roomCode: string): Promise<void>
 
   console.log('🔍 DEBUG: Room data:', {
     skillchecksEnabled: room.settings.skillchecks?.enabled,
-    allSkillchecksCompleted: room.allSkillchecksCompleted,
+    allSkillchecksCompleted_camelCase: room.allSkillchecksCompleted,
+    allskillcheckscompleted_lowercase: room.allskillcheckscompleted,
     escapeAreaExists: !!room.escapeArea,
     skillchecksCount: room.skillchecks?.length
   });
 
   // Only check if skillchecks are enabled and not already completed
-  if (!room.settings.skillchecks?.enabled || room.allSkillchecksCompleted || room.escapeArea) {
+  // Note: PostgreSQL converts column names to lowercase, so allSkillchecksCompleted becomes allskillcheckscompleted
+  const allSkillchecksCompleted = room.allskillcheckscompleted || room.allSkillchecksCompleted;
+  if (!room.settings.skillchecks?.enabled || allSkillchecksCompleted || room.escapeArea) {
     console.log('🔍 DEBUG: Exiting early - conditions not met');
     return;
   }
@@ -164,8 +167,8 @@ export async function checkSkillcheckCompletion(roomCode: string): Promise<void>
       const { error: updateError } = await supabase
         .from('rooms')
         .update({
-          allSkillchecksCompleted: true,
-          escapeArea: escapeArea,
+          allskillcheckscompleted: true,  // PostgreSQL lowercase column name
+          escapearea: escapeArea,         // PostgreSQL lowercase column name  
           escape_timer_started_at: escapeTimerStarted,
         })
         .eq('id', roomCode);
@@ -858,8 +861,8 @@ export async function resetRoomForNewGame(roomCode: string): Promise<void> {
         game_ended_at: null,
         skillchecks: null, // Reset skillchecks for new game
         skillcheckTimeExtensions: null, // Reset time extensions
-        escapeArea: null, // Reset escape area for new game
-        allSkillchecksCompleted: false, // Reset skillcheck completion status
+        escapearea: null, // Reset escape area for new game (PostgreSQL lowercase)
+        allskillcheckscompleted: false, // Reset skillcheck completion status (PostgreSQL lowercase)
         escape_timer_started_at: null, // Reset escape timer
       })
       .eq('id', roomCode);
