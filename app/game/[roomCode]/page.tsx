@@ -901,6 +901,91 @@ function GamePage({ params }: PageProps) {
           </div>
         </div>
       )}
+
+      {/* Debug Panel - Only for Host During Testing */}
+      {room && user?.id === room.host_uid && room.settings.skillchecks?.enabled && (
+        <div className="fixed bottom-4 right-4 bg-yellow-100 border-2 border-yellow-400 rounded-lg p-4 max-w-xs z-50">
+          <div className="text-sm font-bold text-yellow-800 mb-2">🛠️ Host Debug Panel</div>
+          
+          {/* Skillcheck Testing */}
+          {room.skillchecks && room.skillchecks.length > 0 && (
+            <div className="mb-3">
+              <div className="text-xs text-yellow-700 mb-1">Complete Skillchecks:</div>
+              <div className="flex flex-wrap gap-1">
+                {room.skillchecks.map((skillcheck, index) => (
+                  <button
+                    key={skillcheck.id}
+                    onClick={async () => {
+                      if (!skillcheck.isCompleted) {
+                        const { completeSkillcheck } = await import('@/lib/gameService');
+                        await completeSkillcheck(room.id, skillcheck.id, user.id);
+                      }
+                    }}
+                    disabled={skillcheck.isCompleted}
+                    className={`px-2 py-1 text-xs rounded ${
+                      skillcheck.isCompleted 
+                        ? 'bg-green-200 text-green-800' 
+                        : 'bg-yellow-200 text-yellow-800 hover:bg-yellow-300'
+                    }`}
+                  >
+                    SC{index + 1} {skillcheck.isCompleted && '✓'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Manual Escape Area Reveal */}
+          {!room.escapeArea && (isActive || room.status === 'active') && (
+            <button
+              onClick={async () => {
+                const { revealEscapeAreaOnTimer } = await import('@/lib/gameService');
+                await revealEscapeAreaOnTimer(room.id);
+              }}
+              className="w-full mb-2 px-3 py-2 bg-purple-200 text-purple-800 text-xs rounded hover:bg-purple-300"
+            >
+              🚪 Force Reveal Escape Area
+            </button>
+          )}
+
+          {/* Manual Escape (for testing win conditions) */}
+          {room.escapeArea?.isRevealed && currentPlayer?.role === 'survivor' && currentPlayer?.isAlive && !currentPlayer?.hasEscaped && (
+            <button
+              onClick={async () => {
+                const { markPlayerEscaped } = await import('@/lib/gameService');
+                await markPlayerEscaped(room.id, user.id);
+              }}
+              className="w-full mb-2 px-3 py-2 bg-purple-300 text-purple-800 text-xs rounded hover:bg-purple-400"
+            >
+              🏃 Force Escape (Host)
+            </button>
+          )}
+
+          {/* Force Timer Expiration */}
+          {room.escape_timer_started_at && (
+            <button
+              onClick={async () => {
+                const { checkEscapeTimerExpired } = await import('@/lib/gameService');
+                await checkEscapeTimerExpired(room.id);
+              }}
+              className="w-full mb-2 px-3 py-2 bg-red-200 text-red-800 text-xs rounded hover:bg-red-300"
+            >
+              ⏰ Force Timer Expiration
+            </button>
+          )}
+
+          {/* Force Game End Check */}
+          <button
+            onClick={async () => {
+              const { checkGameEnd } = await import('@/lib/gameService');
+              await checkGameEnd(room.id);
+            }}
+            className="w-full px-3 py-2 bg-gray-200 text-gray-800 text-xs rounded hover:bg-gray-300"
+          >
+            🎯 Force Check Game End
+          </button>
+        </div>
+      )}
     </main>
   );
 }
