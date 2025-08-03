@@ -63,7 +63,9 @@ export interface Room {
   skillcheckTimeExtensions?: number; // Additional seconds added due to failed skillchecks (deprecated)
   skillcheckcenterlocation?: PlayerLocation; // Pinned location for skillcheck generation
   escapeArea?: EscapeArea; // Escape area revealed after timer or all skillchecks complete
+  escapearea?: EscapeArea; // PostgreSQL lowercase version of escapeArea
   allSkillchecksCompleted?: boolean; // Whether all skillchecks have been completed
+  allskillcheckscompleted?: boolean; // PostgreSQL lowercase version of allSkillchecksCompleted
   escape_timer_started_at?: number; // When the 10-minute escape timer started
 }
 
