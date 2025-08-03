@@ -352,7 +352,7 @@ export default function CreateRoomModal({
                               <Marker 
                                 position={[userLocation.latitude, userLocation.longitude]}
                                 icon={createProfileIcon(
-                                  profile.profile_picture_url,
+                                  profile.profile_picture_url || null,
                                   profile.custom_username || profile.display_name || 'User'
                                 )}
                               />
