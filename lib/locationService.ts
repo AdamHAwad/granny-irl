@@ -203,26 +203,31 @@ class LocationService {
       (position) => {
         const now = Date.now();
         
-        // Throttle updates to max once every 2 seconds for performance
-        if (now - this.lastUpdateTime < 2000) {
-          return;
-        }
-
         const location: PlayerLocation = {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
           accuracy: position.coords.accuracy,
         };
 
-        // Skip if location hasn't changed significantly (within 5 meters)
-        if (this.lastKnownLocation) {
-          const distance = this.calculateDistance(this.lastKnownLocation, location);
-          if (distance < 5 && location.accuracy && location.accuracy < 20) {
+        // Allow first update immediately for instant visibility
+        const isFirstUpdate = this.lastUpdateTime === 0;
+        
+        if (!isFirstUpdate) {
+          // Throttle subsequent updates to max once every 2 seconds for performance
+          if (now - this.lastUpdateTime < 2000) {
             return;
+          }
+
+          // Skip if location hasn't changed significantly (within 5 meters)
+          if (this.lastKnownLocation) {
+            const distance = this.calculateDistance(this.lastKnownLocation, location);
+            if (distance < 5 && location.accuracy && location.accuracy < 20) {
+              return;
+            }
           }
         }
 
-        console.log('LocationService: Significant location update:', location);
+        console.log('LocationService: Location update:', isFirstUpdate ? '(FIRST)' : '(UPDATE)', location);
         this.lastKnownLocation = location;
         this.lastUpdateTime = now;
         

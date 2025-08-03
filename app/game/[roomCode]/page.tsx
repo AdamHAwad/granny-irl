@@ -220,15 +220,39 @@ function GamePage({ params }: PageProps) {
 
   // Location tracking effect with optimization
   useEffect(() => {
-    if (!user || !room || !locationEnabled) return;
-    if (room.status !== 'active' && room.status !== 'headstart') return;
+    console.log('Location tracking effect triggered:', { 
+      user: !!user, 
+      room: !!room, 
+      locationEnabled, 
+      roomStatus: room?.status 
+    });
+    
+    if (!user || !room || !locationEnabled) {
+      console.log('Location tracking skipped - missing requirements');
+      return;
+    }
+    if (room.status !== 'active' && room.status !== 'headstart') {
+      console.log('Location tracking skipped - game not in active/headstart phase');
+      return;
+    }
 
     console.log('Starting optimized location tracking for user:', user.id);
     let isTracking = true;
+    let isFirstUpdate = true;
 
-    // Debounced location update function
+    // Optimized location update function with immediate first update
     let locationUpdateTimeout: NodeJS.Timeout | null = null;
-    const debouncedLocationUpdate = (location: any) => {
+    const optimizedLocationUpdate = (location: any) => {
+      if (!isTracking) return;
+
+      // First update is immediate for instant visibility
+      if (isFirstUpdate) {
+        isFirstUpdate = false;
+        updatePlayerLocation(params.roomCode, user.id, location);
+        return;
+      }
+
+      // Subsequent updates are debounced for performance
       if (locationUpdateTimeout) {
         clearTimeout(locationUpdateTimeout);
       }
@@ -236,11 +260,11 @@ function GamePage({ params }: PageProps) {
         if (isTracking) {
           await updatePlayerLocation(params.roomCode, user.id, location);
         }
-      }, 2000); // Reduced update frequency for better performance
+      }, 1000); // 1 second debounce for subsequent updates
     };
 
     locationService.startWatching(
-      debouncedLocationUpdate,
+      optimizedLocationUpdate,
       (error) => {
         if (isTracking) {
           console.error('Location tracking error:', error);
