@@ -100,7 +100,7 @@ export async function createRoom(
       settings,
       status: 'waiting',
       created_at: Date.now(),
-      skillcheckCenterLocation, // Store pinned location for skillcheck generation
+      skillcheckcenterlocation: skillcheckCenterLocation, // Store pinned location for skillcheck generation
     };
 
     const { error } = await supabase
@@ -314,7 +314,7 @@ export async function startGame(roomCode: string): Promise<void> {
       let skillchecks: Skillcheck[] = [];
       if (currentRoom.settings.skillchecks?.enabled) {
         // Use pinned skillcheck center location if available, otherwise fall back to host's location
-        const centerLocation = currentRoom.skillcheckCenterLocation || currentRoom.players[currentRoom.host_uid]?.location;
+        const centerLocation = currentRoom.skillcheckcenterlocation || currentRoom.players[currentRoom.host_uid]?.location;
         
         if (centerLocation) {
           skillchecks = generateSkillcheckPositions(
@@ -323,7 +323,7 @@ export async function startGame(roomCode: string): Promise<void> {
             currentRoom.settings.skillchecks.maxDistanceFromHost
           );
           console.log('Generated skillchecks for room:', roomCode, skillchecks.length, 'using', 
-                     currentRoom.skillcheckCenterLocation ? 'pinned location' : 'host GPS location');
+                     currentRoom.skillcheckcenterlocation ? 'pinned location' : 'host GPS location');
         } else {
           console.warn('Cannot generate skillchecks - no center location available');
         }
