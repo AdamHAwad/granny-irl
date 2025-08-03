@@ -411,6 +411,7 @@ function GamePage({ params }: PageProps) {
                 selectedPlayerId={selectedPlayerId}
                 onPlayerClick={handlePlayerClick}
                 onMapClick={() => setSelectedPlayerId(null)}
+                skillchecks={room?.skillchecks}
                 className="mb-4"
               />
             )}
@@ -461,9 +462,10 @@ function GamePage({ params }: PageProps) {
                     currentPlayerUid={user?.id || ''}
                     isKiller={false}
                     isEliminated={true} // Spectators can see everyone
-                        selectedPlayerId={selectedPlayerId}
+                    selectedPlayerId={selectedPlayerId}
                     onPlayerClick={handlePlayerClick}
                     onMapClick={() => setSelectedPlayerId(null)}
+                    skillchecks={room?.skillchecks}
                     className="mb-4"
                   />
                 )}

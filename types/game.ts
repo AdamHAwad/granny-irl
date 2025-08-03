@@ -17,11 +17,26 @@ export interface PlayerLocation {
   heading?: number; // Device compass heading in degrees (0-360)
 }
 
+export interface Skillcheck {
+  id: string;
+  location: PlayerLocation;
+  isCompleted: boolean;
+  completedBy: string[]; // UIDs of players who completed this skillcheck
+  completedAt?: number;
+}
+
+export interface SkillcheckSettings {
+  enabled: boolean;
+  count: number; // Number of skillchecks to generate
+  maxDistanceFromHost: number; // Maximum distance from host location in meters
+}
+
 export interface RoomSettings {
   killerCount: number; // 1-3
   roundLengthMinutes: number; // 0.5 (30s testing), 5, 10, 15, 20, 30
   headstartMinutes: number; // 0.083 (5s testing), 1, 3, 5
   maxPlayers: number; // default 15
+  skillchecks?: SkillcheckSettings; // Optional skillcheck system
 }
 
 export interface Room {
@@ -34,6 +49,8 @@ export interface Room {
   headstart_started_at?: number;
   game_started_at?: number;
   game_ended_at?: number;
+  skillchecks?: Skillcheck[]; // Skillchecks for this room
+  skillcheckTimeExtensions?: number; // Additional seconds added due to failed skillchecks
 }
 
 export interface GameResult {

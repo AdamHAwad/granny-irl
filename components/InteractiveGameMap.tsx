@@ -24,7 +24,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
-import { Player, PlayerLocation } from '@/types/game';
+import { Player, PlayerLocation, Skillcheck } from '@/types/game';
 import { locationService } from '@/lib/locationService';
 import dynamic from 'next/dynamic';
 import 'leaflet/dist/leaflet.css';
@@ -63,7 +63,39 @@ interface InteractiveGameMapProps {
   onPlayerClick?: (playerId: string) => void;
   onMapClick?: () => void;
   className?: string;
+  skillchecks?: Skillcheck[]; // Optional skillchecks to display
 }
+
+// Custom icon for skillchecks
+const createSkillcheckIcon = (skillcheck: Skillcheck) => {
+  const baseSize = 35;
+  const isCompleted = skillcheck.isCompleted;
+  const bgColor = isCompleted ? '#10B981' : '#F59E0B'; // Green if completed, amber if pending
+  const iconSymbol = isCompleted ? '✓' : '⚡';
+  
+  const html = `<div style="
+    width: ${baseSize}px;
+    height: ${baseSize}px;
+    border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    background-color: ${bgColor};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: ${baseSize * 0.5}px;
+    ${isCompleted ? 'opacity: 0.7;' : ''}
+  ">${iconSymbol}</div>`;
+
+  return L.divIcon({
+    className: 'custom-skillcheck-icon',
+    html,
+    iconSize: [baseSize, baseSize],
+    iconAnchor: [baseSize/2, baseSize/2],
+  });
+};
 
 // Custom icons for different player types
 const createCustomIcon = (player: Player, isCurrentPlayer: boolean = false) => {
@@ -123,12 +155,24 @@ function InteractiveGameMap({
   selectedPlayerId,
   onPlayerClick,
   onMapClick,
-  className = '' 
+  className = '',
+  skillchecks = []
 }: InteractiveGameMapProps) {
   const [map, setMap] = useState<L.Map | null>(null);
   const [center, setCenter] = useState<[number, number]>([37.7749, -122.4194]); // Default to SF
   const [zoom, setZoom] = useState(17); // Higher zoom for better detail
   const [isLoading, setIsLoading] = useState(true);
+
+  // Memoized filter for skillchecks based on role visibility
+  const visibleSkillchecks = useMemo(() => {
+    // Killers cannot see skillchecks (per game rules)
+    if (isKiller && !isEliminated) {
+      return [];
+    }
+    
+    // Survivors and eliminated players can see skillchecks
+    return skillchecks;
+  }, [skillchecks, isKiller, isEliminated]);
 
   // Memoized filter for players with location (expensive operation)
   const playersWithLocation = useMemo(() => {
@@ -214,6 +258,49 @@ function InteractiveGameMap({
     if (secondsAgo < 60) return `${secondsAgo}s ago`;
     const minutesAgo = Math.floor(secondsAgo / 60);
     return `${minutesAgo}m ago`;
+  };
+
+  // Create skillcheck marker with custom icon and popup
+  const createSkillcheckMarker = (skillcheck: Skillcheck) => {
+    const completedByNames = skillcheck.completedBy.length > 0 
+      ? skillcheck.completedBy.map(uid => {
+          const player = players.find(p => p.uid === uid);
+          return player?.displayName || 'Unknown Player';
+        }).join(', ')
+      : 'Not completed yet';
+
+    return (
+      <Marker
+        key={skillcheck.id}
+        position={[skillcheck.location.latitude, skillcheck.location.longitude]}
+        icon={createSkillcheckIcon(skillcheck)}
+      >
+        <Popup>
+          <div className="text-sm">
+            <div className="font-bold flex items-center gap-2">
+              <span>⚡ Skillcheck</span>
+              {skillcheck.isCompleted && <span className="text-green-600">✓</span>}
+            </div>
+            <div className="text-xs text-gray-600 mt-1">
+              Status: {skillcheck.isCompleted ? 'Completed' : 'Pending'}
+            </div>
+            {skillcheck.isCompleted && skillcheck.completedAt && (
+              <div className="text-xs text-gray-500">
+                Completed: {new Date(skillcheck.completedAt).toLocaleTimeString()}
+              </div>
+            )}
+            <div className="text-xs text-gray-500 mt-1">
+              Completed by: {completedByNames}
+            </div>
+            {!skillcheck.isCompleted && (
+              <div className="text-xs text-amber-600 mt-2">
+                📍 Get close to start the skillcheck minigame
+              </div>
+            )}
+          </div>
+        </Popup>
+      </Marker>
+    );
   };
 
   // Create player marker with custom icon and popup
@@ -368,6 +455,9 @@ function InteractiveGameMap({
             {/* Render all player markers */}
             {playersWithLocation.map(player => createPlayerMarker(player))}
 
+            {/* Render skillcheck markers (hidden from killers) */}
+            {visibleSkillchecks.map(skillcheck => createSkillcheckMarker(skillcheck))}
+
             {/* Add accuracy circles for players */}
             {playersWithLocation.map(player => {
               if (!player.location?.accuracy || player.location.accuracy > 100) return null;
@@ -411,10 +501,24 @@ function InteractiveGameMap({
           
           {/* Other killers (only visible to killers and eliminated players) */}
           {(isKiller || isEliminated) && playersWithLocation.some(p => p.role === 'killer' && p.uid !== currentPlayerUid) && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mb-1">
               <div className="w-3 h-3 rounded-full bg-red-400 border-2 border-white"></div>
               <span>Other Killers</span>
             </div>
+          )}
+          
+          {/* Skillchecks (only visible to survivors and eliminated players) */}
+          {visibleSkillchecks.length > 0 && (
+            <>
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-3 h-3 rounded-full bg-amber-500 border-2 border-white"></div>
+                <span>Pending Skillchecks</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-500 border-2 border-white"></div>
+                <span>Completed Skillchecks</span>
+              </div>
+            </>
           )}
           
           

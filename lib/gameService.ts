@@ -17,7 +17,8 @@
  */
 
 import { supabase } from './supabase';
-import { Room, Player, RoomSettings, GameResult, PlayerGameStats, GameHistoryEntry, PlayerLocation } from '@/types/game';
+import { Room, Player, RoomSettings, GameResult, PlayerGameStats, GameHistoryEntry, PlayerLocation, Skillcheck } from '@/types/game';
+import { locationService } from './locationService';
 
 /**
  * Generates a random 6-digit room code (e.g., "ABC123")
@@ -27,10 +28,51 @@ export function generateRoomCode(): string {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
+/**
+ * Generates random skillcheck positions around host location
+ * Uses random distribution within circular area
+ */
+export function generateSkillcheckPositions(
+  hostLocation: PlayerLocation,
+  count: number,
+  maxDistance: number
+): Skillcheck[] {
+  const skillchecks: Skillcheck[] = [];
+  
+  for (let i = 0; i < count; i++) {
+    // Generate random position within circle using proper random distribution
+    // Using sqrt for uniform distribution (avoids clustering at center)
+    const distance = Math.sqrt(Math.random()) * maxDistance;
+    const angle = Math.random() * 2 * Math.PI;
+    
+    // Convert polar coordinates to lat/lng offset
+    const deltaLat = (distance / 111320) * Math.cos(angle); // 111320 meters per degree lat
+    const deltaLng = (distance / (111320 * Math.cos(hostLocation.latitude * Math.PI / 180))) * Math.sin(angle);
+    
+    const skillcheckLocation: PlayerLocation = {
+      latitude: hostLocation.latitude + deltaLat,
+      longitude: hostLocation.longitude + deltaLng,
+    };
+    
+    const skillcheck: Skillcheck = {
+      id: `skillcheck_${i + 1}_${Date.now()}`,
+      location: skillcheckLocation,
+      isCompleted: false,
+      completedBy: [],
+    };
+    
+    skillchecks.push(skillcheck);
+  }
+  
+  console.log(`Generated ${skillchecks.length} skillchecks within ${maxDistance}m of host`);
+  return skillchecks;
+}
+
 export async function createRoom(
   hostUid: string,
   hostProfile: { displayName: string; profilePictureUrl?: string },
-  settings: RoomSettings
+  settings: RoomSettings,
+  hostLocation?: PlayerLocation
 ): Promise<string> {
   try {
     let roomCode: string;
@@ -53,6 +95,7 @@ export async function createRoom(
           displayName: hostProfile.displayName,
           profilePictureUrl: hostProfile.profilePictureUrl,
           isAlive: true,
+          location: hostLocation, // Store host location for skillcheck generation
         },
       },
       settings,
@@ -267,11 +310,28 @@ export async function startGame(roomCode: string): Promise<void> {
         return;
       }
 
+      // Generate skillchecks if enabled
+      let skillchecks: Skillcheck[] = [];
+      if (currentRoom.settings.skillchecks?.enabled) {
+        const hostPlayer = currentRoom.players[currentRoom.host_uid];
+        if (hostPlayer?.location) {
+          skillchecks = generateSkillcheckPositions(
+            hostPlayer.location,
+            currentRoom.settings.skillchecks.count,
+            currentRoom.settings.skillchecks.maxDistanceFromHost
+          );
+          console.log('Generated skillchecks for room:', roomCode, skillchecks.length);
+        } else {
+          console.warn('Cannot generate skillchecks - host location not available');
+        }
+      }
+
       const { error } = await supabase
         .from('rooms')
         .update({
           status: 'active',
           game_started_at: Date.now(),
+          skillchecks: skillchecks.length > 0 ? skillchecks : undefined,
         })
         .eq('id', roomCode);
 
@@ -442,6 +502,8 @@ export async function resetRoomForNewGame(roomCode: string): Promise<void> {
         headstart_started_at: null,
         game_started_at: null,
         game_ended_at: null,
+        skillchecks: null, // Reset skillchecks for new game
+        skillcheckTimeExtensions: null, // Reset time extensions
       })
       .eq('id', roomCode);
 
