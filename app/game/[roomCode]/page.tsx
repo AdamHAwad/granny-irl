@@ -87,19 +87,23 @@ function GamePage({ params }: PageProps) {
   };
 
   // Handle escape area interaction
-  const handleEscape = async () => {
+  const handleEscape = useCallback(async () => {
     if (!user) return;
-    console.log('Player attempting escape!');
+    console.log('🏃 Player attempting escape!');
     setShowEscapePrompt(false);
     setNearbyEscapeArea(false);
     
     try {
+      console.log('🏃 Calling markPlayerEscaped for player:', user.id);
       await markPlayerEscaped(params.roomCode, user.id, false); // Normal gameplay, not debug
+      console.log('✅ Escape processing completed');
       vibrate([200, 100, 200, 100, 200]);
     } catch (error) {
-      console.error('Error escaping:', error);
+      console.error('❌ Error escaping:', error);
+      // Show error to user
+      alert('Failed to escape. Please try again.');
     }
-  };
+  }, [user, params.roomCode, vibrate]);
 
   // Handle clicking on a player to view their location
   const handlePlayerClick = (playerId: string) => {
@@ -618,6 +622,24 @@ function GamePage({ params }: PageProps) {
                   <div className="text-xs text-green-600 mt-1">
                     Congratulations! You&apos;ve won the game for all survivors.
                   </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    Game should end automatically...
+                  </div>
+                </div>
+              )}
+
+              {/* Manual Escape Button for Testing */}
+              {user?.id === room.host_uid && nearbyEscapeArea && !currentPlayer.hasEscaped && (
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                  <button
+                    onClick={handleEscape}
+                    className="w-full bg-purple-500 text-white py-2 px-4 rounded-lg font-bold hover:bg-purple-600"
+                  >
+                    🏃 Manual Escape (Testing)
+                  </button>
+                  <div className="text-xs text-purple-600 mt-1">
+                    Host testing escape functionality
+                  </div>
                 </div>
               )}
             </div>
@@ -976,6 +998,15 @@ function GamePage({ params }: PageProps) {
             <div>Escape Area Exists: {(room.escapearea || room.escapeArea) ? '✅' : '❌'}</div>
             <div>Escape Area Revealed: {(room.escapearea?.isRevealed || room.escapeArea?.isRevealed) ? '✅' : '❌'}</div>
             <div>Escape Timer: {room.escape_timer_started_at ? '✅' : '❌'}</div>
+            <div className="mt-2 pt-2 border-t border-gray-200">
+              <div className="font-bold">Game State Debug:</div>
+              <div>Room Status: {room.status}</div>
+              <div>Alive Survivors: {players.filter(p => p.role === 'survivor' && p.isAlive).length}</div>
+              <div>Escaped Survivors: {players.filter(p => p.role === 'survivor' && p.hasEscaped).length}</div>
+              <div>Eliminated Survivors: {players.filter(p => p.role === 'survivor' && !p.isAlive && !p.hasEscaped).length}</div>
+              <div>Current Player Escaped: {currentPlayer?.hasEscaped ? 'Yes' : 'No'}</div>
+              <div>Current Player Alive: {currentPlayer?.isAlive ? 'Yes' : 'No'}</div>
+            </div>
             {(room.escapearea || room.escapeArea) && (
               <div className="mt-2 pt-2 border-t border-gray-200 text-black">
                 {(() => {
@@ -1067,6 +1098,19 @@ function GamePage({ params }: PageProps) {
               🏃 Force Escape (Host)
             </button>
           )}
+
+          {/* Manual Game End Check */}
+          <button
+            onClick={async () => {
+              console.log('🛠️ DEBUG: Manually checking game end');
+              const { checkGameEnd } = await import('@/lib/gameService');
+              await checkGameEnd(room.id);
+              console.log('🛠️ DEBUG: Game end check completed');
+            }}
+            className="w-full mb-2 px-3 py-2 bg-red-300 text-red-800 text-xs rounded hover:bg-red-400"
+          >
+            🏁 Force Check Game End
+          </button>
 
           {/* Force Timer Expiration */}
           {room.escape_timer_started_at && (
