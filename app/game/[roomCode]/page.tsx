@@ -891,7 +891,6 @@ function GamePage({ params }: PageProps) {
               </div>
             </div>
           )}
-        )}
       </div>
 
       <div className="text-center">
