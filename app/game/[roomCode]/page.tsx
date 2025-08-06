@@ -867,30 +867,31 @@ function GamePage({ params }: PageProps) {
                 })}
             </div>
           </div>
+        )}
 
-          {/* Escaped Players Section */}
-          {escapedPlayers.length > 0 && (
-            <div className="mt-6">
-              <h2 className="text-lg font-semibold mb-3 text-green-600">
-                Escaped ({escapedPlayers.length})
-              </h2>
-              <div className="space-y-2">
-                {escapedPlayers
-                  .sort((a, b) => (a.escapedAt || 0) - (b.escapedAt || 0))
-                  .map((player) => {
-                    const canClick = !currentPlayer?.isAlive || currentPlayer.hasEscaped; // Escaped/eliminated players can click
-                    return (
-                      <PlayerCard 
-                        key={player.uid} 
-                        player={player} 
-                        onClick={handlePlayerClick}
-                        canClick={canClick}
-                      />
-                    );
-                  })}
-              </div>
+        {/* Escaped Players Section */}
+        {escapedPlayers.length > 0 && (
+          <div className="mt-6">
+            <h2 className="text-lg font-semibold mb-3 text-green-600">
+              Escaped ({escapedPlayers.length})
+            </h2>
+            <div className="space-y-2">
+              {escapedPlayers
+                .sort((a, b) => (a.escapedAt || 0) - (b.escapedAt || 0))
+                .map((player) => {
+                  const canClick = !currentPlayer?.isAlive || currentPlayer.hasEscaped; // Escaped/eliminated players can click
+                  return (
+                    <PlayerCard 
+                      key={player.uid} 
+                      player={player} 
+                      onClick={handlePlayerClick}
+                      canClick={canClick}
+                    />
+                  );
+                })}
             </div>
-          )}
+          </div>
+        )}
       </div>
 
       <div className="text-center">
