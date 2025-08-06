@@ -67,58 +67,73 @@ export default function JoinRoomModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md text-black">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Join Room</h2>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="glass-modal p-8 w-full max-w-md text-granny-text animate-slide-up">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h2 className="text-2xl font-bold text-granny-text mb-1">🚪 Join Room</h2>
+            <p className="text-sm text-granny-text-muted">Enter the 6-digit room code</p>
+          </div>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl"
+            className="text-granny-text-muted hover:text-granny-text text-2xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-granny-surface-light transition-colors"
           >
             ×
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Room Code
+            <label className="block text-sm font-semibold text-granny-text mb-4 flex items-center gap-2">
+              🔑 Room Code
             </label>
-            <input
-              type="text"
-              value={roomCode}
-              onChange={handleInputChange}
-              placeholder="Enter 6-digit code"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-2xl font-mono tracking-widest"
-              maxLength={6}
-              autoComplete="off"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Ask the host for the room code
+            <div className="relative">
+              <input
+                type="text"
+                value={roomCode}
+                onChange={handleInputChange}
+                placeholder="ABC123"
+                className="w-full px-6 py-4 bg-granny-surface border-2 border-granny-border text-granny-text placeholder-granny-text-muted rounded-xl focus:outline-none focus:border-granny-survivor/50 focus:ring-2 focus:ring-granny-survivor/20 text-center text-3xl font-mono tracking-[0.3em] font-bold transition-all duration-200"
+                maxLength={6}
+                autoComplete="off"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-granny-survivor/5 to-transparent pointer-events-none rounded-xl" />
+            </div>
+            <p className="text-sm text-granny-text-muted mt-3 text-center">
+              Ask the host for the room code to join the hunt
             </p>
           </div>
 
           {error && (
-            <div className="text-red-600 text-sm bg-red-50 p-2 rounded">
-              {error}
+            <div className="glass-card p-4 border border-granny-error/30 bg-granny-error/10">
+              <p className="text-granny-error text-sm font-medium flex items-center gap-2">
+                ⚠️ {error}
+              </p>
             </div>
           )}
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-4 pt-6">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2 px-4 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              className="btn-ghost flex-1 py-3"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 py-2 px-4 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50"
+              className="btn-secondary flex-1 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading || roomCode.length !== 6}
             >
-              {loading ? 'Joining...' : 'Join Room'}
+              {loading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Joining...</span>
+                </div>
+              ) : (
+                <>🚪 Join Room</>
+              )}
             </button>
           </div>
         </form>
