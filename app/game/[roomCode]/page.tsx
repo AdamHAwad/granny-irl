@@ -608,22 +608,29 @@ function GamePage({ params }: PageProps) {
   if (loading) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-4">
-        <div className="text-lg">Loading game...</div>
+        <div className="glass-card p-8 text-center animate-slide-up">
+          <div className="text-xl text-granny-text mb-4 flex items-center justify-center gap-2">
+            🎮 Loading game...
+          </div>
+          <div className="w-8 h-8 border-2 border-granny-danger border-t-transparent rounded-full animate-spin mx-auto" />
+        </div>
       </main>
     );
   }
 
   if (error || !room) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center p-4">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Game Error</h1>
-          <p className="text-red-600 mb-4">{error || 'Game not found'}</p>
+      <main className="flex min-h-screen flex-col items-center justify-center p-4 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-granny-bg/80 to-granny-bg pointer-events-none" />
+        <div className="glass-card p-8 text-center animate-slide-up relative z-10">
+          <div className="text-6xl mb-4">⚠️</div>
+          <h1 className="text-2xl font-bold text-granny-text mb-4">Game Error</h1>
+          <p className="text-granny-error mb-6">{error || 'Game not found'}</p>
           <button
             onClick={() => router.push('/')}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            className="btn-primary px-6 py-3"
           >
-            Back to Home
+            🏠 Back to Home
           </button>
         </div>
       </main>
@@ -634,73 +641,92 @@ function GamePage({ params }: PageProps) {
   const isActive = room.status === 'active';
 
   return (
-    <main className="flex min-h-screen flex-col p-4 max-w-2xl mx-auto">
-      <div className="w-full bg-white rounded-lg shadow-lg p-6 text-black mb-4">
+    <main className="flex min-h-screen flex-col p-4 max-w-4xl mx-auto relative">
+      {/* Background effects */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-granny-bg/80 to-granny-bg pointer-events-none" />
+      
+      <div className="w-full glass-modal p-6 text-granny-text mb-4 relative z-10">
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold mb-2">
-            {isHeadstart ? 'HEADSTART' : 'GAME ACTIVE'}
+          <h1 className={`text-4xl font-bold mb-3 animate-glow flex items-center justify-center gap-3 ${
+            isHeadstart ? 'text-granny-warning' : 'text-granny-danger'
+          }`}>
+            {isHeadstart ? '⚡ HEADSTART' : '🔥 GAME ACTIVE'}
           </h1>
           
           {isHeadstart && (
-            <div className="mb-4">
-              <div className="text-4xl font-mono font-bold text-orange-600">
+            <div className="mb-6">
+              <div className="text-5xl font-mono font-bold text-granny-warning animate-pulse">
                 {formatTime(headstartRemaining)}
               </div>
-              <p className="text-gray-600">Time to hide and prepare</p>
+              <p className="text-granny-text-muted flex items-center justify-center gap-2">
+                🏃 Time to hide and prepare
+              </p>
             </div>
           )}
 
           {isActive && (
-            <div className="mb-4">
-              <div className="text-4xl font-mono font-bold text-red-600">
+            <div className="mb-6">
+              <div className="text-5xl font-mono font-bold text-granny-danger animate-pulse">
                 {formatTime(timeRemaining)}
               </div>
-              <p className="text-gray-600">Time remaining</p>
+              <p className="text-granny-text-muted flex items-center justify-center gap-2">
+                ⏰ Time remaining
+              </p>
             </div>
           )}
 
           {/* Escape Timer - only show when escape area is revealed */}
           {isActive && room?.escapeArea?.isRevealed && room?.settings.skillchecks?.enabled && escapeTimerRemaining > 0 && (
-            <div className="mb-4 border-2 border-purple-300 bg-purple-50 rounded-lg p-4">
-              <div className="text-3xl font-mono font-bold text-purple-700">
-                ⏰ {formatTime(escapeTimerRemaining)}
+            <div className="mb-6 glass-card border-2 border-granny-survivor/50 bg-granny-survivor/10 p-4">
+              <div className="text-4xl font-mono font-bold text-granny-survivor animate-pulse">
+                🚪 {formatTime(escapeTimerRemaining)}
               </div>
-              <p className="text-purple-600 font-medium">ESCAPE TIMER - Reach the escape area!</p>
-              <p className="text-xs text-purple-500 mt-1">Auto-elimination if time expires</p>
+              <p className="text-granny-survivor font-semibold">ESCAPE TIMER - Reach the escape area!</p>
+              <p className="text-xs text-granny-text-muted mt-2">⚠️ Auto-elimination if time expires</p>
             </div>
           )}
 
-          <div className="flex justify-center gap-4 text-sm">
-            <span className="font-medium">
-              Your role: <span className={`${currentPlayer?.role === 'killer' ? 'text-red-600' : 'text-blue-600'}`}>
-                {currentPlayer?.role?.toUpperCase()}
+          <div className="flex justify-center">
+            <div className={`glass-card px-6 py-3 border-2 ${
+              currentPlayer?.role === 'killer' 
+                ? 'border-granny-danger/50 bg-granny-danger/10' 
+                : 'border-granny-survivor/50 bg-granny-survivor/10'
+            }`}>
+              <span className="font-semibold text-granny-text">
+                Your role: <span className={`font-bold ${
+                  currentPlayer?.role === 'killer' ? 'text-granny-danger' : 'text-granny-survivor'
+                }`}>
+                  {currentPlayer?.role === 'killer' ? '🔪 KILLER' : '🛡️ SURVIVOR'}
+                </span>
               </span>
-            </span>
+            </div>
           </div>
 
           {/* Game Status Indicators */}
           {room.settings.skillchecks?.enabled && currentPlayer?.role === 'survivor' && isActive && (
-            <div className="mt-4 space-y-2">
+            <div className="mt-6 space-y-4">
               {/* Skillcheck Progress */}
               {room.skillchecks && room.skillchecks.length > 0 && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-blue-800">⚡ Skillcheck Progress</span>
-                    <span className="text-xs text-blue-600">
+                <div className="glass-card border border-granny-survivor/30 bg-granny-survivor/5 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-semibold text-granny-survivor flex items-center gap-2">
+                      ⚡ Skillcheck Progress
+                    </span>
+                    <span className="text-xs text-granny-survivor font-mono bg-granny-survivor/20 px-2 py-1 rounded">
                       {room.skillchecks.filter(sc => sc.isCompleted).length} / {room.skillchecks.length}
                     </span>
                   </div>
-                  <div className="w-full bg-blue-200 rounded-full h-2">
+                  <div className="w-full bg-granny-surface rounded-full h-3 overflow-hidden">
                     <div 
-                      className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                      className="bg-gradient-to-r from-granny-survivor/60 to-granny-survivor h-3 rounded-full transition-all duration-500 shadow-sm"
                       style={{ 
                         width: `${(room.skillchecks.filter(sc => sc.isCompleted).length / room.skillchecks.length) * 100}%` 
                       }}
                     />
                   </div>
                   {(room.allskillcheckscompleted || room.allSkillchecksCompleted) && (
-                    <div className="text-xs text-green-600 mt-1 font-medium">
-                      ✓ All skillchecks completed! Escape area revealed.
+                    <div className="text-xs text-granny-success mt-2 font-semibold animate-pulse flex items-center gap-1">
+                      ✅ All skillchecks completed! Escape area revealed.
                     </div>
                   )}
                 </div>
@@ -708,31 +734,42 @@ function GamePage({ params }: PageProps) {
 
               {/* Escape Area Status */}
               {room.escapeArea?.isRevealed && (
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-purple-800">🚪 Escape Area Active</span>
+                <div className="glass-card border border-granny-survivor/50 bg-granny-survivor/10 p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-semibold text-granny-survivor flex items-center gap-2">
+                      🚪 Escape Area Active
+                    </span>
                     {room.escapeArea.escapedPlayers.length > 0 && (
-                      <span className="text-xs text-purple-600">
+                      <span className="text-xs text-granny-success font-mono bg-granny-success/20 px-2 py-1 rounded">
                         {room.escapeArea.escapedPlayers.length} escaped
                       </span>
                     )}
                   </div>
-                  <div className="text-xs text-purple-600 mt-1">
-                    Find the purple door on the map to escape! 
-                    {escapeTimerRemaining > 0 && ` ${Math.ceil(escapeTimerRemaining / 60000)} min left!`}
+                  <div className="text-xs text-granny-text-muted flex items-start gap-2">
+                    <span className="text-granny-survivor">🗺️</span>
+                    <div>
+                      Find the purple door on the map to escape!{' '}
+                      {escapeTimerRemaining > 0 && (
+                        <span className="text-granny-warning font-semibold">
+                          {Math.ceil(escapeTimerRemaining / 60000)} min left!
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
 
               {/* Player Escaped Status */}
               {currentPlayer.hasEscaped && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                  <div className="text-sm font-medium text-green-800">🎉 You Escaped!</div>
-                  <div className="text-xs text-green-600 mt-1">
+                <div className="glass-card border border-granny-success/50 bg-granny-success/10 p-4">
+                  <div className="text-sm font-semibold text-granny-success flex items-center gap-2">
+                    🎉 You Escaped!
+                  </div>
+                  <div className="text-xs text-granny-success mt-2">
                     Congratulations! You&apos;ve won the game for all survivors.
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    Game should end automatically...
+                  <div className="text-xs text-granny-text-muted mt-1 flex items-center gap-1">
+                    ⏳ Game should end automatically...
                   </div>
                 </div>
               )}
@@ -757,33 +794,44 @@ function GamePage({ params }: PageProps) {
         </div>
 
         {currentPlayer?.isAlive && currentPlayer?.role === 'survivor' && isActive && (
-          <div className="mb-6 text-center">
-            <div className="bg-red-100 border-2 border-red-300 rounded-lg p-4 mb-4">
-              <div className="text-red-800 font-semibold mb-2">⚠️ Survivor Actions</div>
+          <div className="mb-6 space-y-4">
+            <div className="glass-card border border-granny-error/30 bg-granny-error/5 p-4">
+              <div className="text-granny-error font-semibold mb-3 flex items-center gap-2 justify-center">
+                ⚠️ Survivor Actions
+              </div>
               <button
                 onClick={handleEliminate}
                 disabled={eliminating}
-                className="bg-red-500 hover:bg-red-700 text-white font-bold py-4 px-8 rounded-lg text-xl disabled:opacity-50 shadow-lg transform active:scale-95 transition-transform"
+                className="w-full bg-granny-error hover:bg-granny-error/90 text-white font-bold py-4 px-8 rounded-xl text-lg disabled:opacity-50 shadow-lg hover:shadow-granny-error/20 transition-all duration-200 flex items-center justify-center gap-2"
               >
-                {eliminating ? 'Reporting Death...' : '💀 I Was Caught!'}
+                {eliminating ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Reporting Death...
+                  </>
+                ) : (
+                  <>💀 I Was Caught!</>
+                )}
               </button>
-              <p className="text-xs text-red-700 mt-2">
-                Only press this if you were tagged by a killer
+              <p className="text-xs text-granny-text-muted mt-3 text-center flex items-center justify-center gap-1">
+                🎯 Only press this if you were tagged by a killer
               </p>
             </div>
             
             {/* Practice Skillcheck Button (only if skillchecks are enabled) */}
             {room?.settings.skillchecks?.enabled && (
-              <div className="bg-amber-100 border-2 border-amber-300 rounded-lg p-4">
-                <div className="text-amber-800 font-semibold mb-2">⚡ Skillcheck Practice</div>
+              <div className="glass-card border border-granny-warning/30 bg-granny-warning/5 p-4">
+                <div className="text-granny-warning font-semibold mb-3 flex items-center gap-2 justify-center">
+                  ⚡ Skillcheck Practice
+                </div>
                 <button
                   onClick={() => setShowPracticeSkillcheck(true)}
-                  className="bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-6 rounded-lg disabled:opacity-50 shadow-lg transform active:scale-95 transition-transform"
+                  className="w-full bg-granny-warning hover:bg-granny-warning/90 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-granny-warning/20 transition-all duration-200 flex items-center justify-center gap-2"
                 >
                   🎯 Practice Skillcheck
                 </button>
-                <p className="text-xs text-amber-700 mt-2">
-                  Practice the timing challenge before attempting real skillchecks
+                <p className="text-xs text-granny-text-muted mt-3 text-center flex items-center justify-center gap-1">
+                  🎮 Practice the timing challenge before attempting real skillchecks
                 </p>
               </div>
             )}
@@ -791,27 +839,37 @@ function GamePage({ params }: PageProps) {
         )}
 
         {currentPlayer?.isAlive && currentPlayer?.role === 'killer' && isActive && (
-          <div className="mb-6 text-center">
-            <div className="bg-red-600 text-white rounded-lg p-4">
-              <div className="font-bold text-lg mb-2">🔪 You are a KILLER!</div>
-              <p className="text-sm">
-                Hunt down the survivors! They have {Math.max(0, Math.floor(timeRemaining / 60000))} minutes left to hide.
-              </p>
+          <div className="mb-6">
+            <div className="glass-card border border-granny-danger/50 bg-granny-danger/10 p-6">
+              <div className="text-center mb-4">
+                <div className="font-bold text-2xl mb-3 text-granny-danger animate-glow flex items-center justify-center gap-2">
+                  🔪 You are a KILLER!
+                </div>
+                <p className="text-sm text-granny-text flex items-center justify-center gap-2">
+                  🏃 Hunt down the survivors! They have{' '}
+                  <span className="font-bold text-granny-danger">
+                    {Math.max(0, Math.floor(timeRemaining / 60000))} minutes
+                  </span>{' '}
+                  left to hide.
+                </p>
+              </div>
               
               {/* Killer notifications for skillcheck progress */}
               {room?.settings.skillchecks?.enabled && room?.skillchecks && (
-                <div className="mt-3 pt-3 border-t border-red-400">
-                  <div className="text-xs font-medium">⚡ Skillcheck Progress</div>
-                  <div className="text-xs opacity-90 mt-1">
-                    {room.skillchecks.filter(sc => sc.isCompleted).length} / {room.skillchecks.length} completed by survivors
+                <div className="mt-4 pt-4 border-t border-granny-danger/30">
+                  <div className="text-xs font-semibold text-granny-danger mb-2 flex items-center gap-2">
+                    ⚡ Skillcheck Progress
+                  </div>
+                  <div className="text-xs text-granny-text-muted mb-3 flex items-center gap-2">
+                    📊 {room.skillchecks.filter(sc => sc.isCompleted).length} / {room.skillchecks.length} completed by survivors
                   </div>
                   {(room.allskillcheckscompleted || room.allSkillchecksCompleted) && (
-                    <div className="text-xs bg-red-500 px-2 py-1 rounded mt-2">
+                    <div className="glass-card text-xs bg-granny-error/20 border border-granny-error/50 text-granny-error px-3 py-2 rounded-lg mt-2 animate-pulse">
                       🚨 ALL SKILLCHECKS COMPLETE - Escape area is now active!
                     </div>
                   )}
                   {room.escapeArea?.isRevealed && !(room.allskillcheckscompleted || room.allSkillchecksCompleted) && (
-                    <div className="text-xs bg-red-500 px-2 py-1 rounded mt-2">
+                    <div className="glass-card text-xs bg-granny-error/20 border border-granny-error/50 text-granny-error px-3 py-2 rounded-lg mt-2 animate-pulse">
                       🚨 Timer expired - Escape area is now active!
                     </div>
                   )}
@@ -824,23 +882,24 @@ function GamePage({ params }: PageProps) {
         {/* Map Section - Available to all alive players during active game */}
         {currentPlayer?.isAlive && isActive && (
           <div className="mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className={`text-lg font-semibold ${
-                currentPlayer?.role === 'killer' ? 'text-red-600' : 'text-blue-600'
-              }`}>
-                🗺️ {currentPlayer?.role === 'killer' ? 'Tracking Map' : 'Survivor Map'}
-              </h2>
-              <button
-                onClick={() => setShowMap(!showMap)}
-                className={`px-3 py-1 rounded-lg text-sm font-medium ${
-                  currentPlayer?.role === 'killer' 
-                    ? 'bg-red-100 text-red-700 hover:bg-red-200' 
-                    : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                }`}
-              >
-                {showMap ? 'Hide Map' : 'Show Map'}
-              </button>
-            </div>
+            <div className="glass-card border border-granny-border/30 p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className={`text-lg font-semibold flex items-center gap-2 ${
+                  currentPlayer?.role === 'killer' ? 'text-granny-danger' : 'text-granny-survivor'
+                }`}>
+                  🗺️ {currentPlayer?.role === 'killer' ? 'Tracking Map' : 'Survivor Map'}
+                </h2>
+                <button
+                  onClick={() => setShowMap(!showMap)}
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                    currentPlayer?.role === 'killer' 
+                      ? 'bg-granny-danger/20 text-granny-danger border border-granny-danger/50 hover:bg-granny-danger/30' 
+                      : 'bg-granny-survivor/20 text-granny-survivor border border-granny-survivor/50 hover:bg-granny-survivor/30'
+                  }`}
+                >
+                  {showMap ? '👁️ Hide Map' : '🗺️ Show Map'}
+                </button>
+              </div>
             
             {showMap && (
               <InteractiveGameMap
@@ -856,19 +915,21 @@ function GamePage({ params }: PageProps) {
               />
             )}
             
-            {!showMap && (
-              <div className={`border rounded-lg p-3 text-center ${
-                currentPlayer?.role === 'killer' 
-                  ? 'bg-red-50 border-red-200' 
-                  : 'bg-blue-50 border-blue-200'
-              }`}>
-                <p className={`text-sm ${
-                  currentPlayer?.role === 'killer' ? 'text-red-700' : 'text-blue-700'
+              {!showMap && (
+                <div className={`glass-card border-2 border-dashed p-6 text-center ${
+                  currentPlayer?.role === 'killer' 
+                    ? 'border-granny-danger/30 bg-granny-danger/5' 
+                    : 'border-granny-survivor/30 bg-granny-survivor/5'
                 }`}>
-                  Click &quot;Show Map&quot; to see {currentPlayer?.role === 'killer' ? 'survivor locations' : 'your location and other survivors'}
-                </p>
-              </div>
-            )}
+                  <div className="text-4xl mb-2">🗺️</div>
+                  <p className={`text-sm font-medium ${
+                    currentPlayer?.role === 'killer' ? 'text-granny-danger' : 'text-granny-survivor'
+                  }`}>
+                    Click &quot;Show Map&quot; to see {currentPlayer?.role === 'killer' ? 'survivor locations' : 'your location and other survivors'}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
