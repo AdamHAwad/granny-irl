@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { locationService, LocationPermissionStatus } from '@/lib/locationService';
 
 interface LocationPermissionModalProps {
@@ -19,14 +19,7 @@ export default function LocationPermissionModal({
   const [isRequesting, setIsRequesting] = useState(false);
   const [permissionStatus, setPermissionStatus] = useState<LocationPermissionStatus | null>(null);
 
-  useEffect(() => {
-    if (isOpen && !permissionStatus) {
-      // Check if we already have permission
-      checkCurrentPermission();
-    }
-  }, [isOpen]);
-
-  const checkCurrentPermission = async () => {
+  const checkCurrentPermission = useCallback(async () => {
     if (!locationService.isSupported()) {
       setPermissionStatus({
         granted: false,
@@ -46,7 +39,14 @@ export default function LocationPermissionModal({
       // Permission not granted yet
       setPermissionStatus({ granted: false, denied: false, prompt: true });
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && !permissionStatus) {
+      // Check if we already have permission
+      checkCurrentPermission();
+    }
+  }, [isOpen, permissionStatus, checkCurrentPermission]);
 
   const handleRequestPermission = async () => {
     setIsRequesting(true);

@@ -706,7 +706,23 @@ export async function eliminatePlayer(
   console.log('Eliminating player:', playerUid, 'in room:', roomCode);
   
   try {
-    // Try optimized RPC function first (if it exists)
+    // Try the new secure handle_player_caught function first (prevents refresh issues)
+    if (eliminatedBy) {
+      const { data, error: caughtError } = await supabase.rpc('handle_player_caught', {
+        p_room_id: roomCode,
+        p_survivor_uid: playerUid,
+        p_killer_uid: eliminatedBy
+      });
+      
+      if (!caughtError && data?.success) {
+        console.log('Player eliminated using secure caught handler');
+        // Check game end asynchronously to not block the response
+        setTimeout(() => checkGameEnd(roomCode), 100);
+        return;
+      }
+    }
+    
+    // Fallback to optimized RPC function
     const { error: rpcError } = await supabase.rpc('eliminate_player_fast', {
       p_room_id: roomCode,
       p_player_uid: playerUid,

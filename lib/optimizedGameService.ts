@@ -145,12 +145,12 @@ export async function updatePlayerLocationOptimized(
     }
     
     // Batch update each room
-    for (const [roomCode, playerUpdates] of roomUpdates) {
+    for (const [roomCode, playerUpdates] of Array.from(roomUpdates.entries())) {
       try {
         // Use RPC to batch update multiple players' locations
         await supabase.rpc('batch_update_player_locations', {
           room_id: roomCode,
-          player_updates: Object.fromEntries(playerUpdates)
+          player_updates: Object.fromEntries(Array.from(playerUpdates.entries()))
         });
       } catch (error) {
         console.error('Optimized: Batch location update error:', error);

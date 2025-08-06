@@ -221,7 +221,7 @@ function GamePage({ params }: PageProps) {
       if (redirectTimeout) clearTimeout(redirectTimeout);
       unsubscribe();
     };
-  }, [user, profile, params.roomCode, router, showLocationModal, locationEnabled, lastSuccessfulRoom, handleGameEnd]);
+  }, [user, profile, params.roomCode, router, showLocationModal, locationEnabled, lastSuccessfulRoom, handleGameEnd, room?.escapeArea?.isRevealed]);
 
   useEffect(() => {
     if (!room) return;
