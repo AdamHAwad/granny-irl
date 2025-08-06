@@ -193,20 +193,40 @@ export async function checkSkillcheckCompletion(roomCode: string): Promise<void>
  * Reveals escape area when timer expires (called from existing timer logic)
  */
 export async function revealEscapeAreaOnTimer(roomCode: string): Promise<void> {
-  const { data: room, error } = await supabase
-    .from('rooms')
-    .select('*')
-    .eq('id', roomCode)
-    .single();
-
-  if (error || !room || room.escapeArea) return; // Don't reveal if already revealed
-
-  console.log('Timer expired! Revealing escape area for room:', roomCode);
+  console.log('⏰ revealEscapeAreaOnTimer: Starting for room', roomCode);
   
-  // Use skillcheck center location or host location
-  const centerLocation = room.skillcheckcenterlocation || room.players[room.host_uid]?.location;
-  
-  if (centerLocation) {
+  try {
+    const { data: room, error } = await supabase
+      .from('rooms')
+      .select('*')
+      .eq('id', roomCode)
+      .single();
+
+    if (error) {
+      console.error('❌ Failed to fetch room for escape area reveal:', error);
+      throw error;
+    }
+    
+    if (!room) {
+      console.error('❌ Room not found for escape area reveal');
+      return;
+    }
+    
+    if (room.escapeArea || room.escapearea) {
+      console.log('⚠️ Escape area already revealed, skipping');
+      return;
+    }
+
+    console.log('⏰ Timer expired! Revealing escape area for room:', roomCode);
+    
+    // Use skillcheck center location or host location
+    const centerLocation = room.skillcheckcenterlocation || room.players[room.host_uid]?.location;
+    
+    if (!centerLocation) {
+      console.error('❌ No center location available for escape area generation');
+      return;
+    }
+    
     const maxDistance = room.settings.skillchecks?.maxDistanceFromHost || 500; // Default 500m
     const escapeArea = generateEscapeArea(centerLocation, maxDistance);
     const escapeTimerStarted = Date.now();
@@ -220,17 +240,20 @@ export async function revealEscapeAreaOnTimer(roomCode: string): Promise<void> {
       .eq('id', roomCode);
       
     if (updateError) {
-      console.error('🔍 DEBUG: Error updating room in revealEscapeAreaOnTimer:', updateError);
-    } else {
-      console.log('🔍 DEBUG: Successfully updated room with escape area in revealEscapeAreaOnTimer');
+      console.error('❌ Failed to update room with escape area:', updateError);
+      throw updateError;
     }
 
-    console.log('Escape area revealed due to timer expiration. 10-minute escape timer started.');
+    console.log('✅ Escape area revealed due to timer expiration. 10-minute escape timer started.');
     
     // Start 10-minute escape timer
     setTimeout(async () => {
       await checkEscapeTimerExpired(roomCode);
     }, 10 * 60 * 1000); // 10 minutes
+    
+  } catch (error) {
+    console.error('❌ revealEscapeAreaOnTimer: Critical error:', error);
+    // Don't throw - we don't want to break the app if escape area reveal fails
   }
 }
 
@@ -305,50 +328,92 @@ export async function checkEscapeTimerExpired(roomCode: string): Promise<void> {
  * Mark a survivor as escaped when they reach the escape area
  */
 export async function markPlayerEscaped(roomCode: string, playerUid: string, isDebugMode = false): Promise<void> {
-  const { data: room, error } = await supabase
-    .from('rooms')
-    .select('*')
-    .eq('id', roomCode)
-    .single();
+  console.log('🚪 markPlayerEscaped: Starting for player', playerUid, isDebugMode ? '(DEBUG MODE)' : '');
+  
+  try {
+    // Try optimized RPC function first
+    try {
+      const { error: rpcError } = await supabase.rpc('mark_player_escaped_fast', {
+        p_room_id: roomCode,
+        p_player_uid: playerUid
+      });
+      
+      if (!rpcError) {
+        console.log('✅ Player escaped using optimized function');
+        setTimeout(() => checkGameEnd(roomCode), 1000);
+        return;
+      } else {
+        console.log('❌ Optimized escape marking failed:', rpcError);
+      }
+    } catch (e) {
+      console.log('⚠️ RPC function not available, using fallback method');
+    }
 
-  if (error || !room || !room.escapeArea) return;
+    // Fallback to original method
+    const { data: room, error } = await supabase
+      .from('rooms')
+      .select('*')
+      .eq('id', roomCode)
+      .single();
 
-  const player = room.players[playerUid];
-  // Allow host to debug escape regardless of role
-  if (!isDebugMode && (!player || player.role !== 'survivor' || !player.isAlive || player.hasEscaped)) {
-    return;
+    if (error) {
+      console.error('❌ Failed to fetch room for escape marking:', error);
+      throw error;
+    }
+    
+    if (!room || !room.escapeArea) {
+      console.error('❌ Room or escape area not found');
+      return;
+    }
+
+    const player = room.players[playerUid];
+    // Allow host to debug escape regardless of role
+    if (!isDebugMode && (!player || player.role !== 'survivor' || !player.isAlive || player.hasEscaped)) {
+      console.log('⚠️ Player validation failed for escape marking');
+      return;
+    }
+    // In debug mode, just check if player exists
+    if (isDebugMode && !player) {
+      console.log('⚠️ Player not found in debug mode');
+      return;
+    }
+
+    // Update player status
+    const updatedPlayers = { ...room.players };
+    updatedPlayers[playerUid] = {
+      ...player,
+      hasEscaped: true,
+      escapedAt: Date.now(),
+    };
+
+    // Add to escape area's escaped players list
+    const updatedEscapeArea = {
+      ...room.escapeArea,
+      escapedPlayers: [...room.escapeArea.escapedPlayers, playerUid],
+    };
+
+    const { error: updateError } = await supabase
+      .from('rooms')
+      .update({
+        players: updatedPlayers,
+        escapeArea: updatedEscapeArea,
+      })
+      .eq('id', roomCode);
+
+    if (updateError) {
+      console.error('❌ Failed to update player escape status:', updateError);
+      throw updateError;
+    }
+
+    console.log('✅ Player escaped using fallback method:', playerUid);
+
+    // Check if survivors won (any survivor escaped)
+    setTimeout(() => checkGameEnd(roomCode), 1000);
+    
+  } catch (error) {
+    console.error('❌ markPlayerEscaped: Critical error:', error);
+    // Don't throw - we don't want to break the app if escape marking fails
   }
-  // In debug mode, just check if player exists
-  if (isDebugMode && !player) {
-    return;
-  }
-
-  console.log('Player escaped!', playerUid, isDebugMode ? '(DEBUG MODE)' : '');
-
-  // Update player status
-  const updatedPlayers = { ...room.players };
-  updatedPlayers[playerUid] = {
-    ...player,
-    hasEscaped: true,
-    escapedAt: Date.now(),
-  };
-
-  // Add to escape area's escaped players list
-  const updatedEscapeArea = {
-    ...room.escapeArea,
-    escapedPlayers: [...room.escapeArea.escapedPlayers, playerUid],
-  };
-
-  await supabase
-    .from('rooms')
-    .update({
-      players: updatedPlayers,
-      escapeArea: updatedEscapeArea,
-    })
-    .eq('id', roomCode);
-
-  // Check if survivors won (any survivor escaped)
-  setTimeout(() => checkGameEnd(roomCode), 1000);
 }
 
 /**
@@ -360,53 +425,95 @@ export async function completeSkillcheck(
   playerUid: string,
   isDebugMode = false // Allow bypassing role restrictions for host debugging
 ): Promise<void> {
-  const { data: room, error } = await supabase
-    .from('rooms')
-    .select('*')
-    .eq('id', roomCode)
-    .single();
-
-  if (error || !room || !room.skillchecks) return;
-
-  const player = room.players[playerUid];
-  // Allow host to debug skillchecks regardless of role
-  if (!isDebugMode && (!player || player.role !== 'survivor' || !player.isAlive || player.hasEscaped)) {
-    return;
-  }
-  // In debug mode, just check if player exists
-  if (isDebugMode && !player) {
-    return;
-  }
-
-  // Find and update the skillcheck
-  const updatedSkillchecks = room.skillchecks.map((sc: Skillcheck) => {
-    if (sc.id === skillcheckId && !sc.isCompleted) {
-      return {
-        ...sc,
-        isCompleted: true,
-        completedBy: [...sc.completedBy, playerUid],
-        completedAt: Date.now(),
-      };
+  console.log('🎯 completeSkillcheck: Starting for skillcheck', skillcheckId, 'by player', playerUid);
+  
+  try {
+    // Try optimized RPC function first
+    try {
+      const { error: rpcError } = await supabase.rpc('complete_skillcheck_fast', {
+        p_room_id: roomCode,
+        p_skillcheck_id: skillcheckId,
+        p_player_uid: playerUid
+      });
+      
+      if (!rpcError) {
+        console.log('✅ Skillcheck completed using optimized function');
+        setTimeout(() => checkSkillcheckCompletion(roomCode), 500);
+        return;
+      } else {
+        console.log('❌ Optimized skillcheck completion failed:', rpcError);
+      }
+    } catch (e) {
+      console.log('⚠️ RPC function not available, using fallback method');
     }
-    return sc;
-  });
 
-  await supabase
-    .from('rooms')
-    .update({
-      skillchecks: updatedSkillchecks,
-    })
-    .eq('id', roomCode);
+    // Fallback to original method
+    const { data: room, error } = await supabase
+      .from('rooms')
+      .select('*')
+      .eq('id', roomCode)
+      .single();
 
-  console.log('🔍 DEBUG: Skillcheck completed:', skillcheckId, 'by player:', playerUid);
-  console.log('🔍 DEBUG: Updated skillchecks:', updatedSkillchecks.map((sc: Skillcheck) => ({ 
-    id: sc.id, 
-    isCompleted: sc.isCompleted 
-  })));
+    if (error) {
+      console.error('❌ Failed to fetch room for skillcheck completion:', error);
+      throw error;
+    }
+    
+    if (!room || !room.skillchecks) {
+      console.error('❌ Room or skillchecks not found');
+      return;
+    }
 
-  // Check if all skillchecks are now completed
-  console.log('🔍 DEBUG: Setting timeout to check skillcheck completion in 500ms');
-  setTimeout(() => checkSkillcheckCompletion(roomCode), 500);
+    const player = room.players[playerUid];
+    // Allow host to debug skillchecks regardless of role
+    if (!isDebugMode && (!player || player.role !== 'survivor' || !player.isAlive || player.hasEscaped)) {
+      console.log('⚠️ Player validation failed for skillcheck completion');
+      return;
+    }
+    // In debug mode, just check if player exists
+    if (isDebugMode && !player) {
+      console.log('⚠️ Player not found in debug mode');
+      return;
+    }
+
+    // Find and update the skillcheck
+    const updatedSkillchecks = room.skillchecks.map((sc: Skillcheck) => {
+      if (sc.id === skillcheckId && !sc.isCompleted) {
+        return {
+          ...sc,
+          isCompleted: true,
+          completedBy: [...sc.completedBy, playerUid],
+          completedAt: Date.now(),
+        };
+      }
+      return sc;
+    });
+
+    const { error: updateError } = await supabase
+      .from('rooms')
+      .update({
+        skillchecks: updatedSkillchecks,
+      })
+      .eq('id', roomCode);
+
+    if (updateError) {
+      console.error('❌ Failed to update skillcheck completion:', updateError);
+      throw updateError;
+    }
+
+    console.log('✅ Skillcheck completed using fallback method:', skillcheckId);
+    console.log('🔍 DEBUG: Updated skillchecks:', updatedSkillchecks.map((sc: Skillcheck) => ({ 
+      id: sc.id, 
+      isCompleted: sc.isCompleted 
+    })));
+
+    // Check if all skillchecks are now completed
+    setTimeout(() => checkSkillcheckCompletion(roomCode), 500);
+    
+  } catch (error) {
+    console.error('❌ completeSkillcheck: Critical error:', error);
+    // Don't throw - we don't want to break the app if skillcheck completion fails
+  }
 }
 
 export async function createRoom(
@@ -793,18 +900,24 @@ export async function eliminatePlayer(
 }
 
 export async function checkGameEnd(roomCode: string): Promise<void> {
-  console.log('checkGameEnd: Called for room', roomCode);
+  console.log('🏁 checkGameEnd: Called for room', roomCode);
   
-  const { data: room, error } = await supabase
-    .from('rooms')
-    .select('*')
-    .eq('id', roomCode)
-    .single();
+  try {
+    const { data: room, error } = await supabase
+      .from('rooms')
+      .select('*')
+      .eq('id', roomCode)
+      .single();
 
-  if (error) {
-    console.log('checkGameEnd: Room not found or error:', error);
-    return;
-  }
+    if (error) {
+      console.error('❌ checkGameEnd: Room fetch failed:', error);
+      return;
+    }
+
+    if (!room) {
+      console.error('❌ checkGameEnd: Room not found');
+      return;
+    }
 
   console.log('checkGameEnd: Room status:', room.status, 'game_started_at:', room.game_started_at);
 
@@ -883,23 +996,68 @@ export async function checkGameEnd(roomCode: string): Promise<void> {
       final_players: room.players,
     };
 
-    await Promise.all([
-      supabase
+    console.log('🏁 Ending game with winners:', winners);
+    
+    // Update room status and insert game result with proper error handling
+    try {
+      const roomUpdatePromise = supabase
         .from('rooms')
         .update({
           status: 'finished',
           game_ended_at: Date.now(),
         })
-        .eq('id', roomCode),
-      supabase
+        .eq('id', roomCode);
+
+      const gameResultPromise = supabase
         .from('game_results')
-        .insert(gameResult),
-    ]);
+        .insert(gameResult);
+
+      const [roomResult, gameResultResult] = await Promise.all([
+        roomUpdatePromise,
+        gameResultPromise
+      ]);
+
+      if (roomResult.error) {
+        console.error('❌ Failed to update room status to finished:', roomResult.error);
+        // Try individual update as fallback
+        const { error: fallbackError } = await supabase
+          .from('rooms')
+          .update({ status: 'finished', game_ended_at: Date.now() })
+          .eq('id', roomCode);
+        
+        if (fallbackError) {
+          console.error('❌ Fallback room update also failed:', fallbackError);
+          throw fallbackError;
+        } else {
+          console.log('✅ Room status updated using fallback method');
+        }
+      } else {
+        console.log('✅ Room status updated to finished');
+      }
+
+      if (gameResultResult.error) {
+        console.error('❌ Failed to insert game result:', gameResultResult.error);
+        // Game result insertion failure doesn't prevent game from ending
+      } else {
+        console.log('✅ Game result saved');
+      }
+
+    } catch (error) {
+      console.error('❌ Critical error ending game:', error);
+      throw error;
+    }
 
     // Auto-reset room for new game after 10 seconds
     setTimeout(async () => {
       await resetRoomForNewGame(roomCode);
     }, 10000);
+    
+    console.log('🏁 Game ended successfully');
+  }
+  
+  } catch (error) {
+    console.error('❌ checkGameEnd: Critical error processing game end:', error);
+    // Don't throw - we don't want to break the app if game end detection fails
   }
 }
 
