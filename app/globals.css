@@ -1,33 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  --granny-bg: #0a0a0b;
+  --granny-surface: #1a1a1d;
+  --granny-surface-light: #252529;
+  --granny-border: #2a2a2d;
+  --granny-danger: #c41e3a;
+  --granny-survivor: #2d5a3d;
+  --granny-text: #f5f5f5;
+  --granny-text-muted: #a0a0a0;
+  --granny-warning: #f59e0b;
+  --granny-success: #4ade80;
+  --granny-error: #ef4444;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--granny-bg);
+  color: var(--granny-text);
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(196, 30, 58, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(45, 90, 61, 0.05) 0%, transparent 50%);
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-granny-surface/50 backdrop-blur-md border border-granny-border/50 rounded-lg shadow-xl;
+  }
+  
+  .glass-modal {
+    @apply bg-granny-surface/80 backdrop-blur-lg border border-granny-border/30 rounded-xl shadow-2xl;
+  }
+  
+  .btn-primary {
+    @apply bg-granny-danger hover:bg-granny-danger/90 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-granny-danger/20 focus:outline-none focus:ring-2 focus:ring-granny-danger/50;
+  }
+  
+  .btn-secondary {
+    @apply bg-granny-survivor hover:bg-granny-survivor/90 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-granny-survivor/20 focus:outline-none focus:ring-2 focus:ring-granny-survivor/50;
+  }
+  
+  .btn-ghost {
+    @apply bg-transparent hover:bg-granny-surface-light text-granny-text border border-granny-border hover:border-granny-border font-medium py-2 px-4 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-granny-border;
+  }
+  
+  .input-field {
+    @apply bg-granny-surface border border-granny-border text-granny-text placeholder-granny-text-muted rounded-lg px-4 py-3 focus:outline-none focus:border-granny-danger/50 focus:ring-2 focus:ring-granny-danger/20 transition-all duration-200;
+  }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+  
+  @keyframes subtle-float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+  
+  .animate-float {
+    animation: subtle-float 3s ease-in-out infinite;
   }
 }

@@ -98,21 +98,26 @@ function AuthenticatedHome() {
   if (loading) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-4">
-        <div className="text-lg">Loading profile...</div>
+        <div className="glass-card p-8 text-center">
+          <div className="text-lg text-granny-text mb-4">Loading profile...</div>
+          <div className="w-8 h-8 border-2 border-granny-danger border-t-transparent rounded-full animate-spin mx-auto" />
+        </div>
       </main>
     );
   }
 
   if (needsSetup) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50">
-        <ProfileSetup
-          existingProfile={profile}
-          onComplete={() => {
-            setNeedsSetup(false);
-            refreshProfile();
-          }}
-        />
+      <main className="flex min-h-screen flex-col items-center justify-center p-4">
+        <div className="glass-modal p-8 max-w-md w-full animate-slide-up">
+          <ProfileSetup
+            existingProfile={profile}
+            onComplete={() => {
+              setNeedsSetup(false);
+              refreshProfile();
+            }}
+          />
+        </div>
       </main>
     );
   }
@@ -131,83 +136,102 @@ function AuthenticatedHome() {
 
   return (
     <>
-      <main className="flex min-h-screen flex-col items-center justify-center p-4">
-        <div className="text-center mb-8">
-          <div className="mb-4">
+      <main className="flex min-h-screen flex-col items-center justify-center p-4 relative">
+        {/* Background effects */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-granny-bg/80 to-granny-bg" />
+        
+        <div className="glass-card p-8 text-center mb-8 max-w-lg w-full animate-slide-up relative z-10">
+          <div className="mb-6">
             {profile?.profile_picture_url ? (
               <img
                 src={profile.profile_picture_url}
                 alt="Profile"
-                className="w-16 h-16 rounded-full mx-auto object-cover border-2 border-gray-200"
+                className="w-20 h-20 rounded-full mx-auto object-cover border-3 border-granny-border shadow-lg"
               />
             ) : (
-              <div className="w-16 h-16 rounded-full mx-auto bg-gray-200 flex items-center justify-center border-2 border-gray-200">
-                <span className="text-xl text-gray-500">
+              <div className="w-20 h-20 rounded-full mx-auto bg-granny-surface flex items-center justify-center border-3 border-granny-border shadow-lg">
+                <span className="text-2xl text-granny-text font-semibold">
                   {displayName?.[0]?.toUpperCase()}
                 </span>
               </div>
             )}
           </div>
           
-          <h1 className="text-4xl font-bold mb-4">Granny IRL</h1>
-          <p className="text-lg mb-4">Welcome, {displayName}!</p>
+          <h1 className="text-4xl font-bold mb-3 text-granny-text">
+            Granny IRL
+          </h1>
+          <div className="w-12 h-1 bg-gradient-to-r from-granny-danger to-granny-survivor mx-auto mb-4 rounded-full" />
+          <p className="text-xl mb-6 text-granny-text font-medium">
+            Welcome back, <span className="text-granny-danger">{displayName}</span>!
+          </p>
           
           {/* Location status indicator */}
           {locationPermissionChecked && (
-            <div className={`mb-4 px-3 py-2 rounded-lg text-sm ${
+            <div className={`mb-6 px-4 py-3 rounded-lg text-sm glass-card ${
               hasLocationPermission 
-                ? 'bg-green-100 text-green-800 border border-green-200' 
-                : 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+                ? 'border-granny-success/30' 
+                : 'border-granny-warning/30'
             }`}>
               {hasLocationPermission ? (
-                <>📍 Location enabled - ready for enhanced gameplay!</>
+                <div className="flex items-center justify-center space-x-2 text-granny-success">
+                  <span>📍</span>
+                  <span className="font-medium">Location enabled - ready for enhanced gameplay!</span>
+                </div>
               ) : (
-                <>📍 Location disabled - <button 
-                  onClick={() => setShowLocationModal(true)}
-                  className="underline hover:no-underline"
-                >
-                  click to enable
-                </button> for enhanced features</>
+                <div className="flex items-center justify-center space-x-2 text-granny-warning">
+                  <span>📍</span>
+                  <span>
+                    Location disabled - 
+                    <button 
+                      onClick={() => setShowLocationModal(true)}
+                      className="underline hover:no-underline font-semibold ml-1"
+                    >
+                      click to enable
+                    </button> for enhanced features
+                  </span>
+                </div>
               )}
             </div>
           )}
           
-          <div className="flex gap-4 justify-center text-sm">
+          <div className="flex flex-wrap gap-4 justify-center text-sm">
             <button
               onClick={() => setNeedsSetup(true)}
-              className="text-blue-600 hover:text-blue-800 underline"
+              className="text-granny-danger hover:text-granny-danger/80 underline hover:no-underline transition-all font-medium"
             >
               Edit Profile
             </button>
             <button
               onClick={() => router.push('/history')}
-              className="text-purple-600 hover:text-purple-800 underline"
+              className="text-granny-survivor hover:text-granny-survivor/80 underline hover:no-underline transition-all font-medium"
             >
               Game History
             </button>
             <button
               onClick={logout}
-              className="text-gray-600 hover:text-gray-800 underline"
+              className="text-granny-text-muted hover:text-granny-text underline hover:no-underline transition-all font-medium"
             >
               Sign out
             </button>
           </div>
         </div>
 
-        <CurrentRoom />
+        <div className="w-full max-w-lg mb-8">
+          <CurrentRoom />
+        </div>
         
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 w-full max-w-lg relative z-10">
           <button
             onClick={() => setShowCreateModal(true)}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg"
+            className="btn-primary flex-1 text-lg font-semibold animate-glow"
           >
-            Create Room
+            🎮 Create Room
           </button>
           <button
             onClick={() => setShowJoinModal(true)}
-            className="bg-green-500 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg"
+            className="btn-secondary flex-1 text-lg font-semibold"
           >
-            Join Room
+            🚪 Join Room
           </button>
         </div>
       </main>
@@ -236,13 +260,35 @@ function AuthenticatedHome() {
 
 function UnauthenticatedHome() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4">
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold mb-4">Granny IRL</h1>
-        <p className="text-lg mb-8">Real-life tag game companion app</p>
-        <p className="text-gray-600 mb-8">Sign in to create or join games</p>
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 relative overflow-hidden">
+      {/* Background effects */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-granny-bg/50 to-granny-bg" />
+      
+      <div className="glass-card p-8 text-center max-w-md w-full animate-slide-up relative z-10">
+        <div className="mb-6">
+          <h1 className="text-5xl font-bold mb-4 text-granny-text bg-gradient-to-r from-granny-danger to-granny-survivor bg-clip-text text-transparent animate-float">
+            Granny IRL
+          </h1>
+          <div className="w-16 h-1 bg-gradient-to-r from-granny-danger to-granny-survivor mx-auto mb-6 rounded-full" />
+        </div>
+        
+        <p className="text-xl mb-4 text-granny-text font-medium">Real-life horror tag</p>
+        <p className="text-granny-text-muted mb-8 leading-relaxed">
+          Outdoor multiplayer game with GPS tracking, skillchecks, and escape mechanics
+        </p>
+        
+        <div className="space-y-4">
+          <SignInButton />
+          <p className="text-sm text-granny-text-muted">
+            Sign in with Google to start playing
+          </p>
+        </div>
       </div>
-      <SignInButton />
+      
+      {/* Floating elements for atmosphere */}
+      <div className="absolute top-20 left-20 w-2 h-2 bg-granny-danger/30 rounded-full animate-pulse" />
+      <div className="absolute bottom-32 right-24 w-3 h-3 bg-granny-survivor/20 rounded-full animate-pulse delay-1000" />
+      <div className="absolute top-1/3 right-20 w-1 h-1 bg-granny-warning/40 rounded-full animate-pulse delay-500" />
     </main>
   );
 }
