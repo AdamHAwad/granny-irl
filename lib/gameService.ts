@@ -378,23 +378,42 @@ export async function markPlayerEscaped(roomCode: string, playerUid: string, isD
     }
 
     const player = room.players[playerUid];
-    // Allow host to debug escape regardless of role
-    if (!isDebugMode && (!player || player.role !== 'survivor' || !player.isAlive || player.hasEscaped)) {
-      console.log('⚠️ Player validation failed for escape marking');
+    
+    if (!player) {
+      console.log('⚠️ Player not found');
       return;
     }
-    // In debug mode, just check if player exists
-    if (isDebugMode && !player) {
-      console.log('⚠️ Player not found in debug mode');
-      return;
+    
+    // In debug mode, allow more flexibility but still validate basic requirements
+    if (isDebugMode) {
+      if (player.hasEscaped) {
+        console.log('⚠️ Player already escaped');
+        return;
+      }
+      console.log('🛠️ DEBUG MODE: Allowing escape for', player.role, 'player (alive:', player.isAlive, ')');
+    } else {
+      // Normal mode: strict validation
+      if (!player || player.role !== 'survivor' || !player.isAlive || player.hasEscaped) {
+        console.log('⚠️ Player validation failed for escape marking', {
+          exists: !!player,
+          role: player?.role,
+          isAlive: player?.isAlive,
+          hasEscaped: player?.hasEscaped
+        });
+        return;
+      }
     }
 
-    // Update player status
+    // Update player status - ensure escaped players are alive and clear elimination data
     const updatedPlayers = { ...room.players };
     updatedPlayers[playerUid] = {
       ...player,
+      isAlive: true, // Escaped players are alive
       hasEscaped: true,
       escapedAt: Date.now(),
+      // Clear elimination data since they escaped
+      eliminatedAt: undefined,
+      eliminatedBy: undefined,
     };
 
     // Add to escape area's escaped players list

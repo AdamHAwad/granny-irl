@@ -460,18 +460,18 @@ function GamePage({ params }: PageProps) {
 
   // Memoized player calculations for performance - moved before early returns
   const playerData = useMemo(() => {
-    if (!room) return { players: [], aliveKillers: [], aliveSurvivors: [], deadPlayers: [], escapedSurvivors: [] };
+    if (!room) return { players: [], aliveKillers: [], aliveSurvivors: [], deadPlayers: [], escapedPlayers: [] };
     const players = Object.values(room.players);
     return {
       players,
       aliveKillers: players.filter(p => p.role === 'killer' && p.isAlive),
       aliveSurvivors: players.filter(p => p.role === 'survivor' && p.isAlive && !p.hasEscaped),
-      deadPlayers: players.filter(p => !p.isAlive),
-      escapedSurvivors: players.filter(p => p.role === 'survivor' && p.hasEscaped)
+      deadPlayers: players.filter(p => !p.isAlive && !p.hasEscaped), // Only eliminated players, not escaped
+      escapedPlayers: players.filter(p => p.hasEscaped) // All escaped players (killers or survivors)
     };
   }, [room]);
 
-  const { players, aliveKillers, aliveSurvivors, deadPlayers, escapedSurvivors } = playerData;
+  const { players, aliveKillers, aliveSurvivors, deadPlayers, escapedPlayers } = playerData;
 
   // Memoized nearest survivor calculation for killers - moved before early returns
   const nearestSurvivor = useMemo(() => {
@@ -867,6 +867,30 @@ function GamePage({ params }: PageProps) {
                 })}
             </div>
           </div>
+
+          {/* Escaped Players Section */}
+          {escapedPlayers.length > 0 && (
+            <div className="mt-6">
+              <h2 className="text-lg font-semibold mb-3 text-green-600">
+                Escaped ({escapedPlayers.length})
+              </h2>
+              <div className="space-y-2">
+                {escapedPlayers
+                  .sort((a, b) => (a.escapedAt || 0) - (b.escapedAt || 0))
+                  .map((player) => {
+                    const canClick = !currentPlayer?.isAlive || currentPlayer.hasEscaped; // Escaped/eliminated players can click
+                    return (
+                      <PlayerCard 
+                        key={player.uid} 
+                        player={player} 
+                        onClick={handlePlayerClick}
+                        canClick={canClick}
+                      />
+                    );
+                  })}
+              </div>
+            </div>
+          )}
         )}
       </div>
 
@@ -1003,7 +1027,7 @@ function GamePage({ params }: PageProps) {
               <div className="font-bold">Game State Debug:</div>
               <div>Room Status: {room.status}</div>
               <div>Alive Survivors: {aliveSurvivors.length}</div>
-              <div>Escaped Survivors: {escapedSurvivors.length}</div>
+              <div>Escaped Survivors: {escapedPlayers.filter(p => p.role === 'survivor').length}</div>
               <div>Eliminated Survivors: {players.filter(p => p.role === 'survivor' && !p.isAlive && !p.hasEscaped).length}</div>
               <div>Current Player Escaped: {currentPlayer?.hasEscaped ? 'Yes' : 'No'}</div>
               <div>Current Player Alive: {currentPlayer?.isAlive ? 'Yes' : 'No'}</div>
