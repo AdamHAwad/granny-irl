@@ -57,6 +57,36 @@ body {
   .input-field {
     @apply bg-granny-surface border border-granny-border text-granny-text placeholder-granny-text-muted rounded-lg px-4 py-3 focus:outline-none focus:border-granny-danger/50 focus:ring-2 focus:ring-granny-danger/20 transition-all duration-200;
   }
+  
+  .slider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 8px;
+    border-radius: 4px;
+    outline: none;
+  }
+  
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--granny-danger);
+    cursor: pointer;
+    border: 2px solid var(--granny-text);
+    box-shadow: 0 2px 6px rgba(196, 30, 58, 0.3);
+  }
+  
+  .slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--granny-danger);
+    cursor: pointer;
+    border: 2px solid var(--granny-text);
+    box-shadow: 0 2px 6px rgba(196, 30, 58, 0.3);
+  }
 }
 
 @layer utilities {

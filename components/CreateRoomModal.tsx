@@ -183,29 +183,32 @@ export default function CreateRoomModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center p-4 z-50 overflow-y-auto">
-      <div className="bg-white rounded-lg w-full max-w-md text-black my-8 max-h-[90vh] flex flex-col">
-        <div className="flex justify-between items-center p-6 pb-0">
-          <h2 className="text-2xl font-bold">Create Room</h2>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-start justify-center p-4 z-50 overflow-y-auto">
+      <div className="glass-modal w-full max-w-lg text-granny-text my-8 max-h-[90vh] flex flex-col animate-slide-up">
+        <div className="flex justify-between items-center p-6 pb-4 border-b border-granny-border/30">
+          <div>
+            <h2 className="text-2xl font-bold text-granny-text mb-1">🎮 Create Room</h2>
+            <p className="text-sm text-granny-text-muted">Configure your horror game session</p>
+          </div>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl"
+            className="text-granny-text-muted hover:text-granny-text text-2xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-granny-surface-light transition-colors"
           >
             ×
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 pt-4 space-y-4 overflow-y-auto flex-1">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto flex-1">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Number of Killers
+            <label className="block text-sm font-semibold text-granny-text mb-3 flex items-center gap-2">
+              🔪 Number of Killers
             </label>
             <select
               value={settings.killerCount}
               onChange={(e) =>
                 setSettings({ ...settings, killerCount: parseInt(e.target.value) })
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="input-field w-full"
             >
               <option value={1}>1 Killer</option>
               <option value={2}>2 Killers</option>
@@ -214,8 +217,8 @@ export default function CreateRoomModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Round Length
+            <label className="block text-sm font-semibold text-granny-text mb-3 flex items-center gap-2">
+              ⏱️ Round Length
             </label>
             <select
               value={settings.roundLengthMinutes}
@@ -225,7 +228,7 @@ export default function CreateRoomModal({
                   roundLengthMinutes: parseFloat(e.target.value),
                 })
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="input-field w-full"
             >
               <option value={0.5}>30 seconds (testing)</option>
               <option value={5}>5 minutes</option>
@@ -237,8 +240,8 @@ export default function CreateRoomModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Headstart Time
+            <label className="block text-sm font-semibold text-granny-text mb-3 flex items-center gap-2">
+              🏃 Headstart Time
             </label>
             <select
               value={settings.headstartMinutes}
@@ -248,21 +251,21 @@ export default function CreateRoomModal({
                   headstartMinutes: parseFloat(e.target.value),
                 })
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="input-field w-full"
             >
               <option value={0.083}>5 seconds (testing)</option>
               <option value={1}>1 minute</option>
               <option value={3}>3 minutes</option>
               <option value={5}>5 minutes</option>
             </select>
-            <p className="text-xs text-gray-500 mt-1">
-              Time for survivors to hide before the round starts
+            <p className="text-xs text-granny-text-muted mt-2">
+              Time for survivors to hide before the hunt begins
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Max Players
+            <label className="block text-sm font-semibold text-granny-text mb-3 flex items-center gap-2">
+              👥 Max Players
             </label>
             <select
               value={settings.maxPlayers}
@@ -272,7 +275,7 @@ export default function CreateRoomModal({
                   maxPlayers: parseInt(e.target.value),
                 })
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="input-field w-full"
             >
               <option value={5}>5 players</option>
               <option value={8}>8 players</option>
@@ -283,66 +286,67 @@ export default function CreateRoomModal({
           </div>
 
           {/* Skillcheck System Section */}
-          <div className="border-t pt-4">
-            <div className="flex items-center gap-3 mb-3">
+          <div className="glass-card p-4 border border-granny-border/30">
+            <div className="flex items-start gap-3 mb-3">
               <input
                 type="checkbox"
                 id="skillchecksEnabled"
                 checked={skillchecksEnabled}
                 onChange={(e) => setSkillchecksEnabled(e.target.checked)}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="h-5 w-5 mt-0.5 text-granny-danger focus:ring-granny-danger/50 bg-granny-surface border-granny-border rounded"
               />
-              <label htmlFor="skillchecksEnabled" className="text-sm font-medium text-gray-700">
-                🎯 Enable Skillchecks (Dead by Daylight style)
-              </label>
+              <div>
+                <label htmlFor="skillchecksEnabled" className="text-sm font-semibold text-granny-text block">
+                  🎯 Enable Skillchecks (Dead by Daylight style)
+                </label>
+                <p className="text-xs text-granny-text-muted mt-1">
+                  Survivors must complete objectives while avoiding killers
+                </p>
+              </div>
             </div>
-            
-            <p className="text-xs text-gray-500 mb-2">
-              Survivors must complete objectives while avoiding killers.
-            </p>
 
             {skillchecksEnabled && (
               <div className="space-y-4">
                 {locationError && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                    <p className="text-red-700 text-sm">⚠️ {locationError}</p>
+                  <div className="bg-granny-error/10 border border-granny-error/30 rounded-lg p-3">
+                    <p className="text-granny-error text-sm">⚠️ {locationError}</p>
                   </div>
                 )}
 
                 {/* Location Picker */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Skillcheck Center Location
+                  <label className="block text-sm font-semibold text-granny-text mb-3">
+                    📍 Skillcheck Center Location
                   </label>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <button
                       type="button"
                       onClick={() => setShowLocationPicker(!showLocationPicker)}
-                      className={`w-full p-3 rounded-lg border-2 text-left ${
+                      className={`w-full p-4 rounded-lg border-2 text-left transition-all duration-200 ${
                         pinnedLocation 
-                          ? 'border-green-300 bg-green-50' 
-                          : 'border-gray-300 bg-gray-50'
+                          ? 'border-granny-success/50 bg-granny-success/10 hover:bg-granny-success/15' 
+                          : 'border-granny-border bg-granny-surface hover:bg-granny-surface-light'
                       }`}
                     >
                       {pinnedLocation ? (
                         <div>
-                          <div className="text-green-700 font-medium">📍 Location Selected</div>
-                          <div className="text-xs text-green-600">
+                          <div className="text-granny-success font-semibold mb-1">📍 Location Selected</div>
+                          <div className="text-xs text-granny-text-muted">
                             {pinnedLocation.latitude.toFixed(6)}, {pinnedLocation.longitude.toFixed(6)}
                           </div>
                         </div>
                       ) : (
                         <div>
-                          <div className="text-gray-700 font-medium">🗺️ Click to Pin Location</div>
-                          <div className="text-xs text-gray-500">
-                            Choose where skillchecks will be centered
+                          <div className="text-granny-text font-semibold mb-1">🗺️ Click to Pin Location</div>
+                          <div className="text-xs text-granny-text-muted">
+                            Choose where skillchecks will be centered around
                           </div>
                         </div>
                       )}
                     </button>
                     
                     {showLocationPicker && (
-                      <div className="border rounded-lg overflow-hidden">
+                      <div className="border border-granny-border rounded-lg overflow-hidden bg-granny-surface">
                         <div style={{ height: '200px', width: '100%' }}>
                           <MapContainer
                             center={mapCenter}
@@ -379,8 +383,8 @@ export default function CreateRoomModal({
                             })()}
                           </MapContainer>
                         </div>
-                        <div className="bg-blue-50 p-2 text-xs text-blue-700">
-                          <p>🔵 Blue circle = Your current location (reference point)</p>
+                        <div className="bg-granny-surface-light p-3 text-xs text-granny-text-muted border-t border-granny-border">
+                          <p className="mb-1">🔵 Blue marker = Your current location (reference)</p>
                           <p>📍 Red pin = Click anywhere to set skillcheck center</p>
                         </div>
                       </div>
@@ -389,8 +393,8 @@ export default function CreateRoomModal({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Number of Skillchecks: {skillcheckCount}
+                  <label className="block text-sm font-semibold text-granny-text mb-3">
+                    🎯 Number of Skillchecks: <span className="text-granny-danger">{skillcheckCount}</span>
                   </label>
                   <input
                     type="range"
@@ -399,17 +403,20 @@ export default function CreateRoomModal({
                     step="1"
                     value={skillcheckCount}
                     onChange={(e) => setSkillcheckCount(parseInt(e.target.value))}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                    className="w-full h-2 bg-granny-surface rounded-lg appearance-none cursor-pointer slider"
+                    style={{
+                      background: `linear-gradient(to right, #c41e3a 0%, #c41e3a ${((skillcheckCount - 1) / 7) * 100}%, #1a1a1d ${((skillcheckCount - 1) / 7) * 100}%, #1a1a1d 100%)`
+                    }}
                   />
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>1 skillcheck</span>
-                    <span>8 skillchecks</span>
+                  <div className="flex justify-between text-xs text-granny-text-muted mt-2">
+                    <span>1 objective</span>
+                    <span>8 objectives</span>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Max Distance from Pinned Location: {skillcheckDistance}m
+                  <label className="block text-sm font-semibold text-granny-text mb-3">
+                    📏 Max Distance: <span className="text-granny-survivor">{skillcheckDistance}m</span>
                   </label>
                   <input
                     type="range"
@@ -418,25 +425,28 @@ export default function CreateRoomModal({
                     step="25"
                     value={skillcheckDistance}
                     onChange={(e) => setSkillcheckDistance(parseInt(e.target.value))}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                    className="w-full h-2 bg-granny-surface rounded-lg appearance-none cursor-pointer slider"
+                    style={{
+                      background: `linear-gradient(to right, #2d5a3d 0%, #2d5a3d ${((skillcheckDistance - 50) / 950) * 100}%, #1a1a1d ${((skillcheckDistance - 50) / 950) * 100}%, #1a1a1d 100%)`
+                    }}
                   />
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>50m (close)</span>
-                    <span>1000m (spread out)</span>
+                  <div className="flex justify-between text-xs text-granny-text-muted mt-2">
+                    <span>50m (tight)</span>
+                    <span>1000m (spread)</span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-2">
-                    Skillchecks will be randomly placed within this distance from the pinned location.
+                  <p className="text-xs text-granny-text-muted mt-2">
+                    Objectives randomly scattered within this radius from center
                   </p>
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-2">
-                  <h4 className="font-medium text-blue-800 mb-1 text-sm">📋 Rules:</h4>
-                  <ul className="text-xs text-blue-700 space-y-0.5">
-                    <li>• Complete ALL skillchecks + survive timer</li>
-                    <li>• 30s timing challenge per skillcheck</li>
-                    <li>• Failures add +30s to round timer</li>
-                    <li>• Co-op: work together allowed</li>
-                    <li>• Hidden from killer maps</li>
+                <div className="glass-card p-4 border border-granny-warning/30">
+                  <h4 className="font-semibold text-granny-warning mb-2 text-sm flex items-center gap-2">📋 Skillcheck Rules:</h4>
+                  <ul className="text-xs text-granny-text-muted space-y-1">
+                    <li className="flex items-center gap-2"><span className="text-granny-danger">•</span> Complete ALL objectives + survive timer</li>
+                    <li className="flex items-center gap-2"><span className="text-granny-danger">•</span> 30s timing challenge per objective</li>
+                    <li className="flex items-center gap-2"><span className="text-granny-survivor">•</span> Co-op: survivors can work together</li>
+                    <li className="flex items-center gap-2"><span className="text-granny-survivor">•</span> Hidden from killer maps</li>
+                    <li className="flex items-center gap-2"><span className="text-granny-warning">•</span> Unlock escape area when complete</li>
                   </ul>
                 </div>
               </div>
@@ -445,11 +455,11 @@ export default function CreateRoomModal({
 
         </form>
         
-        <div className="flex gap-3 p-6 pt-4 border-t border-gray-200 bg-gray-50">
+        <div className="flex gap-4 p-6 pt-4 border-t border-granny-border/30">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-2 px-4 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 bg-white"
+            className="btn-ghost flex-1 py-3"
             disabled={loading}
           >
             Cancel
@@ -457,10 +467,17 @@ export default function CreateRoomModal({
           <button
             type="submit"
             onClick={handleSubmit}
-            className="flex-1 py-2 px-4 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
+            className="btn-primary flex-1 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={loading}
           >
-            {loading ? 'Creating...' : 'Create Room'}
+            {loading ? (
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <span>Creating...</span>
+              </div>
+            ) : (
+              <>🎮 Create Room</>
+            )}
           </button>
         </div>
       </div>
