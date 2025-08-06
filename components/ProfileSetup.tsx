@@ -88,86 +88,111 @@ export default function ProfileSetup({ onComplete, existingProfile }: ProfileSet
   };
 
   return (
-    <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-lg text-black">
-      <h2 className="text-2xl font-bold text-center mb-6">Complete Your Profile</h2>
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="text-center">
-          <div className="mb-4">
-            {previewUrl ? (
-              <img
-                src={previewUrl}
-                alt="Profile preview"
-                className="w-24 h-24 rounded-full mx-auto object-cover border-4 border-gray-200"
-              />
-            ) : (
-              <div className="w-24 h-24 rounded-full mx-auto bg-gray-200 flex items-center justify-center border-4 border-gray-200">
-                <span className="text-2xl text-gray-500">
-                  {user?.user_metadata?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase()}
-                </span>
-              </div>
-            )}
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="glass-modal max-w-md w-full text-granny-text animate-slide-up">
+        <div className="p-6">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-granny-text mb-2 flex items-center justify-center gap-2">
+              👤 Complete Your Profile
+            </h2>
+            <p className="text-sm text-granny-text-muted">
+              Customize your identity for the hunt
+            </p>
           </div>
           
-          <div className="space-y-2">
-            <label className="block">
-              <span className="text-sm text-gray-600">Profile Picture (optional)</span>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="text-center">
+              <div className="mb-6">
+                {previewUrl ? (
+                  <div className="relative inline-block">
+                    <img
+                      src={previewUrl}
+                      alt="Profile preview"
+                      className="w-28 h-28 rounded-full mx-auto object-cover border-4 border-granny-survivor/50 shadow-lg"
+                    />
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-b from-transparent to-granny-bg/20 pointer-events-none" />
+                  </div>
+                ) : (
+                  <div className="w-28 h-28 rounded-full mx-auto bg-granny-surface border-4 border-granny-border/50 flex items-center justify-center shadow-lg">
+                    <span className="text-3xl text-granny-text-muted font-bold">
+                      {user?.user_metadata?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase()}
+                    </span>
+                  </div>
+                )}
+              </div>
+              
+              <div className="space-y-4">
+                <label className="block">
+                  <span className="text-sm font-semibold text-granny-text mb-3 block flex items-center gap-2 justify-center">
+                    📸 Profile Picture (optional)
+                  </span>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="block w-full text-sm text-granny-text-muted file:mr-4 file:py-3 file:px-6 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-granny-surface file:text-granny-text file:border file:border-granny-border hover:file:bg-granny-surface-light file:transition-all file:duration-200 bg-granny-surface border border-granny-border rounded-lg focus:border-granny-survivor/50 focus:ring-2 focus:ring-granny-survivor/20 transition-all duration-200"
+                      disabled={loading}
+                    />
+                  </div>
+                </label>
+                {(previewUrl || profileImage) && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    disabled={loading}
+                    className="text-sm text-granny-error hover:text-granny-error/80 font-medium disabled:opacity-50 transition-colors duration-200 flex items-center gap-1 mx-auto"
+                  >
+                    🗑️ Remove Picture
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-granny-text mb-3 flex items-center gap-2">
+                ✏️ Custom Username (optional)
+              </label>
               <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mt-2"
-                disabled={loading}
+                type="text"
+                value={customUsername}
+                onChange={(e) => setCustomUsername(e.target.value)}
+                placeholder={`Default: ${user?.user_metadata?.full_name || user?.email}`}
+                className="input-field w-full placeholder:text-granny-text-muted/60"
+                maxLength={20}
               />
-            </label>
-            {(previewUrl || profileImage) && (
+              <p className="text-xs text-granny-text-muted mt-3 flex items-center gap-1">
+                👥 This will be displayed to other players during games
+              </p>
+            </div>
+
+            <div className="flex gap-4 pt-4">
               <button
                 type="button"
-                onClick={handleRemoveImage}
+                onClick={handleSkip}
+                className="btn-ghost flex-1 py-3"
                 disabled={loading}
-                className="text-sm text-red-600 hover:text-red-800 underline disabled:opacity-50"
               >
-                Remove Picture
+                Skip for Now
               </button>
-            )}
-          </div>
+              <button
+                type="submit"
+                className="btn-secondary flex-1 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={loading}
+              >
+                {loading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Saving...</span>
+                  </div>
+                ) : (
+                  <>💾 Save Profile</>
+                )}
+              </button>
+            </div>
+          </form>
         </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Custom Username (optional)
-          </label>
-          <input
-            type="text"
-            value={customUsername}
-            onChange={(e) => setCustomUsername(e.target.value)}
-            placeholder={`Default: ${user?.user_metadata?.full_name || user?.email}`}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            maxLength={20}
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            This will be displayed to other players
-          </p>
-        </div>
-
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={handleSkip}
-            className="flex-1 py-2 px-4 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-            disabled={loading}
-          >
-            Skip
-          </button>
-          <button
-            type="submit"
-            className="flex-1 py-2 px-4 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
-            disabled={loading}
-          >
-            {loading ? 'Saving...' : 'Save'}
-          </button>
-        </div>
-      </form>
+      </div>
     </div>
   );
 }
