@@ -935,10 +935,11 @@ function GamePage({ params }: PageProps) {
 
         {!currentPlayer?.isAlive && (
           <div className="mb-6">
-            <div className="text-center mb-4">
-              <div className="bg-gray-600 text-white rounded-lg p-4">
-                <div className="font-bold text-lg mb-2">💀 You have been eliminated</div>
-                <p className="text-sm">
+            <div className="text-center mb-6">
+              <div className="glass-card border border-granny-text-muted/30 bg-granny-text-muted/10 p-6">
+                <div className="text-6xl mb-4">💀</div>
+                <div className="font-bold text-xl mb-3 text-granny-text">You have been eliminated</div>
+                <p className="text-sm text-granny-text-muted">
                   Watch the remaining players battle it out!
                 </p>
               </div>
@@ -946,14 +947,16 @@ function GamePage({ params }: PageProps) {
             
             {/* Spectator Map */}
             {isActive && (
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-lg font-semibold text-gray-600">👻 Spectator Map</h2>
+              <div className="glass-card border border-granny-border/30 p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-granny-text flex items-center gap-2">
+                    👻 Spectator Map
+                  </h2>
                   <button
                     onClick={() => setShowMap(!showMap)}
-                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium"
+                    className="px-4 py-2 bg-granny-surface border border-granny-border text-granny-text rounded-lg hover:bg-granny-surface-light text-sm font-semibold transition-all duration-200"
                   >
-                    {showMap ? 'Hide Map' : 'Show Map'}
+                    {showMap ? '👁️ Hide Map' : '🗺️ Show Map'}
                   </button>
                 </div>
                 
@@ -978,10 +981,10 @@ function GamePage({ params }: PageProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <h2 className="text-lg font-semibold mb-3 text-red-600">
-              Killers ({aliveKillers.length})
+            <h2 className="text-lg font-semibold mb-4 text-granny-danger flex items-center gap-2">
+              🔪 Killers ({aliveKillers.length})
             </h2>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {players.filter(p => p.role === 'killer').map((player) => {
                 const canClick = currentPlayer?.role === 'killer' || !currentPlayer?.isAlive;
                 return (
@@ -997,10 +1000,10 @@ function GamePage({ params }: PageProps) {
           </div>
 
           <div>
-            <h2 className="text-lg font-semibold mb-3 text-blue-600">
-              Survivors ({aliveSurvivors.length})
+            <h2 className="text-lg font-semibold mb-4 text-granny-survivor flex items-center gap-2">
+              🛡️ Survivors ({aliveSurvivors.length})
             </h2>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {players.filter(p => p.role === 'survivor').map((player) => {
                 const canClick = true; // Everyone can click on survivors
                 return (
@@ -1018,10 +1021,10 @@ function GamePage({ params }: PageProps) {
 
         {deadPlayers.length > 0 && (
           <div className="mt-6">
-            <h2 className="text-lg font-semibold mb-3 text-gray-600">
-              Eliminated ({deadPlayers.length})
+            <h2 className="text-lg font-semibold mb-4 text-granny-error flex items-center gap-2">
+              💀 Eliminated ({deadPlayers.length})
             </h2>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {deadPlayers
                 .sort((a, b) => (a.eliminatedAt || 0) - (b.eliminatedAt || 0))
                 .map((player) => {
@@ -1042,10 +1045,10 @@ function GamePage({ params }: PageProps) {
         {/* Escaped Players Section */}
         {escapedPlayers.length > 0 && (
           <div className="mt-6">
-            <h2 className="text-lg font-semibold mb-3 text-green-600">
-              Escaped ({escapedPlayers.length})
+            <h2 className="text-lg font-semibold mb-4 text-granny-success flex items-center gap-2">
+              🎉 Escaped ({escapedPlayers.length})
             </h2>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {escapedPlayers
                 .sort((a, b) => (a.escapedAt || 0) - (b.escapedAt || 0))
                 .map((player) => {
@@ -1067,23 +1070,27 @@ function GamePage({ params }: PageProps) {
       <div className="text-center">
         <button
           onClick={() => router.push(`/room/${params.roomCode}`)}
-          className="text-blue-600 hover:text-blue-800 underline"
+          className="btn-ghost px-6 py-3"
         >
-          Back to Room
+          🏠 Back to Room
         </button>
       </div>
 
       {/* Location Error Display */}
       {locationError && (
-        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-yellow-800 text-sm">📍 {locationError}</p>
+        <div className="mt-4 glass-card p-4 border border-granny-warning/30 bg-granny-warning/10">
+          <p className="text-granny-warning text-sm font-medium flex items-center gap-2">
+            ⚠️ {locationError}
+          </p>
         </div>
       )}
 
       {/* Location Status */}
       {locationEnabled && (
-        <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-green-800 text-sm">📍 Location sharing enabled</p>
+        <div className="mt-4 glass-card p-4 border border-granny-success/30 bg-granny-success/10">
+          <p className="text-granny-success text-sm font-medium flex items-center gap-2">
+            📍 Location sharing enabled
+          </p>
         </div>
       )}
 
@@ -1402,13 +1409,17 @@ const PlayerCard = memo(function PlayerCard({ player, onClick, canClick }: {
 
   const cardStyles = useMemo(() => {
     const isInactive = !player.isAlive || player.hasEscaped;
+    const roleColor = player.role === 'killer' ? 'granny-danger' : 'granny-survivor';
+    
     return {
-      container: `flex items-center gap-3 p-3 rounded-lg ${
-        isInactive ? 'bg-gray-200 opacity-75' : 'bg-gray-50'
-      } ${canClick && player.location ? 'cursor-pointer hover:bg-gray-100 transition-colors' : ''}`,
-      name: `font-medium ${isInactive ? 'line-through text-gray-500' : ''}`
+      container: `glass-card p-4 border transition-all duration-200 ${
+        isInactive 
+          ? 'border-granny-text-muted/30 bg-granny-text-muted/10 opacity-75' 
+          : `border-${roleColor}/30 hover:border-${roleColor}/50`
+      } ${canClick && player.location ? 'cursor-pointer hover:scale-[1.02]' : ''}`,
+      name: `font-semibold text-granny-text ${isInactive ? 'line-through opacity-75' : ''}`
     };
-  }, [player.isAlive, player.hasEscaped, canClick, player.location]);
+  }, [player.isAlive, player.hasEscaped, player.role, canClick, player.location]);
 
   const statusTime = useMemo(() => {
     if (player.hasEscaped && player.escapedAt) {
@@ -1423,37 +1434,91 @@ const PlayerCard = memo(function PlayerCard({ player, onClick, canClick }: {
   return (
     <div className={cardStyles.container} onClick={handleClick}>
       {player.profilePictureUrl ? (
-        <img
-          src={player.profilePictureUrl}
-          alt={player.displayName}
-          className="w-10 h-10 rounded-full object-cover"
-        />
+        <div className="relative">
+          <img
+            src={player.profilePictureUrl}
+            alt={player.displayName}
+            className={`w-12 h-12 rounded-full object-cover border-2 ${
+              player.role === 'killer' 
+                ? 'border-granny-danger/50' 
+                : 'border-granny-survivor/50'
+            }`}
+          />
+          {player.hasEscaped && (
+            <div className="absolute -top-1 -right-1 w-6 h-6 bg-granny-success rounded-full flex items-center justify-center">
+              <span className="text-xs">🎉</span>
+            </div>
+          )}
+          {!player.isAlive && !player.hasEscaped && (
+            <div className="absolute -top-1 -right-1 w-6 h-6 bg-granny-error rounded-full flex items-center justify-center">
+              <span className="text-xs">💀</span>
+            </div>
+          )}
+        </div>
       ) : (
-        <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-          <span className="text-sm font-medium text-gray-700">
-            {player.displayName[0]?.toUpperCase()}
-          </span>
+        <div className="relative">
+          <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center ${
+            player.role === 'killer' 
+              ? 'bg-granny-danger/20 border-granny-danger/50' 
+              : 'bg-granny-survivor/20 border-granny-survivor/50'
+          }`}>
+            <span className="text-lg font-bold text-granny-text">
+              {player.displayName[0]?.toUpperCase()}
+            </span>
+          </div>
+          {player.hasEscaped && (
+            <div className="absolute -top-1 -right-1 w-6 h-6 bg-granny-success rounded-full flex items-center justify-center">
+              <span className="text-xs">🎉</span>
+            </div>
+          )}
+          {!player.isAlive && !player.hasEscaped && (
+            <div className="absolute -top-1 -right-1 w-6 h-6 bg-granny-error rounded-full flex items-center justify-center">
+              <span className="text-xs">💀</span>
+            </div>
+          )}
         </div>
       )}
       <div className="flex-1">
         <p className={cardStyles.name}>
           {player.displayName}
         </p>
+        <div className="flex items-center gap-2 mt-1">
+          <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+            player.role === 'killer' 
+              ? 'bg-granny-danger/20 text-granny-danger' 
+              : 'bg-granny-survivor/20 text-granny-survivor'
+          }`}>
+            {player.role === 'killer' ? '🔪' : '🛡️'} {player.role?.toUpperCase()}
+          </span>
+          {player.hasEscaped && (
+            <span className="text-xs font-medium px-2 py-1 rounded-full bg-granny-success/20 text-granny-success">
+              🎉 ESCAPED
+            </span>
+          )}
+          {!player.isAlive && !player.hasEscaped && (
+            <span className="text-xs font-medium px-2 py-1 rounded-full bg-granny-error/20 text-granny-error">
+              💀 ELIMINATED
+            </span>
+          )}
+        </div>
         {statusTime && (
-          <p className="text-xs text-gray-500">
-            {statusTime.type === 'escaped' ? 'Escaped' : 'Eliminated'} {statusTime.time}
+          <p className="text-xs text-granny-text-muted mt-1 flex items-center gap-1">
+            ⏰ {statusTime.type === 'escaped' ? 'Escaped' : 'Eliminated'} at {statusTime.time}
           </p>
         )}
       </div>
-      {player.hasEscaped ? (
-        <div className="text-green-500 text-sm font-medium">
-          🎉
-        </div>
-      ) : !player.isAlive ? (
-        <div className="text-red-500 text-sm font-medium">
-          💀
-        </div>
-      ) : null}
+      
+      <div className="flex flex-col items-center gap-1">
+        {player.hasEscaped && <div className="text-3xl animate-bounce">🎉</div>}
+        {!player.isAlive && !player.hasEscaped && <div className="text-2xl text-granny-error">💀</div>}
+        {player.isAlive && !player.hasEscaped && (
+          <div className={`text-2xl ${
+            player.role === 'killer' ? 'text-granny-danger' : 'text-granny-survivor'
+          }`}>
+            {player.role === 'killer' ? '🔪' : '🛡️'}
+          </div>
+        )}
+      </div>
     </div>
   );
 });
