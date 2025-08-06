@@ -94,7 +94,7 @@ function GamePage({ params }: PageProps) {
     setNearbyEscapeArea(false);
     
     try {
-      await markPlayerEscaped(params.roomCode, user.id);
+      await markPlayerEscaped(params.roomCode, user.id, false); // Normal gameplay, not debug
       vibrate([200, 100, 200, 100, 200]);
     } catch (error) {
       console.error('Error escaping:', error);
@@ -977,7 +977,7 @@ function GamePage({ params }: PageProps) {
                       if (!skillcheck.isCompleted) {
                         console.log('🛠️ DEBUG: Completing skillcheck', skillcheck.id);
                         const { completeSkillcheck } = await import('@/lib/gameService');
-                        await completeSkillcheck(room.id, skillcheck.id, user.id);
+                        await completeSkillcheck(room.id, skillcheck.id, user.id, true); // Debug mode = true
                         console.log('🛠️ DEBUG: Skillcheck completion request sent');
                       }
                     }}
@@ -996,7 +996,7 @@ function GamePage({ params }: PageProps) {
           )}
 
           {/* Manual Escape Area Reveal */}
-          {!room.escapeArea && (isActive || room.status === 'active') && (
+          {!(room.escapearea || room.escapeArea) && (isActive || room.status === 'active') && (
             <button
               onClick={async () => {
                 console.log('🛠️ DEBUG: Force revealing escape area');
@@ -1025,11 +1025,13 @@ function GamePage({ params }: PageProps) {
           </div>
 
           {/* Manual Escape (for testing win conditions) */}
-          {room.escapeArea?.isRevealed && currentPlayer?.role === 'survivor' && currentPlayer?.isAlive && !currentPlayer?.hasEscaped && (
+          {(room.escapearea?.isRevealed || room.escapeArea?.isRevealed) && (
             <button
               onClick={async () => {
+                console.log('🛠️ DEBUG: Force escaping player');
                 const { markPlayerEscaped } = await import('@/lib/gameService');
-                await markPlayerEscaped(room.id, user.id);
+                await markPlayerEscaped(room.id, user.id, true); // Debug mode = true
+                console.log('🛠️ DEBUG: Force escape request sent');
               }}
               className="w-full mb-2 px-3 py-2 bg-purple-300 text-purple-800 text-xs rounded hover:bg-purple-400"
             >

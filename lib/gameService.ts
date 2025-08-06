@@ -304,7 +304,7 @@ export async function checkEscapeTimerExpired(roomCode: string): Promise<void> {
 /**
  * Mark a survivor as escaped when they reach the escape area
  */
-export async function markPlayerEscaped(roomCode: string, playerUid: string): Promise<void> {
+export async function markPlayerEscaped(roomCode: string, playerUid: string, isDebugMode = false): Promise<void> {
   const { data: room, error } = await supabase
     .from('rooms')
     .select('*')
@@ -314,11 +314,16 @@ export async function markPlayerEscaped(roomCode: string, playerUid: string): Pr
   if (error || !room || !room.escapeArea) return;
 
   const player = room.players[playerUid];
-  if (!player || player.role !== 'survivor' || !player.isAlive || player.hasEscaped) {
+  // Allow host to debug escape regardless of role
+  if (!isDebugMode && (!player || player.role !== 'survivor' || !player.isAlive || player.hasEscaped)) {
+    return;
+  }
+  // In debug mode, just check if player exists
+  if (isDebugMode && !player) {
     return;
   }
 
-  console.log('Player escaped!', playerUid);
+  console.log('Player escaped!', playerUid, isDebugMode ? '(DEBUG MODE)' : '');
 
   // Update player status
   const updatedPlayers = { ...room.players };
@@ -352,7 +357,8 @@ export async function markPlayerEscaped(roomCode: string, playerUid: string): Pr
 export async function completeSkillcheck(
   roomCode: string, 
   skillcheckId: string, 
-  playerUid: string
+  playerUid: string,
+  isDebugMode = false // Allow bypassing role restrictions for host debugging
 ): Promise<void> {
   const { data: room, error } = await supabase
     .from('rooms')
@@ -363,7 +369,12 @@ export async function completeSkillcheck(
   if (error || !room || !room.skillchecks) return;
 
   const player = room.players[playerUid];
-  if (!player || player.role !== 'survivor' || !player.isAlive || player.hasEscaped) {
+  // Allow host to debug skillchecks regardless of role
+  if (!isDebugMode && (!player || player.role !== 'survivor' || !player.isAlive || player.hasEscaped)) {
+    return;
+  }
+  // In debug mode, just check if player exists
+  if (isDebugMode && !player) {
     return;
   }
 
