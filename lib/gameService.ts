@@ -361,8 +361,15 @@ export async function markPlayerEscaped(roomCode: string, playerUid: string, isD
       throw error;
     }
     
-    if (!room || !room.escapeArea) {
-      console.error('❌ Room or escape area not found');
+    // Check for escape area (handle PostgreSQL lowercase column names)
+    const escapeArea = room.escapearea || room.escapeArea;
+    if (!room || !escapeArea) {
+      console.error('❌ Room or escape area not found', {
+        roomExists: !!room,
+        escapeAreaExists: !!escapeArea,
+        escapeAreaLowercase: !!room.escapearea,
+        escapeAreaCamelCase: !!room.escapeArea
+      });
       return;
     }
 
@@ -388,15 +395,15 @@ export async function markPlayerEscaped(roomCode: string, playerUid: string, isD
 
     // Add to escape area's escaped players list
     const updatedEscapeArea = {
-      ...room.escapeArea,
-      escapedPlayers: [...room.escapeArea.escapedPlayers, playerUid],
+      ...escapeArea,
+      escapedPlayers: [...(escapeArea.escapedPlayers || []), playerUid],
     };
 
     const { error: updateError } = await supabase
       .from('rooms')
       .update({
         players: updatedPlayers,
-        escapeArea: updatedEscapeArea,
+        escapearea: updatedEscapeArea, // PostgreSQL lowercase column name
       })
       .eq('id', roomCode);
 
