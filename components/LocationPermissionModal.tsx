@@ -114,7 +114,7 @@ export default function LocationPermissionModal({
                 </p>
                 <div className="text-xs text-granny-text-muted mt-2 space-y-1">
                   <p>1. Click the location icon in your address bar</p>
-                  <p>2. Select "Allow" for location permissions</p>
+                  <p>2. Select &quot;Allow&quot; for location permissions</p>
                   <p>3. Refresh the page and try again</p>
                 </div>
               </div>
