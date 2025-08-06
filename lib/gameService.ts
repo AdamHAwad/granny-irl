@@ -703,6 +703,29 @@ export async function eliminatePlayer(
   playerUid: string,
   eliminatedBy?: string
 ): Promise<void> {
+  console.log('Eliminating player:', playerUid, 'in room:', roomCode);
+  
+  try {
+    // Try optimized RPC function first (if it exists)
+    const { error: rpcError } = await supabase.rpc('eliminate_player_fast', {
+      p_room_id: roomCode,
+      p_player_uid: playerUid,
+      p_eliminated_by: eliminatedBy || null
+    });
+    
+    if (!rpcError) {
+      console.log('Player eliminated using optimized function');
+      // Check game end asynchronously to not block the response
+      setTimeout(() => checkGameEnd(roomCode), 100);
+      return;
+    }
+    
+    console.log('RPC function not available, falling back to regular method');
+  } catch (e) {
+    console.log('RPC function error, using fallback method');
+  }
+  
+  // Fallback to original method if RPC doesn't exist yet
   const { data: room, error } = await supabase
     .from('rooms')
     .select('*')
