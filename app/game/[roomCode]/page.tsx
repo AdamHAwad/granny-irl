@@ -1142,7 +1142,7 @@ function GamePage({ params }: PageProps) {
         <div className="fixed bottom-20 right-4 z-30 space-y-2 max-w-xs">
           {/* Background Skillcheck Notification */}
           {backgroundSkillcheck && (
-            <div className="bg-blue-500 text-white rounded-lg p-3 shadow-lg animate-pulse cursor-pointer hover:bg-blue-600 transition-colors"
+            <div className="glass-card border border-granny-warning/50 bg-granny-warning/90 text-white rounded-lg p-3 shadow-xl animate-pulse cursor-pointer hover:bg-granny-warning transition-all duration-200 hover:scale-105"
                  onClick={() => {
                    setActiveSkillcheck(backgroundSkillcheck);
                    setBackgroundSkillcheck(null);
@@ -1150,7 +1150,7 @@ function GamePage({ params }: PageProps) {
               <div className="flex items-center gap-2">
                 <span className="text-xl">⚡</span>
                 <div className="text-left">
-                  <div className="font-semibold text-sm">Skillcheck Nearby!</div>
+                  <div className="font-bold text-sm">Skillcheck Nearby!</div>
                   <div className="text-xs opacity-90">Tap to complete</div>
                 </div>
               </div>
@@ -1159,12 +1159,12 @@ function GamePage({ params }: PageProps) {
           
           {/* Background Escape Notification */}
           {backgroundEscape && !escaping && (
-            <div className="bg-purple-500 text-white rounded-lg p-3 shadow-lg animate-pulse cursor-pointer hover:bg-purple-600 transition-colors"
+            <div className="glass-card border border-purple-400/50 bg-purple-500/90 text-white rounded-lg p-3 shadow-xl animate-pulse cursor-pointer hover:bg-purple-500 transition-all duration-200 hover:scale-105"
                  onClick={handleEscape}>
               <div className="flex items-center gap-2">
                 <span className="text-xl">🚪</span>
                 <div className="text-left">
-                  <div className="font-semibold text-sm">Escape Area!</div>
+                  <div className="font-bold text-sm">Escape Area!</div>
                   <div className="text-xs opacity-90">Tap to escape</div>
                 </div>
               </div>
@@ -1175,36 +1175,41 @@ function GamePage({ params }: PageProps) {
 
       {/* Skillcheck Proximity Prompt */}
       {showSkillcheckPrompt && !activeSkillcheck && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
-          <div className="bg-white rounded-lg p-6 text-black max-w-sm mx-4 text-center">
-            <div className="text-2xl mb-4">⚡ Skillcheck Detected!</div>
-            <p className="mb-6">You&apos;re near a skillcheck. Complete it to help your team progress!</p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setActiveSkillcheck(showSkillcheckPrompt);
-                  setShowSkillcheckPrompt(null);
-                }}
-                className="flex-1 bg-blue-500 text-white py-3 px-4 rounded-lg font-bold hover:bg-blue-600"
-              >
-                Start Skillcheck
-              </button>
-              <button
-                onClick={() => {
-                  // Dismiss the modal and add to dismissed set
-                  setDismissedSkillcheckPrompts(prev => {
-                    const newSet = new Set(prev);
-                    newSet.add(showSkillcheckPrompt!);
-                    return newSet;
-                  });
-                  setShowSkillcheckPrompt(null);
-                  // Show in background instead
-                  setBackgroundSkillcheck(showSkillcheckPrompt);
-                }}
-                className="flex-1 bg-gray-300 text-gray-700 py-3 px-4 rounded-lg font-bold hover:bg-gray-400"
-              >
-                Later
-              </button>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-40 p-4">
+          <div className="glass-modal max-w-md w-full text-granny-text text-center animate-slide-up">
+            <div className="p-6">
+              <div className="text-4xl mb-4">⚡</div>
+              <div className="text-2xl font-bold text-granny-warning mb-4">Skillcheck Detected!</div>
+              <p className="text-granny-text-muted mb-6">
+                You&apos;re near a skillcheck. Complete it to help your team progress!
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setActiveSkillcheck(showSkillcheckPrompt);
+                    setShowSkillcheckPrompt(null);
+                  }}
+                  className="btn-primary flex-1 py-3"
+                >
+                  ⚡ Start Skillcheck
+                </button>
+                <button
+                  onClick={() => {
+                    // Dismiss the modal and add to dismissed set
+                    setDismissedSkillcheckPrompts(prev => {
+                      const newSet = new Set(prev);
+                      newSet.add(showSkillcheckPrompt!);
+                      return newSet;
+                    });
+                    setShowSkillcheckPrompt(null);
+                    // Show in background instead
+                    setBackgroundSkillcheck(showSkillcheckPrompt);
+                  }}
+                  className="btn-ghost flex-1 py-3"
+                >
+                  🕰️ Later
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1212,30 +1217,40 @@ function GamePage({ params }: PageProps) {
 
       {/* Escape Area Proximity Prompt */}
       {showEscapePrompt && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
-          <div className="bg-white rounded-lg p-6 text-black max-w-sm mx-4 text-center">
-            <div className="text-2xl mb-4">🚪 Escape Area Found!</div>
-            <p className="mb-6">You&apos;ve reached the escape zone! Escape now to save yourself! {escapeTimerRemaining > 0 && `Time left: ${Math.ceil(escapeTimerRemaining / 1000)}s`}</p>
-            <div className="flex gap-3">
-              <button
-                onClick={handleEscape}
-                disabled={escaping}
-                className="flex-1 bg-purple-500 text-white py-3 px-4 rounded-lg font-bold hover:bg-purple-600 disabled:opacity-50"
-              >
-                {escaping ? '⏳ Escaping...' : '🏃 ESCAPE NOW!'}
-              </button>
-              <button
-                onClick={() => {
-                  // Dismiss the modal and mark as dismissed
-                  setDismissedEscapePrompt(true);
-                  setShowEscapePrompt(false);
-                  // Show in background instead
-                  setBackgroundEscape(true);
-                }}
-                className="flex-1 bg-gray-300 text-gray-700 py-3 px-4 rounded-lg font-bold hover:bg-gray-400"
-              >
-                Not Yet
-              </button>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-40 p-4">
+          <div className="glass-modal max-w-md w-full text-granny-text text-center animate-slide-up">
+            <div className="p-6">
+              <div className="text-4xl mb-4">🚪</div>
+              <div className="text-2xl font-bold text-purple-400 mb-4">Escape Area Found!</div>
+              <p className="text-granny-text-muted mb-6">
+                You&apos;ve reached the escape zone! Escape now to save yourself!
+                {escapeTimerRemaining > 0 && (
+                  <span className="block mt-2 text-granny-warning font-semibold">
+                    ⏰ Time left: {Math.ceil(escapeTimerRemaining / 1000)}s
+                  </span>
+                )}
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleEscape}
+                  disabled={escaping}
+                  className="btn-secondary flex-1 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {escaping ? '⏳ Escaping...' : '🏃 ESCAPE NOW!'}
+                </button>
+                <button
+                  onClick={() => {
+                    // Dismiss the modal and mark as dismissed
+                    setDismissedEscapePrompt(true);
+                    setShowEscapePrompt(false);
+                    // Show in background instead
+                    setBackgroundEscape(true);
+                  }}
+                  className="btn-ghost flex-1 py-3"
+                >
+                  ⏳ Not Yet
+                </button>
+              </div>
             </div>
           </div>
         </div>

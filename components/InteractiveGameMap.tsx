@@ -332,24 +332,24 @@ function InteractiveGameMap({
         icon={createSkillcheckIcon(skillcheck)}
       >
         <Popup>
-          <div className="text-sm">
-            <div className="font-bold flex items-center gap-2">
+          <div className="glass-card border border-granny-border/30 p-3 text-sm bg-granny-bg text-granny-text">
+            <div className="font-bold flex items-center gap-2 text-granny-text">
               <span>⚡ Skillcheck</span>
-              {skillcheck.isCompleted && <span className="text-green-600">✓</span>}
+              {skillcheck.isCompleted && <span className="text-granny-success">✓</span>}
             </div>
-            <div className="text-xs text-gray-600 mt-1">
+            <div className="text-xs text-granny-text-muted mt-2">
               Status: {skillcheck.isCompleted ? 'Completed' : 'Pending'}
             </div>
             {skillcheck.isCompleted && skillcheck.completedAt && (
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-granny-text-muted">
                 Completed: {new Date(skillcheck.completedAt).toLocaleTimeString()}
               </div>
             )}
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-granny-text-muted mt-1">
               Completed by: {completedByNames}
             </div>
             {!skillcheck.isCompleted && (
-              <div className="text-xs text-amber-600 mt-2">
+              <div className="text-xs text-granny-warning mt-2 font-medium">
                 📍 Get close to start the skillcheck minigame
               </div>
             )}
@@ -389,22 +389,24 @@ function InteractiveGameMap({
         } : undefined}
       >
         <Popup>
-          <div className="text-sm">
-            <div className="font-bold">{player.displayName}</div>
-            <div className="text-xs text-gray-600">
+          <div className="glass-card border border-granny-border/30 p-3 text-sm bg-granny-bg text-granny-text">
+            <div className="font-bold text-granny-text">{player.displayName}</div>
+            <div className={`text-xs mt-1 ${
+              player.role === 'killer' ? 'text-granny-danger' : 'text-granny-survivor'
+            }`}>
               {player.role === 'killer' ? '🔪 Killer' : '🏃 Survivor'}
-              {!player.isAlive && ' (Eliminated)'}
+              {!player.isAlive && <span className="text-granny-error"> (Eliminated)</span>}
             </div>
             {distance !== null && (
-              <div className="text-xs mt-1">
+              <div className="text-xs text-granny-text mt-1">
                 Distance: {distance < 1000 ? `${Math.round(distance)}m` : `${(distance/1000).toFixed(1)}km`}
               </div>
             )}
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-granny-text-muted mt-1">
               Updated: {formatLastUpdate(player.lastLocationUpdate!)}
             </div>
             {player.location.accuracy && (
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-granny-text-muted">
                 Accuracy: ±{Math.round(player.location.accuracy)}m
               </div>
             )}
@@ -436,23 +438,23 @@ function InteractiveGameMap({
         icon={createEscapeAreaIcon()}
       >
         <Popup>
-          <div className="text-sm">
-            <div className="font-bold flex items-center gap-2">
+          <div className="glass-card border border-granny-border/30 p-3 text-sm bg-granny-bg text-granny-text">
+            <div className="font-bold flex items-center gap-2 text-granny-text">
               <span>🚪 Escape Area</span>
-              <span className="text-purple-600">✨</span>
+              <span className="text-purple-400">✨</span>
             </div>
-            <div className="text-xs text-gray-600 mt-1">
+            <div className="text-xs text-granny-success mt-1 font-medium">
               Status: Escape zone active!
             </div>
             {escapeArea.revealedAt && (
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-granny-text-muted">
                 Revealed: {new Date(escapeArea.revealedAt).toLocaleTimeString()}
               </div>
             )}
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-granny-text-muted mt-1">
               Escaped players: {escapedPlayerNames}
             </div>
-            <div className="text-xs text-purple-600 mt-2">
+            <div className="text-xs text-purple-400 mt-2 font-medium">
               📍 Get close to escape and win the game!
             </div>
           </div>
@@ -473,10 +475,10 @@ function InteractiveGameMap({
       : "Players need to enable location sharing to appear on the map";
       
     return (
-      <div className={`bg-gray-100 rounded-lg p-4 text-center ${className}`}>
-        <div className="text-gray-600">
-          <p className="font-medium">{waitingMessage}</p>
-          <p className="text-sm mt-2">{subMessage}</p>
+      <div className={`glass-card border border-granny-border/30 p-6 text-center ${className}`}>
+        <div className="text-granny-text">
+          <p className="font-semibold text-lg mb-2">{waitingMessage}</p>
+          <p className="text-sm text-granny-text-muted">{subMessage}</p>
         </div>
       </div>
     );
@@ -484,9 +486,12 @@ function InteractiveGameMap({
 
   if (isLoading) {
     return (
-      <div className={`bg-gray-100 rounded-lg p-4 text-center ${className}`}>
-        <div className="text-gray-600">
-          <p className="font-medium">🗺️ Loading map...</p>
+      <div className={`glass-card border border-granny-border/30 p-6 text-center ${className}`}>
+        <div className="text-granny-text">
+          <p className="font-semibold text-lg flex items-center justify-center gap-2">
+            🗺️ Loading map...
+          </p>
+          <div className="w-6 h-6 border-2 border-granny-danger border-t-transparent rounded-full animate-spin mx-auto mt-3" />
         </div>
       </div>
     );
@@ -494,21 +499,21 @@ function InteractiveGameMap({
 
   // Dynamic styling and header based on player role
   const getBorderColor = () => {
-    if (isEliminated) return 'border-gray-200';
-    if (isKiller) return 'border-red-200';
-    return 'border-blue-200';
+    if (isEliminated) return 'border-granny-text-muted/30';
+    if (isKiller) return 'border-granny-danger/30';
+    return 'border-granny-survivor/30';
   };
 
   const getHeaderBg = () => {
-    if (isEliminated) return 'bg-gray-50 border-gray-200';
-    if (isKiller) return 'bg-red-50 border-red-200';
-    return 'bg-blue-50 border-blue-200';
+    if (isEliminated) return 'glass-card border-granny-text-muted/20 bg-granny-text-muted/5';
+    if (isKiller) return 'glass-card border-granny-danger/20 bg-granny-danger/5';
+    return 'glass-card border-granny-survivor/20 bg-granny-survivor/5';
   };
 
   const getHeaderText = () => {
-    if (isEliminated) return 'text-gray-800';
-    if (isKiller) return 'text-red-800';
-    return 'text-blue-800';
+    if (isEliminated) return 'text-granny-text';
+    if (isKiller) return 'text-granny-danger';
+    return 'text-granny-survivor';
   };
 
   const getHeaderTitle = () => {
@@ -518,19 +523,19 @@ function InteractiveGameMap({
   };
 
   const getSubtitleText = () => {
-    if (isEliminated) return 'text-gray-600';
-    if (isKiller) return 'text-red-600';
-    return 'text-blue-600';
+    if (isEliminated) return 'text-granny-text-muted';
+    if (isKiller) return 'text-granny-danger/80';
+    return 'text-granny-survivor/80';
   };
 
   const visibleSurvivors = playersWithLocation.filter(p => p.role === 'survivor').length;
   const visibleKillers = playersWithLocation.filter(p => p.role === 'killer').length;
 
   return (
-    <div className={`bg-white rounded-lg border-2 ${getBorderColor()} ${className}`}>
-      <div className={`p-3 border-b ${getHeaderBg()}`}>
-        <h3 className={`font-bold ${getHeaderText()} text-center`}>{getHeaderTitle()}</h3>
-        <div className={`text-xs ${getSubtitleText()} text-center mt-1`}>
+    <div className={`glass-card border-2 ${getBorderColor()} ${className}`}>
+      <div className={`p-4 border-b border-granny-border/20 ${getHeaderBg()}`}>
+        <h3 className={`font-bold text-lg ${getHeaderText()} text-center`}>{getHeaderTitle()}</h3>
+        <div className={`text-sm ${getSubtitleText()} text-center mt-2`}>
           {isKiller || isEliminated ? (
             `${visibleSurvivors} survivor${visibleSurvivors !== 1 ? 's' : ''} visible`
           ) : (
@@ -589,30 +594,34 @@ function InteractiveGameMap({
         </div>
 
         {/* Legend */}
-        <div className="absolute bottom-4 left-4 bg-white bg-opacity-90 rounded-lg p-2 text-xs shadow-lg z-[1000]">
-          <div className="font-semibold mb-1">Legend</div>
+        <div className="absolute bottom-4 left-4 glass-card border border-granny-border/30 p-3 text-xs shadow-xl z-[1000]">
+          <div className="font-semibold text-granny-text mb-2 flex items-center gap-1">
+            🗺️ Legend
+          </div>
           
           {/* Current player marker */}
-          <div className="flex items-center gap-2 mb-1">
-            <div className={`w-4 h-4 rounded-full border-2 border-white ${
-              isKiller ? 'bg-red-600' : 'bg-blue-600'
+          <div className="flex items-center gap-2 mb-2">
+            <div className={`w-4 h-4 rounded-full border-2 border-granny-surface ${
+              isKiller ? 'bg-granny-danger' : 'bg-granny-survivor'
             }`}></div>
-            <span>You ({isKiller ? 'Killer' : 'Survivor'})</span>
+            <span className="text-granny-text font-medium">
+              You ({isKiller ? '🔪 Killer' : '🛡️ Survivor'})
+            </span>
           </div>
           
           {/* Other survivors (always visible to all) */}
           {visibleSurvivors > (isKiller ? 0 : 1) && (
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-3 h-3 rounded-full bg-blue-500 border-2 border-white"></div>
-              <span>Other Survivors</span>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-3 h-3 rounded-full bg-granny-survivor border-2 border-granny-surface"></div>
+              <span className="text-granny-text-muted">Other Survivors</span>
             </div>
           )}
           
           {/* Other killers (only visible to killers and eliminated players) */}
           {(isKiller || isEliminated) && playersWithLocation.some(p => p.role === 'killer' && p.uid !== currentPlayerUid) && (
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-3 h-3 rounded-full bg-red-400 border-2 border-white"></div>
-              <span>Other Killers</span>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-3 h-3 rounded-full bg-granny-danger border-2 border-granny-surface"></div>
+              <span className="text-granny-text-muted">Other Killers</span>
             </div>
           )}
           
@@ -620,57 +629,57 @@ function InteractiveGameMap({
           {visibleSkillchecks.length > 0 && (
             <>
               <div className="flex items-center gap-2 mb-1">
-                <div className="w-3 h-3 rounded-full bg-amber-500 border-2 border-white"></div>
-                <span>Pending Skillchecks</span>
+                <div className="w-3 h-3 rounded-full bg-granny-warning border-2 border-granny-surface"></div>
+                <span className="text-granny-text-muted">⚡ Pending Skillchecks</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-green-500 border-2 border-white"></div>
-                <span>Completed Skillchecks</span>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-3 h-3 rounded-full bg-granny-success border-2 border-granny-surface"></div>
+                <span className="text-granny-text-muted">✅ Completed Skillchecks</span>
               </div>
             </>
           )}
           
           {/* Escape Area (only visible to survivors and eliminated players) */}
           {visibleEscapeArea && (
-            <div className="flex items-center gap-2 mt-1">
-              <div className="w-3 h-3 rounded-full bg-purple-500 border-2 border-white"></div>
-              <span>Escape Area (🚪)</span>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-3 h-3 rounded-full bg-purple-500 border-2 border-granny-surface"></div>
+              <span className="text-granny-text-muted">🚪 Escape Area</span>
             </div>
           )}
           
           {/* Selected player info */}
           {selectedPlayerId && (
-            <div className="text-xs text-blue-600 mt-2 pt-2 border-t border-gray-200">
+            <div className="text-xs text-granny-survivor mt-2 pt-2 border-t border-granny-border/30">
               📍 Viewing: {playersWithLocation.find(p => p.uid === selectedPlayerId)?.displayName}
             </div>
           )}
           
           {/* Note for survivors */}
           {!isKiller && !isEliminated && (
-            <div className="text-xs text-gray-600 mt-2 italic">
-              Killers are hidden from your view
+            <div className="text-xs text-granny-text-muted mt-2 italic">
+              🔒 Killers are hidden from your view
             </div>
           )}
           
           {/* Click instruction */}
           {(onPlayerClick || onMapClick) && (
-            <div className="text-xs text-gray-500 mt-2 italic">
-              Click players to view • Click map to reset view
+            <div className="text-xs text-granny-text-muted mt-2 italic">
+              👆 Click players to view • Click map to reset view
             </div>
           )}
         </div>
 
         {/* Controls hint */}
-        <div className="absolute top-4 right-4 bg-white bg-opacity-90 rounded-lg p-2 text-xs shadow-lg z-[1000]">
-          <div>Pinch to zoom • Drag to pan</div>
+        <div className="absolute top-4 right-4 glass-card border border-granny-border/30 p-2 text-xs shadow-lg z-[1000]">
+          <div className="text-granny-text-muted font-medium">
+            📱 Pinch to zoom • Drag to pan
+          </div>
         </div>
       </div>
 
       {/* Update info */}
-      <div className={`p-2 text-xs text-gray-600 text-center border-t ${
-        isEliminated ? 'border-gray-200' : isKiller ? 'border-red-200' : 'border-blue-200'
-      }`}>
-        Updates every 5 seconds • Tap markers for details
+      <div className="p-3 text-xs text-granny-text-muted text-center border-t border-granny-border/20">
+        🔄 Updates every 5 seconds • 📍 Tap markers for details
       </div>
     </div>
   );
