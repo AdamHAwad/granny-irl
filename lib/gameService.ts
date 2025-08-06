@@ -957,18 +957,26 @@ export async function checkGameEnd(roomCode: string): Promise<void> {
 
   const players = Object.values(room.players);
   const aliveKillers = players.filter((p: any) => p.role === 'killer' && p.isAlive);
-  const aliveSurvivors = players.filter((p: any) => p.role === 'survivor' && p.isAlive);
+  const aliveSurvivors = players.filter((p: any) => p.role === 'survivor' && p.isAlive && !p.hasEscaped);
   const escapedSurvivors = players.filter((p: any) => p.role === 'survivor' && p.hasEscaped);
   const allSurvivors = players.filter((p: any) => p.role === 'survivor');
   const eliminatedSurvivors = allSurvivors.filter((p: any) => !p.isAlive && !p.hasEscaped);
 
-  console.log('checkGameEnd: Alive killers:', aliveKillers.length, 'Alive survivors:', aliveSurvivors.length, 'Escaped survivors:', escapedSurvivors.length, 'Total survivors:', allSurvivors.length, 'Eliminated survivors:', eliminatedSurvivors.length);
+  console.log('🏁 checkGameEnd: Alive killers:', aliveKillers.length, 'Alive survivors:', aliveSurvivors.length, 'Escaped survivors:', escapedSurvivors.length, 'Total survivors:', allSurvivors.length, 'Eliminated survivors:', eliminatedSurvivors.length);
+  console.log('🏁 checkGameEnd: Player states:', players.map(p => ({ 
+    name: p.displayName, 
+    role: p.role, 
+    isAlive: p.isAlive, 
+    hasEscaped: p.hasEscaped 
+  })));
 
   let gameEnded = false;
   let winners: 'killers' | 'survivors' | null = null;
 
   // Game only ends when ALL survivors are either eliminated OR escaped (no one still alive and trying)
+  console.log('🏁 checkGameEnd: Checking if game should end. Alive survivors:', aliveSurvivors.length);
   if (aliveSurvivors.length === 0) {
+    console.log('🏁 checkGameEnd: ✅ Game should end - no alive survivors remaining');
     // All survivors have either escaped or been eliminated - now determine winner
     gameEnded = true;
     
@@ -1012,7 +1020,8 @@ export async function checkGameEnd(roomCode: string): Promise<void> {
       }
     }
   } else {
-    console.log('checkGameEnd: Game not ending - status:', room.status, 'game_started_at:', room.game_started_at);
+    console.log('🏁 checkGameEnd: ❌ Game not ending - alive survivors still remain:', aliveSurvivors.length);
+    console.log('🏁 checkGameEnd: Room status:', room.status, 'game_started_at:', room.game_started_at);
   }
 
   if (gameEnded && winners) {
