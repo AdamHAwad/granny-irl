@@ -101,25 +101,35 @@ Game hosts can customize:
 - No location tracking outside of gameplay
 - Clear permission requests with explanations
 
-## 🌟 Recent Updates
+## 🌟 Recent Updates (December 2025)
 
+- ✅ **Non-invasive notification system** - Prompts only show once, then become background notifications
+- ✅ **Robust error handling** - All critical actions have timeout protection
+- ✅ **"I was caught" button fixes** - No more stuck states or multiple clicks required
+- ✅ **Escape button improvements** - Single-click escapes with loading states
+- ✅ **Game end detection fixes** - Properly handles escaped vs eliminated players
+- ✅ **Local state tracking** - Prevents double skillcheck prompts
 - ✅ **Dead by Daylight-style skillcheck system** with proximity detection
 - ✅ **Escape area mechanics** with purple door markers
 - ✅ **Interactive map location picker** for skillcheck placement
 - ✅ **Dual win condition system** (original + escape modes)
 - ✅ **Performance optimizations** for real-time gameplay
 - ✅ **Mobile-friendly UI improvements** and touch controls
-- ✅ Interactive OpenStreetMap integration
-- ✅ Profile picture system with Supabase Storage
-- ✅ Proximity detection and directional arrows
-- ✅ Game history and player statistics
-- ✅ Host moderation tools (kick players)
 
 ## 🔮 Upcoming Features
 
+- **Killer Notifications**: Real-time alerts when skillchecks are completed
 - **Heat Maps**: Movement density visualization
-- **Trail History**: Player path tracking
+- **Trail History**: Player path tracking  
 - **Mobile Apps**: Native iOS/Android versions
+- **Spectator Mode**: Watch games after elimination
+
+## 🐛 Known Issues
+
+- GPS accuracy varies by device and environment
+- Device compass may not work on all phones
+- Free tier database can experience slowness during peak usage
+- Location permissions must be granted for each game session
 
 ---
 

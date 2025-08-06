@@ -1,3 +1,29 @@
+/**
+ * Game Page - Active Gameplay Interface
+ * 
+ * This is the main gameplay component for Granny IRL. Handles:
+ * - Real-time game state updates via Supabase subscriptions
+ * - GPS location tracking with 5-second updates
+ * - Proximity detection for skillchecks (50m radius)
+ * - Non-invasive notification system (modal → background)
+ * - Dead by Daylight-style skillcheck minigames
+ * - Escape area mechanics with purple door visualization
+ * - Robust error handling with timeout protection
+ * 
+ * Game Flow:
+ * 1. Players join room and enable location permissions
+ * 2. Host starts game → headstart phase (survivors hide)
+ * 3. Active phase begins → killers hunt survivors
+ * 4. Skillchecks appear if enabled (proximity detection)
+ * 5. Escape area reveals after timer/skillchecks complete
+ * 6. Game ends when all survivors are eliminated/escaped
+ * 
+ * Key Features:
+ * - Local state tracking prevents double prompts
+ * - Background notifications don't block gameplay
+ * - Timeout protection prevents stuck UI states
+ * - Mobile-optimized with touch-friendly controls
+ */
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, memo } from 'react';
@@ -27,7 +53,8 @@ function GamePage({ params }: PageProps) {
   const { playGameStart, playGameEnd, playElimination, playCountdown, vibrate } = useSoundNotifications();
   const [room, setRoom] = useState<Room | null>(null);
   
-  // Helper function to get escape area (handles PostgreSQL case sensitivity)
+  // Helper functions to handle PostgreSQL case sensitivity
+  // PostgreSQL converts column names to lowercase, so we check both variants
   const getEscapeArea = (room: Room) => room.escapearea || room.escapeArea;
   const getAllSkillchecksCompleted = (room: Room) => room.allskillcheckscompleted || room.allSkillchecksCompleted;
   const [loading, setLoading] = useState(true);
@@ -36,24 +63,33 @@ function GamePage({ params }: PageProps) {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [headstartRemaining, setHeadstartRemaining] = useState(0);
   const [escapeTimerRemaining, setEscapeTimerRemaining] = useState(0);
-  const [eliminating, setEliminating] = useState(false);
+  // Core game state
+  const [eliminating, setEliminating] = useState(false); // Prevents multiple "I was caught" clicks
   const [gameStartSoundPlayed, setGameStartSoundPlayed] = useState(false);
+  
+  // Location tracking state
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [locationError, setLocationError] = useState('');
+  
+  // UI state
   const [showMap, setShowMap] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [showPracticeSkillcheck, setShowPracticeSkillcheck] = useState(false);
   const [activeSkillcheck, setActiveSkillcheck] = useState<string | null>(null);
   const [nearbyEscapeArea, setNearbyEscapeArea] = useState(false);
-  const [showSkillcheckPrompt, setShowSkillcheckPrompt] = useState<string | null>(null);
-  const [showEscapePrompt, setShowEscapePrompt] = useState(false);
+  
+  // Notification system state (prevents invasive prompts)
+  const [showSkillcheckPrompt, setShowSkillcheckPrompt] = useState<string | null>(null); // Modal prompt
+  const [showEscapePrompt, setShowEscapePrompt] = useState(false); // Modal prompt
+  const [dismissedSkillcheckPrompts, setDismissedSkillcheckPrompts] = useState<Set<string>>(new Set()); // Dismissed modals
+  const [dismissedEscapePrompt, setDismissedEscapePrompt] = useState(false); // Dismissed escape modal
+  const [backgroundSkillcheck, setBackgroundSkillcheck] = useState<string | null>(null); // Background notification
+  const [backgroundEscape, setBackgroundEscape] = useState(false); // Background notification
+  
+  // Local state for immediate UI updates (prevents race conditions)
   const [localCompletedSkillchecks, setLocalCompletedSkillchecks] = useState<Set<string>>(new Set());
-  const [escaping, setEscaping] = useState(false);
-  const [dismissedSkillcheckPrompts, setDismissedSkillcheckPrompts] = useState<Set<string>>(new Set());
-  const [dismissedEscapePrompt, setDismissedEscapePrompt] = useState(false);
-  const [backgroundSkillcheck, setBackgroundSkillcheck] = useState<string | null>(null);
-  const [backgroundEscape, setBackgroundEscape] = useState(false);
+  const [escaping, setEscaping] = useState(false); // Prevents multiple escape clicks
 
   // Handle practice skillcheck
   const handlePracticeSkillcheckSuccess = () => {

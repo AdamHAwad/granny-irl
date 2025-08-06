@@ -1,19 +1,36 @@
 /**
  * Game Service - Core business logic for Granny IRL
  * 
- * Handles:
- * - Room management (create, join, leave, kick)
- * - Game state transitions (waiting → headstart → active → finished)
- * - Player elimination and game end detection
- * - Real-time subscriptions with polling fallback
- * - Location tracking integration
- * - Game history and statistics
+ * This service handles all game-related operations for the real-life tag game app.
+ * Granny IRL combines outdoor gameplay with Dead by Daylight-inspired mechanics.
  * 
- * Key patterns:
- * - All database operations go through Supabase client
- * - Real-time updates via subscriptions + 2s polling fallback
- * - Comprehensive logging for debugging
- * - Resilient error handling for free tier limitations
+ * Core Features:
+ * - Room-based multiplayer with 6-digit codes
+ * - Real-time GPS tracking for killers hunting survivors
+ * - Skillcheck minigames with proximity detection
+ * - Escape area mechanics with dual win conditions
+ * - Robust error handling with timeout protection
+ * 
+ * Game Flow:
+ * 1. Room Creation: Host creates room, players join with code
+ * 2. Game Start: Random role assignment, configurable settings
+ * 3. Headstart Phase: Survivors hide while killers wait
+ * 4. Active Phase: Hunt begins, skillchecks appear if enabled
+ * 5. Escape Phase: Timer expires OR skillchecks complete → escape area appears
+ * 6. Game End: DBD-style win conditions (75% elimination rate)
+ * 
+ * Technical Details:
+ * - PostgreSQL database with JSONB for complex objects
+ * - Supabase real-time subscriptions + polling fallback
+ * - Haversine distance calculations for proximity
+ * - RPC functions for optimized database operations
+ * - Comprehensive logging with emoji prefixes for debugging
+ * 
+ * Key Patterns:
+ * - Timeout protection for all critical operations
+ * - Fallback methods when optimized RPC functions fail
+ * - Local state tracking to prevent race conditions
+ * - Case sensitivity handling for PostgreSQL columns
  */
 
 import { supabase } from './supabase';

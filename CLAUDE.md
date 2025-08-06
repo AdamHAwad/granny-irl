@@ -10,9 +10,11 @@
 - Real-time location tracking with interactive maps
 - Complete game flow from lobby to results
 - Mobile-optimized for outdoor gameplay
-- **NEW: Dead by Daylight-style escape area system**
-- **NEW: Interactive skillcheck mechanics with proximity detection**
-- All major features implemented and tested
+- Dead by Daylight-style escape area system
+- Interactive skillcheck mechanics with proximity detection
+- Non-invasive notification system for game prompts
+- Robust error handling with timeout protection
+- All major features implemented, tested, and refined
 
 ## Technical Stack
 - **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS
@@ -236,28 +238,55 @@ Dead by Daylight-inspired skillcheck minigames that survivors must complete to r
 - **Completion**: Server-side tracking with real-time updates
 - **Proximity**: Haversine distance calculation
 
-## Recent Bug Fixes
-1. **Profile pictures not showing in edit modal** - Fixed by passing existing profile data
-2. **"Room not found" during transitions** - Added 5-second grace period
-3. **Elimination button stuck** - Needs proper state management (reverted)
-4. **Map profile pictures as capsules** - Fixed with proper circular cropping
-5. **Mobile scrolling blocked in CreateRoomModal** - Fixed overflow-y-auto
-6. **"skillcheckCenterLocation column doesn't exist"** - PostgreSQL case sensitivity (skillcheckcenterlocation)
-7. **Missing Leaflet icons on SSR** - Dynamic imports with client-side only checks
-8. **React hooks dependency violations** - Moved useMemo before early returns
-9. **Build errors with unescaped apostrophes** - Proper string escaping
-10. **Skillcheck using host GPS instead of pinned location** - Fixed location reference
+## Recent Bug Fixes & Improvements (August 2025)
+
+### Critical Fixes
+1. **"I was caught" button stuck in "Reporting death..." state**
+   - Added timeout protection (10 seconds)
+   - Implemented proper state management with `eliminating` flag
+   - Added secure RPC function `handle_player_caught` with table locking
+   - Shows proper killer attribution in elimination messages
+
+2. **Game not ending after all players eliminated/escaped**
+   - Fixed `checkGameEnd` logic to exclude escaped players from alive count
+   - Added comprehensive debug logging with emoji prefixes
+   - Implemented fallback room status updates
+   - Added longer timeouts for database commits
+
+3. **Skillcheck completion detection lag**
+   - Added local state tracking (`localCompletedSkillchecks`) to prevent double prompts
+   - Immediately removes completed skillchecks from proximity detection
+   - Clears local state when game resets
+
+4. **Escape button requiring multiple clicks**
+   - Added `escaping` state flag to prevent concurrent requests
+   - Implemented 10-second timeout protection
+   - Shows loading state: "⏳ Escaping..."
+   - Proper error handling with user feedback
+
+5. **Invasive proximity prompts**
+   - Modal only shows once per skillcheck/escape area
+   - "Later" button dismisses modal and shows background notification
+   - Background notifications are non-blocking, animated, and clickable
+   - Positioned bottom-right to avoid gameplay interference
+
+### Database & Performance
+1. **PostgreSQL case sensitivity** - All column names use lowercase (escapearea, skillcheckcenterlocation)
+2. **Optimized RPC functions** - Added for eliminate, escape, and skillcheck operations
+3. **Real-time subscription improvements** - Better error handling and reconnection logic
+4. **Location update batching** - Reduces database writes during active games
 
 ## Known Limitations
 - Free tier slowness (Supabase database operations)
 - Compass may not work on all devices
 - Location accuracy depends on device GPS
 
-## Pending Tasks (From Session)
-1. **Remove old skillcheck penalties code** - Clean up deprecated timer extension logic
-2. **Heat Maps** - Show player movement density
-3. **Trail History** - Track player paths
-4. **Mobile Apps** - Native iOS/Android wrappers
+## Pending Tasks
+1. **Add killer notifications when skillchecks are completed** - Notify killers in real-time
+2. **Remove old skillcheck penalties (timer extension)** - Clean up deprecated code
+3. **Add heat maps** - Visualize player movement density
+4. **Implement trail history** - Track and display player paths
+5. **Create mobile app wrappers** - Native iOS/Android apps
 
 ## Required SQL Migration
 The escape area system requires running this SQL in Supabase:
@@ -322,6 +351,59 @@ git push            # Auto-deploy to Vercel
 4. Follow component patterns
 5. Test with 5s/30s game settings
 
+## UI/UX Patterns
+
+### Notification System
+The app uses a tiered notification approach to avoid disrupting gameplay:
+
+1. **Modal Prompts** (First encounter only)
+   - Full-screen overlays for skillchecks and escape areas
+   - "Start Skillcheck" / "Later" buttons
+   - "Escape Now!" / "Not Yet" buttons
+   - Once dismissed, never shows again for that specific prompt
+
+2. **Background Notifications** (After dismissal)
+   - Small cards in bottom-right corner
+   - Animated with `animate-pulse` class
+   - Clickable to trigger action
+   - Auto-clears when player moves away
+
+3. **Status Cards** (Always visible)
+   - Game timer and role display
+   - Skillcheck progress bar
+   - Escape area status
+   - Player lists with real-time updates
+
+### State Management Patterns
+```typescript
+// Prevent multiple simultaneous actions
+const [eliminating, setEliminating] = useState(false);
+const [escaping, setEscaping] = useState(false);
+
+// Track dismissed prompts to show background notifications
+const [dismissedSkillcheckPrompts, setDismissedSkillcheckPrompts] = useState<Set<string>>(new Set());
+const [dismissedEscapePrompt, setDismissedEscapePrompt] = useState(false);
+
+// Local state for immediate UI updates
+const [localCompletedSkillchecks, setLocalCompletedSkillchecks] = useState<Set<string>>(new Set());
+```
+
+### Error Handling Patterns
+All critical actions use timeout protection:
+```typescript
+const actionPromise = someAsyncAction();
+const timeoutPromise = new Promise((_, reject) => 
+  setTimeout(() => reject(new Error('Timeout')), 10000)
+);
+await Promise.race([actionPromise, timeoutPromise]);
+```
+
+### Responsive Design
+- Mobile-first approach with Tailwind CSS
+- Touch-friendly buttons (minimum 44px tap targets)
+- Proper overflow handling for modals
+- Fixed positioning for critical UI elements
+
 ## Implementation Notes for Future Agents
 
 ### Key Patterns Used:
@@ -343,8 +425,31 @@ git push            # Auto-deploy to Vercel
 - Efficient player filtering by role
 - Smart bounds calculation for map display
 
+## Debug Console Commands
+When debugging game issues, use these console filters:
+- `🏁` - Game end detection logs
+- `🚪` - Escape area related logs
+- `🎯` - Skillcheck completion logs
+- `🏃` - Player escape attempts
+- `❌` - Error messages
+- `✅` - Success confirmations
+
+## Common Development Commands
+```bash
+npm run dev          # Start local development server
+npm run build        # Build for production
+npm run lint         # Run ESLint
+git push            # Deploy to Vercel (automatic)
+```
+
+## Testing Guidelines
+- Use short game durations (30s) for quick testing
+- Enable host debug panel for manual controls
+- Test on actual mobile devices for GPS features
+- Use multiple browser tabs to simulate multiple players
+
 ---
-**Last Updated**: August 2025 (Escape Area System Implementation)
-**Status**: Production-ready with new escape mechanics and skillcheck system
-**Session Context**: Complete - All documentation updated for future agents</content>
+**Last Updated**: December 2025 (Comprehensive Documentation Update)
+**Status**: Production-ready with refined UX and robust error handling
+**Session Context**: Full app implementation with all major features complete and documented</content>
 </invoke>

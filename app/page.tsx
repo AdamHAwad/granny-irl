@@ -1,3 +1,33 @@
+/**
+ * Home Page - Main entry point for Granny IRL
+ * 
+ * This is the primary landing page that handles:
+ * - User authentication (Google OAuth via Supabase)
+ * - Profile setup and management
+ * - Room creation and joining
+ * - Current active rooms display
+ * - Game navigation and statistics
+ * 
+ * App Overview:
+ * Granny IRL is a real-life outdoor tag game where players use their phones
+ * to coordinate games. Killers hunt survivors using GPS tracking, with
+ * Dead by Daylight-inspired mechanics including skillchecks and escape areas.
+ * 
+ * Key Features:
+ * - 6-digit room codes for easy sharing
+ * - Real-time GPS tracking during games
+ * - Interactive map with OpenStreetMap
+ * - Skillcheck minigames with timing challenges
+ * - Escape area mechanics with dual win conditions
+ * - Game history and player statistics
+ * 
+ * User Flow:
+ * 1. Sign in with Google
+ * 2. Set up profile (display name, picture)
+ * 3. Create new room or join existing with code
+ * 4. Configure game settings (killers, time, skillchecks)
+ * 5. Start game and play outdoors with GPS tracking
+ */
 'use client';
 
 import { useState, useEffect } from 'react';

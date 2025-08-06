@@ -1,10 +1,11 @@
 # Granny IRL Development Guide
 
 ## Quick Context
-- **Production-ready** real-life tag game app
-- **Tech Stack**: Next.js 14 + Supabase + Leaflet maps
+- **Production-ready** real-life tag game app with refined UX
+- **Tech Stack**: Next.js 14 + Supabase + Leaflet maps + TypeScript + Tailwind CSS
 - **Live**: https://granny-irl.vercel.app
 - **Repo**: https://github.com/AdamHAwad/granny-irl
+- **Status**: All major features implemented with robust error handling
 
 ## Branching Strategy
 
@@ -33,9 +34,12 @@ git push origin main  # Auto-deploys
 - Proximity detection and directional arrows
 - Game history and player statistics
 - Mobile-optimized responsive design
-- **NEW: Dead by Daylight-style skillcheck system**
-- **NEW: Escape area mechanics with dual win conditions**
-- **NEW: Interactive map location picker for hosts**
+- Dead by Daylight-style skillcheck system
+- Escape area mechanics with dual win conditions
+- Interactive map location picker for hosts
+- **NEW: Non-invasive notification system**
+- **NEW: Robust error handling with timeout protection**
+- **NEW: Local state tracking for immediate UI updates**
 
 ### 🔧 Known Technical Details
 - **Supabase free tier**: Causes some slowness in transitions
@@ -44,10 +48,11 @@ git push origin main  # Auto-deploys
 - **Real-time**: Subscriptions + 2s polling fallback
 
 ### 🚧 Next Priority Features
-1. **Remove skillcheck penalties code** - Clean up deprecated timer extensions
-2. **Heat Maps** - Player movement density tracking
-3. **Trail History** - Path visualization (toggleable)
-4. **Native Mobile Apps** - iOS/Android wrappers
+1. **Killer Notifications** - Real-time alerts when skillchecks are completed
+2. **Remove skillcheck penalties code** - Clean up deprecated timer extensions
+3. **Heat Maps** - Player movement density tracking
+4. **Trail History** - Path visualization (toggleable)
+5. **Native Mobile Apps** - iOS/Android wrappers
 
 ### 🎯 New Game Modes
 - **Original Mode**: Classic timer-based tag game
@@ -117,19 +122,33 @@ git push         # Auto-deploy to production
 ## Debugging Guide
 
 ### Common Issues:
-1. **Slow transitions** → Supabase free tier latency
-2. **Location not working** → Browser permissions
-3. **Map not loading** → Network/Leaflet imports
-4. **Profile pics missing** → Supabase storage policies
-5. **Skillchecks using host GPS** → Check pinned location reference
-6. **Escape area not appearing** → Run SQL migration in Supabase
-7. **Column doesn't exist errors** → PostgreSQL case sensitivity
-8. **Build failures** → React hook dependencies or unescaped strings
+1. **"I was caught" button stuck** → Fixed with timeout protection
+2. **Game not ending properly** → Fixed checkGameEnd logic
+3. **Double skillcheck prompts** → Fixed with local state tracking
+4. **Multiple clicks required for escape** → Fixed with loading states
+5. **Invasive prompts blocking gameplay** → Fixed with background notifications
+6. **Slow transitions** → Supabase free tier latency (expected)
+7. **Location not working** → Browser permissions
+8. **Map not loading** → Network/Leaflet imports
+9. **Column doesn't exist errors** → PostgreSQL case sensitivity
+10. **Build failures** → React hook dependencies or TypeScript errors
 
 ### Debug Tools:
-- Console logs throughout services
-- Browser DevTools for network
-- Supabase dashboard for DB queries
+- **Console logs with emoji prefixes**: Filter by 🏁, 🚪, 🎯, 🏃, ❌, ✅
+- **Host debug panel**: Manual controls for testing game mechanics
+- Browser DevTools for network and performance
+- Supabase dashboard for DB queries and real-time monitoring
+
+### Key Debug Console Filters:
+```javascript
+// In browser console, filter by these:
+🏁  // Game end detection logs
+🚪  // Escape area related logs  
+🎯  // Skillcheck completion logs
+🏃  // Player escape attempts
+❌  // Error messages
+✅  // Success confirmations
+```
 
 ## Performance Notes
 
@@ -159,7 +178,33 @@ ADD COLUMN allSkillchecksCompleted BOOLEAN DEFAULT false;
 - JSONB for complex objects: players, skillchecks, escapeArea
 - Players now include: hasEscaped, escapedAt fields
 
+## State Management Patterns
+
+### Error Prevention:
+```typescript
+// Prevent multiple simultaneous actions
+const [eliminating, setEliminating] = useState(false);
+const [escaping, setEscaping] = useState(false);
+
+// Track dismissed prompts
+const [dismissedSkillcheckPrompts, setDismissedSkillcheckPrompts] = useState<Set<string>>(new Set());
+const [dismissedEscapePrompt, setDismissedEscapePrompt] = useState(false);
+
+// Local state for immediate updates
+const [localCompletedSkillchecks, setLocalCompletedSkillchecks] = useState<Set<string>>(new Set());
+```
+
+### Timeout Protection:
+```typescript
+// All critical actions use this pattern
+const actionPromise = someAsyncAction();
+const timeoutPromise = new Promise((_, reject) => 
+  setTimeout(() => reject(new Error('Timeout')), 10000)
+);
+await Promise.race([actionPromise, timeoutPromise]);
+```
+
 ---
-**Updated**: August 2025 (Escape Area System)  
-**Status**: Production-ready with dual game modes  
-**Next**: See CLAUDE.md for complete implementation details
+**Updated**: December 2025 (Comprehensive Documentation)  
+**Status**: Production-ready with refined UX and robust error handling  
+**Next**: See CLAUDE.md for complete implementation details and future features
