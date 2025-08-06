@@ -708,47 +708,66 @@ export async function eliminatePlayer(
   try {
     // Try the new secure handle_player_caught function first (prevents refresh issues)
     if (eliminatedBy) {
+      console.log('Attempting secure elimination with eliminatedBy:', eliminatedBy);
       const { data, error: caughtError } = await supabase.rpc('handle_player_caught', {
         p_room_id: roomCode,
         p_survivor_uid: playerUid,
         p_killer_uid: eliminatedBy
       });
       
+      console.log('Secure elimination result:', { data, error: caughtError });
+      
       if (!caughtError && data?.success) {
-        console.log('Player eliminated using secure caught handler');
+        console.log('✅ Player eliminated using secure caught handler');
         // Check game end asynchronously to not block the response
         setTimeout(() => checkGameEnd(roomCode), 100);
         return;
+      } else {
+        console.log('❌ Secure elimination failed:', caughtError || 'No success flag');
       }
     }
     
     // Fallback to optimized RPC function
+    console.log('Attempting optimized elimination');
     const { error: rpcError } = await supabase.rpc('eliminate_player_fast', {
       p_room_id: roomCode,
       p_player_uid: playerUid,
       p_eliminated_by: eliminatedBy || null
     });
     
+    console.log('Optimized elimination result:', { error: rpcError });
+    
     if (!rpcError) {
-      console.log('Player eliminated using optimized function');
+      console.log('✅ Player eliminated using optimized function');
       // Check game end asynchronously to not block the response
       setTimeout(() => checkGameEnd(roomCode), 100);
       return;
+    } else {
+      console.log('❌ Optimized elimination failed:', rpcError);
     }
     
-    console.log('RPC function not available, falling back to regular method');
+    console.log('⚠️ Both RPC functions failed, falling back to regular method');
   } catch (e) {
-    console.log('RPC function error, using fallback method');
+    console.error('❌ RPC functions threw error:', e);
+    console.log('⚠️ Using fallback method due to exception');
   }
   
   // Fallback to original method if RPC doesn't exist yet
+  console.log('📝 Using fallback elimination method (fetch + update)');
   const { data: room, error } = await supabase
     .from('rooms')
     .select('*')
     .eq('id', roomCode)
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error('❌ Failed to fetch room for elimination:', error);
+    throw error;
+  }
+
+  if (!room.players[playerUid]) {
+    throw new Error(`Player ${playerUid} not found in room`);
+  }
 
   const updatedPlayers = { ...room.players };
   updatedPlayers[playerUid].isAlive = false;
@@ -757,12 +776,18 @@ export async function eliminatePlayer(
     updatedPlayers[playerUid].eliminatedBy = eliminatedBy;
   }
 
+  console.log('📝 Updating player elimination in database');
   const { error: updateError } = await supabase
     .from('rooms')
     .update({ players: updatedPlayers })
     .eq('id', roomCode);
 
-  if (updateError) throw updateError;
+  if (updateError) {
+    console.error('❌ Failed to update room with elimination:', updateError);
+    throw updateError;
+  }
+  
+  console.log('✅ Player eliminated using fallback method');
   
   await checkGameEnd(roomCode);
 }

@@ -129,15 +129,44 @@ function GamePage({ params }: PageProps) {
     if (!user || !room) return;
 
     setEliminating(true);
+    
+    // Create a timeout to reset the button if the operation hangs
+    const timeout = setTimeout(() => {
+      console.warn('Elimination timeout - resetting button state');
+      setEliminating(false);
+    }, 10000); // 10 second timeout
+
     try {
-      await eliminatePlayer(params.roomCode, user.id);
+      // Find a random alive killer to attribute the elimination to
+      const aliveKillers = Object.values(room.players).filter(p => p.role === 'killer' && p.isAlive);
+      const eliminatedBy = aliveKillers.length > 0 ? aliveKillers[Math.floor(Math.random() * aliveKillers.length)].uid : undefined;
+      
+      console.log('Eliminating player with eliminatedBy:', eliminatedBy);
+      await eliminatePlayer(params.roomCode, user.id, eliminatedBy);
+      
       playElimination();
       vibrate([300, 100, 300, 100, 300]);
+      
+      // Wait a brief moment for real-time update, then reset state
+      setTimeout(() => {
+        setEliminating(false);
+      }, 2000);
+      
     } catch (error) {
       console.error('Error eliminating player:', error);
       setEliminating(false);
+    } finally {
+      clearTimeout(timeout);
     }
   }, [user, room, params.roomCode, playElimination, vibrate]);
+
+  // Reset eliminating state when player is actually eliminated via real-time updates
+  useEffect(() => {
+    if (currentPlayer && !currentPlayer.isAlive && eliminating) {
+      console.log('Player eliminated via real-time update - resetting button state');
+      setEliminating(false);
+    }
+  }, [currentPlayer?.isAlive, eliminating]);
 
   const handleGameEnd = useCallback(async () => {
     if (!user) return;
