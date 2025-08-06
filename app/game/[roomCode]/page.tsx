@@ -795,44 +795,58 @@ function GamePage({ params }: PageProps) {
 
         {currentPlayer?.isAlive && currentPlayer?.role === 'survivor' && isActive && (
           <div className="mb-6 space-y-4">
-            <div className="glass-card border border-granny-error/30 bg-granny-error/5 p-4">
-              <div className="text-granny-error font-semibold mb-3 flex items-center gap-2 justify-center">
-                ⚠️ Survivor Actions
+            <div className="glass-card border border-granny-error/30 bg-granny-error/5 p-6">
+              <div className="text-center mb-4">
+                <div className="text-4xl mb-2">💀</div>
+                <div className="text-granny-error font-bold text-lg">
+                  Survivor Emergency
+                </div>
               </div>
               <button
                 onClick={handleEliminate}
                 disabled={eliminating}
-                className="w-full bg-granny-error hover:bg-granny-error/90 text-white font-bold py-4 px-8 rounded-xl text-lg disabled:opacity-50 shadow-lg hover:shadow-granny-error/20 transition-all duration-200 flex items-center justify-center gap-2"
+                className="w-full bg-granny-error hover:bg-granny-error/90 text-white font-bold py-4 px-8 rounded-xl text-lg disabled:opacity-50 shadow-xl hover:shadow-granny-error/30 transition-all duration-300 flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98]"
               >
                 {eliminating ? (
                   <>
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Reporting Death...
+                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Reporting Death...</span>
                   </>
                 ) : (
-                  <>💀 I Was Caught!</>
+                  <>
+                    <span className="text-2xl">⚡</span>
+                    <span>I Was Caught!</span>
+                  </>
                 )}
               </button>
-              <p className="text-xs text-granny-text-muted mt-3 text-center flex items-center justify-center gap-1">
-                🎯 Only press this if you were tagged by a killer
-              </p>
+              <div className="glass-card border border-granny-warning/20 bg-granny-warning/10 p-3 mt-4">
+                <p className="text-xs text-granny-warning font-medium text-center flex items-center justify-center gap-2">
+                  ⚠️ Only press if you were physically tagged by a killer
+                </p>
+              </div>
             </div>
             
             {/* Practice Skillcheck Button (only if skillchecks are enabled) */}
             {room?.settings.skillchecks?.enabled && (
-              <div className="glass-card border border-granny-warning/30 bg-granny-warning/5 p-4">
-                <div className="text-granny-warning font-semibold mb-3 flex items-center gap-2 justify-center">
-                  ⚡ Skillcheck Practice
+              <div className="glass-card border border-granny-survivor/30 bg-granny-survivor/5 p-6">
+                <div className="text-center mb-4">
+                  <div className="text-4xl mb-2">⚡</div>
+                  <div className="text-granny-survivor font-bold text-lg">
+                    Skillcheck Training
+                  </div>
                 </div>
                 <button
                   onClick={() => setShowPracticeSkillcheck(true)}
-                  className="w-full bg-granny-warning hover:bg-granny-warning/90 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-granny-warning/20 transition-all duration-200 flex items-center justify-center gap-2"
+                  className="w-full bg-granny-survivor hover:bg-granny-survivor/90 text-white font-bold py-4 px-6 rounded-xl shadow-xl hover:shadow-granny-survivor/30 transition-all duration-300 flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  🎯 Practice Skillcheck
+                  <span className="text-2xl">🎯</span>
+                  <span>Practice Mode</span>
                 </button>
-                <p className="text-xs text-granny-text-muted mt-3 text-center flex items-center justify-center gap-1">
-                  🎮 Practice the timing challenge before attempting real skillchecks
-                </p>
+                <div className="glass-card border border-granny-text-muted/20 bg-granny-text-muted/5 p-3 mt-4">
+                  <p className="text-xs text-granny-text-muted text-center flex items-center justify-center gap-2">
+                    🎮 Perfect your timing before the real challenge
+                  </p>
+                </div>
               </div>
             )}
           </div>

@@ -182,131 +182,156 @@ export default function SkillcheckMinigame({
 
   if (!isOpen) return null;
 
-  const needleX = 150 + 100 * Math.cos((angle - 90) * Math.PI / 180);
-  const needleY = 150 + 100 * Math.sin((angle - 90) * Math.PI / 180);
+  const needleX = 140 + 90 * Math.cos((angle - 90) * Math.PI / 180);
+  const needleY = 140 + 90 * Math.sin((angle - 90) * Math.PI / 180);
 
   const successZoneEnd = (successZoneStart + successZoneSize) % 360;
   
-  // Create SVG path for success zone arc
+  // Create SVG path for success zone arc - updated for smaller circle
   const successZoneStartRad = (successZoneStart - 90) * Math.PI / 180;
   const successZoneEndRad = (successZoneEnd - 90) * Math.PI / 180;
   
-  const x1 = 150 + 100 * Math.cos(successZoneStartRad);
-  const y1 = 150 + 100 * Math.sin(successZoneStartRad);
-  const x2 = 150 + 100 * Math.cos(successZoneEndRad);
-  const y2 = 150 + 100 * Math.sin(successZoneEndRad);
+  const x1 = 140 + 90 * Math.cos(successZoneStartRad);
+  const y1 = 140 + 90 * Math.sin(successZoneStartRad);
+  const x2 = 140 + 90 * Math.cos(successZoneEndRad);
+  const y2 = 140 + 90 * Math.sin(successZoneEndRad);
   
   const largeArcFlag = successZoneSize > 180 ? 1 : 0;
   
   const successZonePath = [
-    `M 150 150`,
+    `M 140 140`,
     `L ${x1} ${y1}`,
-    `A 100 100 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+    `A 90 90 0 ${largeArcFlag} 1 ${x2} ${y2}`,
     `Z`
   ].join(' ');
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
-      <div className="bg-gray-900 rounded-xl p-8 text-white text-center max-w-md w-full mx-4">
-        <div className="mb-4">
-          <h2 className="text-2xl font-bold mb-2">⚡ SKILLCHECK</h2>
-          <p className="text-sm text-gray-300 mb-4">Hit the moving zones with varying speeds!</p>
-          
-          {/* Stats */}
-          <div className="flex justify-center gap-8 mb-4">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-green-400">{hits}/{REQUIRED_HITS}</div>
-              <div className="text-xs text-gray-400">Hits</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-amber-400">{Math.round(needleSpeed)}°/s</div>
-              <div className="text-xs text-gray-400">Speed</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-red-400">{misses}/{MAX_MISSES}</div>
-              <div className="text-xs text-gray-400">Misses</div>
+    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="glass-modal max-w-lg w-full text-granny-text text-center animate-slide-up">
+        <div className="p-8">
+          <div className="mb-8">
+            <div className="text-6xl mb-4">⚡</div>
+            <h2 className="text-3xl font-bold mb-3 text-granny-warning">SKILLCHECK</h2>
+            <p className="text-granny-text-muted mb-6">Hit the green zone when the needle passes through</p>
+            
+            {/* Simplified Progress */}
+            <div className="mb-6">
+              <div className="flex justify-center items-center gap-6 mb-4">
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-granny-success">{hits}</div>
+                  <div className="text-sm text-granny-text-muted">Hits</div>
+                </div>
+                <div className="text-6xl text-granny-text-muted">/</div>
+                <div className="text-center">
+                  <div className="text-4xl font-bold text-granny-text">{REQUIRED_HITS}</div>
+                  <div className="text-sm text-granny-text-muted">Required</div>
+                </div>
+              </div>
+              
+              {/* Clean Progress Bar */}
+              <div className="w-full bg-granny-surface rounded-full h-2 mb-3 overflow-hidden">
+                <div 
+                  className="bg-gradient-to-r from-granny-success/60 to-granny-success h-2 rounded-full transition-all duration-500"
+                  style={{ width: `${Math.min(100, (hits / REQUIRED_HITS) * 100)}%` }}
+                />
+              </div>
+              
+              {/* Miss indicator */}
+              {misses > 0 && (
+                <div className="flex justify-center gap-1 mt-2">
+                  {Array.from({ length: MAX_MISSES }, (_, i) => (
+                    <div 
+                      key={i}
+                      className={`w-3 h-3 rounded-full border-2 ${
+                        i < misses ? 'bg-granny-error border-granny-error' : 'border-granny-border/50'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-          
-          {/* Progress bar */}
-          <div className="w-full bg-gray-700 rounded-full h-3 mb-2">
-            <div 
-              className="bg-green-500 h-3 rounded-full transition-all duration-300"
-              style={{ width: `${Math.min(100, (hits / REQUIRED_HITS) * 100)}%` }}
-            />
+
+          {/* Skillcheck Circle - Simplified */}
+          <div className="relative mx-auto mb-8" style={{ width: '280px', height: '280px' }}>
+            <div className="absolute inset-0 rounded-full bg-granny-surface/30 border-4 border-granny-border/50"></div>
+            
+            <svg width="280" height="280" className="transform -rotate-90 relative z-10">
+              {/* Main track */}
+              <circle
+                cx="140"
+                cy="140"
+                r="90"
+                stroke="rgba(42, 42, 45, 0.8)"
+                strokeWidth="12"
+                fill="none"
+              />
+              
+              {/* Success zone - cleaner design */}
+              <path
+                d={successZonePath.replace(/150/g, '140').replace(/100/g, '90')}
+                fill="rgba(45, 90, 61, 0.7)"
+                stroke="#2d5a3d"
+                strokeWidth="3"
+                className="animate-pulse"
+              />
+              
+              {/* Needle - thinner and more elegant */}
+              <line
+                x1="140"
+                y1="140"
+                x2={140 + 90 * Math.cos((angle - 90) * Math.PI / 180)}
+                y2={140 + 90 * Math.sin((angle - 90) * Math.PI / 180)}
+                stroke="#c41e3a"
+                strokeWidth="3"
+                strokeLinecap="round"
+                className="drop-shadow-lg"
+              />
+              
+              {/* Center dot - smaller and cleaner */}
+              <circle
+                cx="140"
+                cy="140"
+                r="6"
+                fill="#c41e3a"
+                className="drop-shadow-md"
+              />
+            </svg>
+            
+            {/* Subtle glow effect */}
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-granny-warning/20 via-transparent to-granny-danger/20 animate-pulse"></div>
           </div>
-          <p className="text-xs text-gray-400">Get {REQUIRED_HITS} hits to complete</p>
-        </div>
 
-        {/* Skillcheck Circle */}
-        <div className="relative mx-auto mb-6" style={{ width: '300px', height: '300px' }}>
-          <svg width="300" height="300" className="transform -rotate-90">
-            {/* Outer circle */}
-            <circle
-              cx="150"
-              cy="150"
-              r="100"
-              stroke="#374151"
-              strokeWidth="8"
-              fill="none"
-            />
+          {/* Instructions - Simplified */}
+          <div className="space-y-3 text-granny-text-muted">
+            <div className="glass-card border border-granny-border/20 p-4">
+              <p className="font-medium text-granny-text mb-2">
+                🎯 Hit the green zone to progress
+              </p>
+              <p className="text-sm">
+                ⌨️ Press SPACE or tap when needle is in green
+              </p>
+            </div>
             
-            {/* Inner circle */}
-            <circle
-              cx="150"
-              cy="150"
-              r="80"
-              stroke="#4B5563"
-              strokeWidth="2"
-              fill="none"
-            />
-            
-            {/* Success zone */}
-            <path
-              d={successZonePath}
-              fill="#10B981"
-              fillOpacity="0.6"
-              stroke="#10B981"
-              strokeWidth="2"
-            />
-            
-            {/* Needle */}
-            <line
-              x1="150"
-              y1="150"
-              x2={needleX}
-              y2={needleY}
-              stroke="#EF4444"
-              strokeWidth="4"
-              strokeLinecap="round"
-            />
-            
-            {/* Center dot */}
-            <circle
-              cx="150"
-              cy="150"
-              r="8"
-              fill="#EF4444"
-            />
-          </svg>
-        </div>
+            {misses > 0 && (
+              <div className="glass-card border border-granny-error/30 bg-granny-error/10 p-3">
+                <p className="text-sm text-granny-error font-medium">
+                  ⚠️ {MAX_MISSES - misses} miss{MAX_MISSES - misses !== 1 ? 'es' : ''} remaining
+                </p>
+              </div>
+            )}
+          </div>
 
-        {/* Instructions */}
-        <div className="space-y-2 text-sm text-gray-300">
-          <p>🎯 Green zones change position, size, and needle speed varies</p>
-          <p>⌨️ Press SPACE or tap when the red needle is in the green zone</p>
-          <p>⚠️ {MAX_MISSES} misses = fail! Get {REQUIRED_HITS} hits to complete!</p>
+          {/* Close button (hidden during active game) */}
+          {!gameStarted && (
+            <button
+              onClick={onClose}
+              className="btn-ghost mt-6 px-6 py-3"
+            >
+              ✕ Close
+            </button>
+          )}
         </div>
-
-        {/* Close button (hidden during active game) */}
-        {!gameStarted && (
-          <button
-            onClick={onClose}
-            className="mt-4 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg"
-          >
-            Close
-          </button>
-        )}
       </div>
     </div>
   );
