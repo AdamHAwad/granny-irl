@@ -460,17 +460,18 @@ function GamePage({ params }: PageProps) {
 
   // Memoized player calculations for performance - moved before early returns
   const playerData = useMemo(() => {
-    if (!room) return { players: [], aliveKillers: [], aliveSurvivors: [], deadPlayers: [] };
+    if (!room) return { players: [], aliveKillers: [], aliveSurvivors: [], deadPlayers: [], escapedSurvivors: [] };
     const players = Object.values(room.players);
     return {
       players,
       aliveKillers: players.filter(p => p.role === 'killer' && p.isAlive),
-      aliveSurvivors: players.filter(p => p.role === 'survivor' && p.isAlive),
-      deadPlayers: players.filter(p => !p.isAlive)
+      aliveSurvivors: players.filter(p => p.role === 'survivor' && p.isAlive && !p.hasEscaped),
+      deadPlayers: players.filter(p => !p.isAlive),
+      escapedSurvivors: players.filter(p => p.role === 'survivor' && p.hasEscaped)
     };
   }, [room]);
 
-  const { players, aliveKillers, aliveSurvivors, deadPlayers } = playerData;
+  const { players, aliveKillers, aliveSurvivors, deadPlayers, escapedSurvivors } = playerData;
 
   // Memoized nearest survivor calculation for killers - moved before early returns
   const nearestSurvivor = useMemo(() => {
@@ -1001,8 +1002,8 @@ function GamePage({ params }: PageProps) {
             <div className="mt-2 pt-2 border-t border-gray-200">
               <div className="font-bold">Game State Debug:</div>
               <div>Room Status: {room.status}</div>
-              <div>Alive Survivors: {players.filter(p => p.role === 'survivor' && p.isAlive).length}</div>
-              <div>Escaped Survivors: {players.filter(p => p.role === 'survivor' && p.hasEscaped).length}</div>
+              <div>Alive Survivors: {aliveSurvivors.length}</div>
+              <div>Escaped Survivors: {escapedSurvivors.length}</div>
               <div>Eliminated Survivors: {players.filter(p => p.role === 'survivor' && !p.isAlive && !p.hasEscaped).length}</div>
               <div>Current Player Escaped: {currentPlayer?.hasEscaped ? 'Yes' : 'No'}</div>
               <div>Current Player Alive: {currentPlayer?.isAlive ? 'Yes' : 'No'}</div>
@@ -1152,17 +1153,25 @@ const PlayerCard = memo(function PlayerCard({ player, onClick, canClick }: {
     }
   }, [canClick, player.location, player.uid, onClick]);
 
-  const cardStyles = useMemo(() => ({
-    container: `flex items-center gap-3 p-3 rounded-lg ${
-      player.isAlive ? 'bg-gray-50' : 'bg-gray-200 opacity-75'
-    } ${canClick && player.location ? 'cursor-pointer hover:bg-gray-100 transition-colors' : ''}`,
-    name: `font-medium ${!player.isAlive ? 'line-through text-gray-500' : ''}`
-  }), [player.isAlive, canClick, player.location]);
+  const cardStyles = useMemo(() => {
+    const isInactive = !player.isAlive || player.hasEscaped;
+    return {
+      container: `flex items-center gap-3 p-3 rounded-lg ${
+        isInactive ? 'bg-gray-200 opacity-75' : 'bg-gray-50'
+      } ${canClick && player.location ? 'cursor-pointer hover:bg-gray-100 transition-colors' : ''}`,
+      name: `font-medium ${isInactive ? 'line-through text-gray-500' : ''}`
+    };
+  }, [player.isAlive, player.hasEscaped, canClick, player.location]);
 
-  const eliminatedTime = useMemo(() => {
-    if (!player.eliminatedAt) return null;
-    return new Date(player.eliminatedAt).toLocaleTimeString();
-  }, [player.eliminatedAt]);
+  const statusTime = useMemo(() => {
+    if (player.hasEscaped && player.escapedAt) {
+      return { type: 'escaped', time: new Date(player.escapedAt).toLocaleTimeString() };
+    }
+    if (!player.isAlive && player.eliminatedAt) {
+      return { type: 'eliminated', time: new Date(player.eliminatedAt).toLocaleTimeString() };
+    }
+    return null;
+  }, [player.eliminatedAt, player.escapedAt, player.hasEscaped, player.isAlive]);
 
   return (
     <div className={cardStyles.container} onClick={handleClick}>
@@ -1183,17 +1192,21 @@ const PlayerCard = memo(function PlayerCard({ player, onClick, canClick }: {
         <p className={cardStyles.name}>
           {player.displayName}
         </p>
-        {!player.isAlive && eliminatedTime && (
+        {statusTime && (
           <p className="text-xs text-gray-500">
-            Eliminated {eliminatedTime}
+            {statusTime.type === 'escaped' ? 'Escaped' : 'Eliminated'} {statusTime.time}
           </p>
         )}
       </div>
-      {!player.isAlive && (
+      {player.hasEscaped ? (
+        <div className="text-green-500 text-sm font-medium">
+          🎉
+        </div>
+      ) : !player.isAlive ? (
         <div className="text-red-500 text-sm font-medium">
           💀
         </div>
-      )}
+      ) : null}
     </div>
   );
 });

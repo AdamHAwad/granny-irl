@@ -340,7 +340,11 @@ export async function markPlayerEscaped(roomCode: string, playerUid: string, isD
       
       if (!rpcError) {
         console.log('✅ Player escaped using optimized function');
-        setTimeout(() => checkGameEnd(roomCode), 1000);
+        console.log('⏰ Scheduling game end check in 2 seconds...');
+        setTimeout(() => {
+          console.log('🏁 Running scheduled game end check after escape (RPC)');
+          checkGameEnd(roomCode);
+        }, 2000);
         return;
       } else {
         console.log('❌ Optimized escape marking failed:', rpcError);
@@ -414,8 +418,12 @@ export async function markPlayerEscaped(roomCode: string, playerUid: string, isD
 
     console.log('✅ Player escaped using fallback method:', playerUid);
 
-    // Check if survivors won (any survivor escaped)
-    setTimeout(() => checkGameEnd(roomCode), 1000);
+    // Check if survivors won (any survivor escaped) - use longer timeout to ensure DB commit
+    console.log('⏰ Scheduling game end check in 2 seconds...');
+    setTimeout(() => {
+      console.log('🏁 Running scheduled game end check after escape');
+      checkGameEnd(roomCode);
+    }, 2000);
     
   } catch (error) {
     console.error('❌ markPlayerEscaped: Critical error:', error);
