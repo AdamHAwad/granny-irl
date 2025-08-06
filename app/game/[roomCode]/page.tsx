@@ -50,6 +50,10 @@ function GamePage({ params }: PageProps) {
   const [showEscapePrompt, setShowEscapePrompt] = useState(false);
   const [localCompletedSkillchecks, setLocalCompletedSkillchecks] = useState<Set<string>>(new Set());
   const [escaping, setEscaping] = useState(false);
+  const [dismissedSkillcheckPrompts, setDismissedSkillcheckPrompts] = useState<Set<string>>(new Set());
+  const [dismissedEscapePrompt, setDismissedEscapePrompt] = useState(false);
+  const [backgroundSkillcheck, setBackgroundSkillcheck] = useState<string | null>(null);
+  const [backgroundEscape, setBackgroundEscape] = useState(false);
 
   // Handle practice skillcheck
   const handlePracticeSkillcheckSuccess = () => {
@@ -80,6 +84,11 @@ function GamePage({ params }: PageProps) {
       return newSet;
     });
     
+    // Clear background notification if it was for this skillcheck
+    if (backgroundSkillcheck === skillcheckId) {
+      setBackgroundSkillcheck(null);
+    }
+    
     vibrate(200);
     
     try {
@@ -104,6 +113,7 @@ function GamePage({ params }: PageProps) {
     setEscaping(true);
     setShowEscapePrompt(false);
     setNearbyEscapeArea(false);
+    setBackgroundEscape(false);
     
     try {
       console.log('🏃 Calling markPlayerEscaped for player:', user.id);
@@ -402,10 +412,17 @@ function GamePage({ params }: PageProps) {
         
         if (distance <= PROXIMITY_DISTANCE) {
           // Player is near an incomplete skillcheck
-          if (!showSkillcheckPrompt && !activeSkillcheck) {
+          if (!showSkillcheckPrompt && !activeSkillcheck && !backgroundSkillcheck) {
             console.log('Near skillcheck:', skillcheck.id, 'distance:', distance);
-            setShowSkillcheckPrompt(skillcheck.id);
-            vibrate(100);
+            
+            // If we've dismissed this prompt before, show it in background
+            if (dismissedSkillcheckPrompts.has(skillcheck.id)) {
+              setBackgroundSkillcheck(skillcheck.id);
+            } else {
+              // First time, show modal
+              setShowSkillcheckPrompt(skillcheck.id);
+              vibrate(100);
+            }
           }
           return; // Only show one prompt at a time
         }
@@ -422,24 +439,33 @@ function GamePage({ params }: PageProps) {
       
       if (distance <= PROXIMITY_DISTANCE) {
         // Player is near escape area
-        if (!showEscapePrompt && !nearbyEscapeArea) {
+        if (!showEscapePrompt && !nearbyEscapeArea && !backgroundEscape) {
           console.log('Near escape area, distance:', distance);
           setNearbyEscapeArea(true);
-          setShowEscapePrompt(true);
-          vibrate([100, 50, 100]);
+          
+          // If we've dismissed the escape prompt before, show it in background
+          if (dismissedEscapePrompt) {
+            setBackgroundEscape(true);
+          } else {
+            // First time, show modal
+            setShowEscapePrompt(true);
+            vibrate([100, 50, 100]);
+          }
         }
       } else {
         // Player moved away from escape area
         if (nearbyEscapeArea) {
           setNearbyEscapeArea(false);
           setShowEscapePrompt(false);
+          setBackgroundEscape(false);
         }
       }
     }
 
     // Clear skillcheck prompt if player moved away
-    if (showSkillcheckPrompt && room.skillchecks) {
-      const skillcheck = room.skillchecks.find(sc => sc.id === showSkillcheckPrompt);
+    if ((showSkillcheckPrompt || backgroundSkillcheck) && room.skillchecks) {
+      const skillcheckId = showSkillcheckPrompt || backgroundSkillcheck;
+      const skillcheck = room.skillchecks.find(sc => sc.id === skillcheckId);
       if (skillcheck) {
         const distance = locationService.calculateDistance(
           playerLocation,
@@ -447,16 +473,21 @@ function GamePage({ params }: PageProps) {
         );
         if (distance > PROXIMITY_DISTANCE) {
           setShowSkillcheckPrompt(null);
+          setBackgroundSkillcheck(null);
         }
       }
     }
-  }, [room, currentPlayer, showSkillcheckPrompt, activeSkillcheck, showEscapePrompt, nearbyEscapeArea, localCompletedSkillchecks, vibrate]);
+  }, [room, currentPlayer, showSkillcheckPrompt, activeSkillcheck, showEscapePrompt, nearbyEscapeArea, localCompletedSkillchecks, dismissedSkillcheckPrompts, dismissedEscapePrompt, backgroundSkillcheck, backgroundEscape, vibrate]);
 
   // Clear local completed skillchecks when game resets or room changes
   useEffect(() => {
     if (room?.status === 'waiting') {
       setLocalCompletedSkillchecks(new Set());
       setEscaping(false);
+      setDismissedSkillcheckPrompts(new Set());
+      setDismissedEscapePrompt(false);
+      setBackgroundSkillcheck(null);
+      setBackgroundEscape(false);
     }
   }, [room?.status]);
 
@@ -1002,6 +1033,42 @@ function GamePage({ params }: PageProps) {
         />
       )}
 
+      {/* Background Notifications - Non-intrusive prompts */}
+      {currentPlayer?.isAlive && currentPlayer?.role === 'survivor' && isActive && (
+        <div className="fixed bottom-20 right-4 z-30 space-y-2 max-w-xs">
+          {/* Background Skillcheck Notification */}
+          {backgroundSkillcheck && (
+            <div className="bg-blue-500 text-white rounded-lg p-3 shadow-lg animate-pulse cursor-pointer hover:bg-blue-600 transition-colors"
+                 onClick={() => {
+                   setActiveSkillcheck(backgroundSkillcheck);
+                   setBackgroundSkillcheck(null);
+                 }}>
+              <div className="flex items-center gap-2">
+                <span className="text-xl">⚡</span>
+                <div className="text-left">
+                  <div className="font-semibold text-sm">Skillcheck Nearby!</div>
+                  <div className="text-xs opacity-90">Tap to complete</div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Background Escape Notification */}
+          {backgroundEscape && !escaping && (
+            <div className="bg-purple-500 text-white rounded-lg p-3 shadow-lg animate-pulse cursor-pointer hover:bg-purple-600 transition-colors"
+                 onClick={handleEscape}>
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🚪</span>
+                <div className="text-left">
+                  <div className="font-semibold text-sm">Escape Area!</div>
+                  <div className="text-xs opacity-90">Tap to escape</div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Skillcheck Proximity Prompt */}
       {showSkillcheckPrompt && !activeSkillcheck && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
@@ -1019,7 +1086,17 @@ function GamePage({ params }: PageProps) {
                 Start Skillcheck
               </button>
               <button
-                onClick={() => setShowSkillcheckPrompt(null)}
+                onClick={() => {
+                  // Dismiss the modal and add to dismissed set
+                  setDismissedSkillcheckPrompts(prev => {
+                    const newSet = new Set(prev);
+                    newSet.add(showSkillcheckPrompt!);
+                    return newSet;
+                  });
+                  setShowSkillcheckPrompt(null);
+                  // Show in background instead
+                  setBackgroundSkillcheck(showSkillcheckPrompt);
+                }}
                 className="flex-1 bg-gray-300 text-gray-700 py-3 px-4 rounded-lg font-bold hover:bg-gray-400"
               >
                 Later
@@ -1044,7 +1121,13 @@ function GamePage({ params }: PageProps) {
                 {escaping ? '⏳ Escaping...' : '🏃 ESCAPE NOW!'}
               </button>
               <button
-                onClick={() => setShowEscapePrompt(false)}
+                onClick={() => {
+                  // Dismiss the modal and mark as dismissed
+                  setDismissedEscapePrompt(true);
+                  setShowEscapePrompt(false);
+                  // Show in background instead
+                  setBackgroundEscape(true);
+                }}
                 className="flex-1 bg-gray-300 text-gray-700 py-3 px-4 rounded-lg font-bold hover:bg-gray-400"
               >
                 Not Yet
