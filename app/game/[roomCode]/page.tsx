@@ -90,6 +90,7 @@ function GamePage({ params }: PageProps) {
   // Local state for immediate UI updates (prevents race conditions)
   const [localCompletedSkillchecks, setLocalCompletedSkillchecks] = useState<Set<string>>(new Set());
   const [escaping, setEscaping] = useState(false); // Prevents multiple escape clicks
+  const [showSkillcheckSuccess, setShowSkillcheckSuccess] = useState(false); // Success prompt
 
   // Handle practice skillcheck
   const handlePracticeSkillcheckSuccess = () => {
@@ -112,6 +113,14 @@ function GamePage({ params }: PageProps) {
     console.log('Real skillcheck succeeded!', skillcheckId);
     setActiveSkillcheck(null);
     setShowSkillcheckPrompt(null);
+    
+    // Show success prompt immediately
+    setShowSkillcheckSuccess(true);
+    
+    // Auto-hide success prompt after 2 seconds
+    setTimeout(() => {
+      setShowSkillcheckSuccess(false);
+    }, 2000);
     
     // Immediately add to local completed set to prevent double prompts
     setLocalCompletedSkillchecks(prev => {
@@ -1419,6 +1428,28 @@ function GamePage({ params }: PageProps) {
           >
             🎯 Force Check Game End
           </button>
+        </div>
+      )}
+
+      {/* Skillcheck Success Prompt - Highest Priority */}
+      {showSkillcheckSuccess && (
+        <div className="fixed inset-0 flex items-center justify-center z-[60] pointer-events-none">
+          <div className="glass-modal max-w-sm w-full mx-4 text-center animate-slide-up pointer-events-auto">
+            <div className="p-6">
+              <div className="text-6xl mb-4 animate-bounce">✅</div>
+              <div className="text-2xl font-bold text-granny-success mb-2">
+                Skillcheck Complete!
+              </div>
+              <p className="text-granny-text-muted text-sm">
+                Great timing! Keep it up.
+              </p>
+              <div className="mt-4">
+                <div className="w-full bg-granny-surface rounded-full h-2 overflow-hidden">
+                  <div className="bg-gradient-to-r from-granny-success/60 to-granny-success h-2 rounded-full animate-pulse" />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </main>
