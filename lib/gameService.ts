@@ -963,7 +963,7 @@ export async function checkGameEnd(roomCode: string): Promise<void> {
   const eliminatedSurvivors = allSurvivors.filter((p: any) => !p.isAlive && !p.hasEscaped);
 
   console.log('🏁 checkGameEnd: Alive killers:', aliveKillers.length, 'Alive survivors:', aliveSurvivors.length, 'Escaped survivors:', escapedSurvivors.length, 'Total survivors:', allSurvivors.length, 'Eliminated survivors:', eliminatedSurvivors.length);
-  console.log('🏁 checkGameEnd: Player states:', players.map(p => ({ 
+  console.log('🏁 checkGameEnd: Player states:', players.map((p: any) => ({ 
     name: p.displayName, 
     role: p.role, 
     isAlive: p.isAlive, 
