@@ -48,6 +48,8 @@ function GamePage({ params }: PageProps) {
   const [nearbyEscapeArea, setNearbyEscapeArea] = useState(false);
   const [showSkillcheckPrompt, setShowSkillcheckPrompt] = useState<string | null>(null);
   const [showEscapePrompt, setShowEscapePrompt] = useState(false);
+  const [localCompletedSkillchecks, setLocalCompletedSkillchecks] = useState<Set<string>>(new Set());
+  const [escaping, setEscaping] = useState(false);
 
   // Handle practice skillcheck
   const handlePracticeSkillcheckSuccess = () => {
@@ -70,6 +72,14 @@ function GamePage({ params }: PageProps) {
     console.log('Real skillcheck succeeded!', skillcheckId);
     setActiveSkillcheck(null);
     setShowSkillcheckPrompt(null);
+    
+    // Immediately add to local completed set to prevent double prompts
+    setLocalCompletedSkillchecks(prev => {
+      const newSet = new Set(prev);
+      newSet.add(skillcheckId);
+      return newSet;
+    });
+    
     vibrate(200);
     
     try {
@@ -88,22 +98,42 @@ function GamePage({ params }: PageProps) {
 
   // Handle escape area interaction
   const handleEscape = useCallback(async () => {
-    if (!user) return;
+    if (!user || escaping) return;
+    
     console.log('🏃 Player attempting escape!');
+    setEscaping(true);
     setShowEscapePrompt(false);
     setNearbyEscapeArea(false);
     
     try {
       console.log('🏃 Calling markPlayerEscaped for player:', user.id);
-      await markPlayerEscaped(params.roomCode, user.id, false); // Normal gameplay, not debug
+      
+      // Add timeout protection to prevent multiple rapid clicks
+      const escapePromise = markPlayerEscaped(params.roomCode, user.id, false);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Escape timeout')), 10000)
+      );
+      
+      await Promise.race([escapePromise, timeoutPromise]);
+      
       console.log('✅ Escape processing completed');
       vibrate([200, 100, 200, 100, 200]);
     } catch (error) {
       console.error('❌ Error escaping:', error);
-      // Show error to user
-      alert('Failed to escape. Please try again.');
+      
+      // Reset states on error so user can try again
+      setEscaping(false);
+      
+      if (error instanceof Error && error.message === 'Escape timeout') {
+        alert('Escape is taking longer than expected. Please wait or try again.');
+      } else {
+        alert('Failed to escape. Please try again.');
+      }
     }
-  }, [user, params.roomCode, vibrate]);
+    
+    // Reset escaping state after a delay regardless of success/failure
+    setTimeout(() => setEscaping(false), 2000);
+  }, [user, params.roomCode, vibrate, escaping]);
 
   // Handle clicking on a player to view their location
   const handlePlayerClick = (playerId: string) => {
@@ -359,7 +389,10 @@ function GamePage({ params }: PageProps) {
 
     // Check skillcheck proximity
     if (room.skillchecks && room.settings.skillchecks?.enabled) {
-      const incompleteSkillchecks = room.skillchecks.filter(sc => !sc.isCompleted);
+      // Filter out skillchecks that are completed OR locally tracked as completed
+      const incompleteSkillchecks = room.skillchecks.filter(sc => 
+        !sc.isCompleted && !localCompletedSkillchecks.has(sc.id)
+      );
       
       for (const skillcheck of incompleteSkillchecks) {
         const distance = locationService.calculateDistance(
@@ -417,7 +450,15 @@ function GamePage({ params }: PageProps) {
         }
       }
     }
-  }, [room, currentPlayer, showSkillcheckPrompt, activeSkillcheck, showEscapePrompt, nearbyEscapeArea, vibrate]);
+  }, [room, currentPlayer, showSkillcheckPrompt, activeSkillcheck, showEscapePrompt, nearbyEscapeArea, localCompletedSkillchecks, vibrate]);
+
+  // Clear local completed skillchecks when game resets or room changes
+  useEffect(() => {
+    if (room?.status === 'waiting') {
+      setLocalCompletedSkillchecks(new Set());
+      setEscaping(false);
+    }
+  }, [room?.status]);
 
   // Location tracking effect
   useEffect(() => {
@@ -634,9 +675,10 @@ function GamePage({ params }: PageProps) {
                 <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
                   <button
                     onClick={handleEscape}
-                    className="w-full bg-purple-500 text-white py-2 px-4 rounded-lg font-bold hover:bg-purple-600"
+                    disabled={escaping}
+                    className="w-full bg-purple-500 text-white py-2 px-4 rounded-lg font-bold hover:bg-purple-600 disabled:opacity-50"
                   >
-                    🏃 Manual Escape (Testing)
+                    {escaping ? '⏳ Escaping...' : '🏃 Manual Escape (Testing)'}
                   </button>
                   <div className="text-xs text-purple-600 mt-1">
                     Host testing escape functionality
@@ -996,9 +1038,10 @@ function GamePage({ params }: PageProps) {
             <div className="flex gap-3">
               <button
                 onClick={handleEscape}
-                className="flex-1 bg-purple-500 text-white py-3 px-4 rounded-lg font-bold hover:bg-purple-600"
+                disabled={escaping}
+                className="flex-1 bg-purple-500 text-white py-3 px-4 rounded-lg font-bold hover:bg-purple-600 disabled:opacity-50"
               >
-                🏃 ESCAPE NOW!
+                {escaping ? '⏳ Escaping...' : '🏃 ESCAPE NOW!'}
               </button>
               <button
                 onClick={() => setShowEscapePrompt(false)}
