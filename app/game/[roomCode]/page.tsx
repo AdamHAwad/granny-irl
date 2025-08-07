@@ -1201,31 +1201,49 @@ function GamePage({ params }: PageProps) {
         <div className="fixed bottom-20 right-4 z-30 space-y-2 max-w-xs">
           {/* Background Skillcheck Notification */}
           {backgroundSkillcheck && (
-            <div className="glass-card border border-granny-warning/50 bg-granny-warning/90 text-white rounded-lg p-3 shadow-xl animate-pulse cursor-pointer hover:bg-granny-warning transition-all duration-200 hover:scale-105"
+            <div className="relative group"
                  onClick={() => {
                    setActiveSkillcheck(backgroundSkillcheck);
                    setBackgroundSkillcheck(null);
                  }}>
-              <div className="flex items-center gap-2">
-                <span className="text-xl">⚡</span>
-                <div className="text-left">
-                  <div className="font-bold text-sm">Skillcheck Nearby!</div>
-                  <div className="text-xs opacity-90">Tap to complete</div>
+              <div className="glass-card border border-granny-border/20 bg-granny-bg/95 backdrop-blur-md text-granny-text rounded-xl p-4 shadow-2xl cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-amber-500/20 hover:shadow-xl">
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-200">
+                    <span className="text-white text-lg font-bold">⚡</span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-semibold text-granny-text mb-1">Skillcheck Available</div>
+                    <div className="text-xs text-granny-text-muted opacity-80">Tap to start minigame</div>
+                  </div>
+                  <div className="flex-shrink-0 w-6 h-6 bg-granny-border/20 rounded-full flex items-center justify-center">
+                    <span className="text-granny-text-muted text-xs">→</span>
+                  </div>
                 </div>
+                {/* Subtle glow effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-amber-400/10 to-yellow-500/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
             </div>
           )}
           
           {/* Background Escape Notification */}
           {backgroundEscape && !escaping && (
-            <div className="glass-card border border-purple-400/50 bg-purple-500/90 text-white rounded-lg p-3 shadow-xl animate-pulse cursor-pointer hover:bg-purple-500 transition-all duration-200 hover:scale-105"
+            <div className="relative group"
                  onClick={handleEscape}>
-              <div className="flex items-center gap-2">
-                <span className="text-xl">🚪</span>
-                <div className="text-left">
-                  <div className="font-bold text-sm">Escape Area!</div>
-                  <div className="text-xs opacity-90">Tap to escape</div>
+              <div className="glass-card border border-granny-border/20 bg-granny-bg/95 backdrop-blur-md text-granny-text rounded-xl p-4 shadow-2xl cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-purple-500/20 hover:shadow-xl">
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-200">
+                    <span className="text-white text-lg">🚪</span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-semibold text-granny-text mb-1">Escape Zone Ready</div>
+                    <div className="text-xs text-granny-text-muted opacity-80">Tap to escape and win</div>
+                  </div>
+                  <div className="flex-shrink-0 w-6 h-6 bg-granny-border/20 rounded-full flex items-center justify-center">
+                    <span className="text-granny-text-muted text-xs">→</span>
+                  </div>
                 </div>
+                {/* Subtle glow effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-purple-600/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
             </div>
           )}
