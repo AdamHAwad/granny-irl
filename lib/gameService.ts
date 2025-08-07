@@ -38,10 +38,14 @@ import { Room, Player, RoomSettings, GameResult, PlayerGameStats, GameHistoryEnt
 import { locationService } from './locationService';
 
 // Performance optimization: Cache and debouncing
-const queryCache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+export const queryCache = new Map<string, { data: any; timestamp: number; ttl: number }>();
 const CACHE_TTL_SHORT = 5000; // 5 seconds for room data
 const CACHE_TTL_MEDIUM = 30000; // 30 seconds for lists
 const CACHE_TTL_LONG = 300000; // 5 minutes for static data
+
+// Export for cache utilities
+import { setGlobalCache } from './cacheUtils';
+setGlobalCache(queryCache);
 
 // Debounced update batching
 let updateBatch: Map<string, any> = new Map();
@@ -112,7 +116,16 @@ async function getRoomOptimized(roomCode: string, useCache: boolean = true): Pro
   if (useCache) {
     const cached = getCachedData(cacheKey);
     if (cached) {
-      return cached;
+      // Validate cache isn't corrupted with duplicate players
+      const playerCount = Object.keys(cached.players || {}).length;
+      const uniqueUids = new Set(Object.keys(cached.players || {}));
+      
+      if (playerCount === uniqueUids.size) {
+        return cached;
+      } else {
+        // Cache is corrupted, clear it
+        queryCache.delete(cacheKey);
+      }
     }
   }
   
@@ -1332,6 +1345,12 @@ export function subscribeToRoom(
     
     debounceTimeout = setTimeout(() => {
       if (isActive) {
+        // Clear cache on update to ensure fresh data
+        if (room) {
+          const cacheKey = `room:${roomCode}`;
+          queryCache.delete(cacheKey); // Clear stale cache
+          setCachedData(cacheKey, room, CACHE_TTL_SHORT);
+        }
         callback(room);
         lastUpdate = Date.now();
       }
@@ -1348,13 +1367,9 @@ export function subscribeToRoom(
       try {
         const room = await getRoomOptimized(roomCode, false); // Force refresh
         if (room) {
-          // Only callback if data actually changed (reduces UI thrashing)
-          const cacheKey = `room:${roomCode}`;
-          const cached = getCachedData(cacheKey);
-          
-          if (!cached || JSON.stringify(cached) !== JSON.stringify(room)) {
-            debouncedCallback(room);
-          }
+          // Always callback during polling to ensure data freshness
+          // The debounce will handle preventing UI thrashing
+          debouncedCallback(room);
         }
       } catch (error) {
         console.warn('🔔 Polling error:', error);
