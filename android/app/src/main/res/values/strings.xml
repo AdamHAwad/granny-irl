@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Granny IRL</string>
+    <string name="title_activity_main">Granny IRL</string>
+    <string name="package_name">com.grannyirl.app</string>
+    <string name="custom_url_scheme">com.grannyirl.app</string>
+    
+    <!-- Google OAuth Configuration -->
+    <string name="server_client_id">20328927068-en1cmbti4ponfronn7g307lmqt5njabq.apps.googleusercontent.com</string>
+</resources>

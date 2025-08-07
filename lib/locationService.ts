@@ -16,6 +16,7 @@
  */
 
 import { PlayerLocation } from '@/types/game';
+import { mobileService } from './mobileService';
 
 export interface LocationPermissionStatus {
   granted: boolean;

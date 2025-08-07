@@ -35,12 +35,14 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import SignInButton from '@/components/SignInButton';
+import MobileSignInButton from '@/components/MobileSignInButton';
 import AuthGuard from '@/components/AuthGuard';
 import ProfileSetup from '@/components/ProfileSetup';
 import CreateRoomModal from '@/components/CreateRoomModal';
 import JoinRoomModal from '@/components/JoinRoomModal';
 import CurrentRoom from '@/components/CurrentRoom';
 import LocationPermissionModal from '@/components/LocationPermissionModal';
+import MobileAuthCode from '@/components/MobileAuthCode';
 import { locationService } from '@/lib/locationService';
 
 function AuthenticatedHome() {
@@ -216,6 +218,9 @@ function AuthenticatedHome() {
           </div>
         </div>
 
+        {/* Mobile Auth Code */}
+        <MobileAuthCode />
+
         <div className="w-full max-w-lg mb-8">
           <CurrentRoom />
         </div>
@@ -279,6 +284,15 @@ function UnauthenticatedHome() {
         
         <div className="space-y-4">
           <SignInButton />
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-granny-border/30"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="bg-granny-bg px-2 text-granny-text-muted">OR</span>
+            </div>
+          </div>
+          <MobileSignInButton />
           <p className="text-sm text-granny-text-muted">
             Sign in with Google to start playing
           </p>
