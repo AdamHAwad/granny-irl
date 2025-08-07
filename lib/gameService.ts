@@ -116,16 +116,7 @@ async function getRoomOptimized(roomCode: string, useCache: boolean = true): Pro
   if (useCache) {
     const cached = getCachedData(cacheKey);
     if (cached) {
-      // Validate cache isn't corrupted with duplicate players
-      const playerCount = Object.keys(cached.players || {}).length;
-      const uniqueUids = new Set(Object.keys(cached.players || {}));
-      
-      if (playerCount === uniqueUids.size) {
-        return cached;
-      } else {
-        // Cache is corrupted, clear it
-        queryCache.delete(cacheKey);
-      }
+      return cached;
     }
   }
   
@@ -472,118 +463,68 @@ export async function markPlayerEscaped(roomCode: string, playerUid: string, isD
   console.log('🚪 markPlayerEscaped: Starting for player', playerUid, isDebugMode ? '(DEBUG MODE)' : '');
   
   try {
-    // Try optimized RPC function first
+    // Try optimized RPC function first with timeout protection
     try {
-      const { error: rpcError } = await supabase.rpc('mark_player_escaped_fast', {
+      const rpcPromise = supabase.rpc('mark_player_escaped_fast', {
         p_room_id: roomCode,
         p_player_uid: playerUid
       });
       
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Escape timeout')), 5000)
+      );
+      
+      const { error: rpcError } = await Promise.race([rpcPromise, timeoutPromise]) as { error: any };
+      
       if (!rpcError) {
         console.log('✅ Player escaped using optimized function');
-        console.log('⏰ Scheduling game end check in 2 seconds...');
-        setTimeout(() => {
-          console.log('🏁 Running scheduled game end check after escape (RPC)');
-          checkGameEnd(roomCode);
-        }, 2000);
+        setTimeout(() => checkGameEnd(roomCode), 100);
         return;
       } else {
         console.log('❌ Optimized escape marking failed:', rpcError);
       }
-    } catch (e) {
-      console.log('⚠️ RPC function not available, using fallback method');
+    } catch (error) {
+      console.log('⚠️ Escape RPC failed/timed out, using fallback:', error.message || error);
     }
 
-    // Fallback to original method
-    const { data: room, error } = await supabase
-      .from('rooms')
-      .select('*')
-      .eq('id', roomCode)
-      .single();
-
-    if (error) {
-      console.error('❌ Failed to fetch room for escape marking:', error);
-      throw error;
-    }
-    
-    // Check for escape area (handle PostgreSQL lowercase column names)
-    const escapeArea = room.escapearea || room.escapeArea;
-    if (!room || !escapeArea) {
-      console.error('❌ Room or escape area not found', {
-        roomExists: !!room,
-        escapeAreaExists: !!escapeArea,
-        escapeAreaLowercase: !!room.escapearea,
-        escapeAreaCamelCase: !!room.escapeArea
-      });
-      return;
-    }
-
-    const player = room.players[playerUid];
-    
-    if (!player) {
-      console.log('⚠️ Player not found');
-      return;
-    }
-    
-    // In debug mode, allow more flexibility but still validate basic requirements
-    if (isDebugMode) {
-      if (player.hasEscaped) {
-        console.log('⚠️ Player already escaped');
-        return;
-      }
-      console.log('🛠️ DEBUG MODE: Allowing escape for', player.role, 'player (alive:', player.isAlive, ')');
-    } else {
-      // Normal mode: strict validation
-      if (!player || player.role !== 'survivor' || !player.isAlive || player.hasEscaped) {
-        console.log('⚠️ Player validation failed for escape marking', {
-          exists: !!player,
-          role: player?.role,
-          isAlive: player?.isAlive,
-          hasEscaped: player?.hasEscaped
-        });
-        return;
-      }
-    }
-
-    // Update player status - ensure escaped players are alive and clear elimination data
-    const updatedPlayers = { ...room.players };
-    updatedPlayers[playerUid] = {
-      ...player,
-      isAlive: true, // Escaped players are alive
-      hasEscaped: true,
-      escapedAt: Date.now(),
-      // Clear elimination data since they escaped
-      eliminatedAt: undefined,
-      eliminatedBy: undefined,
-    };
-
-    // Add to escape area's escaped players list
-    const updatedEscapeArea = {
-      ...escapeArea,
-      escapedPlayers: [...(escapeArea.escapedPlayers || []), playerUid],
-    };
-
+    // Efficient fallback using raw SQL (avoid fetch+modify+update)
+    console.log('🚪 Using efficient escape fallback (raw SQL)');
     const { error: updateError } = await supabase
       .from('rooms')
       .update({
-        players: updatedPlayers,
-        escapearea: updatedEscapeArea, // PostgreSQL lowercase column name
+        players: supabase.raw(`
+          players || jsonb_build_object(
+            '${playerUid}', 
+            players->'${playerUid}' || jsonb_build_object(
+              'hasEscaped', true,
+              'escapedAt', ${Date.now()}
+            )
+          )
+        `),
+        escapearea: supabase.raw(`
+          escapearea || jsonb_build_object(
+            'escapedPlayers', 
+            COALESCE(escapearea->'escapedPlayers', '[]'::jsonb) || 
+            CASE 
+              WHEN NOT (escapearea->'escapedPlayers' @> '"${playerUid}"'::jsonb)
+              THEN to_jsonb('${playerUid}'::text)
+              ELSE '[]'::jsonb
+            END
+          )
+        `)
       })
-      .eq('id', roomCode);
+      .eq('id', roomCode)
+      .eq('status', 'active');
 
     if (updateError) {
-      console.error('❌ Failed to update player escape status:', updateError);
+      console.error('❌ Escape fallback failed:', updateError);
       throw updateError;
     }
-
-    console.log('✅ Player escaped using fallback method:', playerUid);
-
-    // Check if survivors won (any survivor escaped) - use longer timeout to ensure DB commit
-    console.log('⏰ Scheduling game end check in 2 seconds...');
-    setTimeout(() => {
-      console.log('🏁 Running scheduled game end check after escape');
-      checkGameEnd(roomCode);
-    }, 2000);
+    
+    console.log('✅ Player escaped using efficient fallback:', playerUid);
+    
+    // Check game end asynchronously to not block the response
+    setTimeout(() => checkGameEnd(roomCode), 100);
     
   } catch (error) {
     console.error('❌ markPlayerEscaped: Critical error:', error);
@@ -603,23 +544,29 @@ export async function completeSkillcheck(
   console.log('🎯 completeSkillcheck: Starting for skillcheck', skillcheckId, 'by player', playerUid);
   
   try {
-    // Try optimized RPC function first
+    // Try optimized RPC function first with timeout protection
     try {
-      const { error: rpcError } = await supabase.rpc('complete_skillcheck_fast', {
+      const rpcPromise = supabase.rpc('complete_skillcheck_fast', {
         p_room_id: roomCode,
         p_skillcheck_id: skillcheckId,
         p_player_uid: playerUid
       });
       
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Skillcheck completion timeout')), 5000)
+      );
+      
+      const { error: rpcError } = await Promise.race([rpcPromise, timeoutPromise]) as { error: any };
+      
       if (!rpcError) {
         console.log('✅ Skillcheck completed using optimized function');
-        setTimeout(() => checkSkillcheckCompletion(roomCode), 500);
+        setTimeout(() => checkSkillcheckCompletion(roomCode), 100);
         return;
       } else {
         console.log('❌ Optimized skillcheck completion failed:', rpcError);
       }
-    } catch (e) {
-      console.log('⚠️ RPC function not available, using fallback method');
+    } catch (error) {
+      console.log('⚠️ Skillcheck RPC failed/timed out, using fallback:', error.message || error);
     }
 
     // Fallback to original method
@@ -988,90 +935,100 @@ export async function eliminatePlayer(
   console.log('Eliminating player:', playerUid, 'in room:', roomCode);
   
   try {
-    // Try the new secure handle_player_caught function first (prevents refresh issues)
+    // Try the secure handle_player_caught function first with timeout protection
     if (eliminatedBy) {
-      console.log('Attempting secure elimination with eliminatedBy:', eliminatedBy);
-      const { data, error: caughtError } = await supabase.rpc('handle_player_caught', {
-        p_room_id: roomCode,
-        p_survivor_uid: playerUid,
-        p_killer_uid: eliminatedBy
-      });
+      console.log('🔥 Attempting secure elimination with eliminatedBy:', eliminatedBy);
       
-      console.log('Secure elimination result:', { data, error: caughtError });
-      
-      if (!caughtError && data?.success) {
-        console.log('✅ Player eliminated using secure caught handler');
-        // Check game end asynchronously to not block the response
-        setTimeout(() => checkGameEnd(roomCode), 100);
-        return;
-      } else {
-        console.log('❌ Secure elimination failed:', caughtError || 'No success flag');
+      try {
+        const rpcPromise = supabase.rpc('handle_player_caught', {
+          p_room_id: roomCode,
+          p_survivor_uid: playerUid,
+          p_killer_uid: eliminatedBy
+        });
+        
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Secure elimination timeout')), 6000)
+        );
+        
+        const { data, error: caughtError } = await Promise.race([rpcPromise, timeoutPromise]) as { data: any; error: any };
+        
+        console.log('🔥 Secure elimination result:', { data, error: caughtError });
+        
+        if (!caughtError && data?.success) {
+          console.log('✅ Player eliminated using secure caught handler');
+          setTimeout(() => checkGameEnd(roomCode), 100);
+          return;
+        } else {
+          console.log('❌ Secure elimination failed:', caughtError || 'No success flag');
+        }
+      } catch (timeoutError) {
+        console.log('⏱️ Secure elimination timed out, trying backup');
       }
     }
     
-    // Fallback to optimized RPC function
-    console.log('Attempting optimized elimination');
-    const { error: rpcError } = await supabase.rpc('eliminate_player_fast', {
-      p_room_id: roomCode,
-      p_player_uid: playerUid,
-      p_eliminated_by: eliminatedBy || null
-    });
+    // Fallback to optimized RPC function with timeout
+    console.log('🔥 Attempting optimized elimination');
     
-    console.log('Optimized elimination result:', { error: rpcError });
-    
-    if (!rpcError) {
-      console.log('✅ Player eliminated using optimized function');
-      // Check game end asynchronously to not block the response
-      setTimeout(() => checkGameEnd(roomCode), 100);
-      return;
-    } else {
-      console.log('❌ Optimized elimination failed:', rpcError);
+    try {
+      const rpcPromise = supabase.rpc('eliminate_player_fast', {
+        p_room_id: roomCode,
+        p_player_uid: playerUid,
+        p_eliminated_by: eliminatedBy || null
+      });
+      
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Optimized elimination timeout')), 5000)
+      );
+      
+      const { error: rpcError } = await Promise.race([rpcPromise, timeoutPromise]) as { error: any };
+      
+      console.log('🔥 Optimized elimination result:', { error: rpcError });
+      
+      if (!rpcError) {
+        console.log('✅ Player eliminated using optimized function');
+        setTimeout(() => checkGameEnd(roomCode), 100);
+        return;
+      } else {
+        console.log('❌ Optimized elimination failed:', rpcError);
+      }
+    } catch (timeoutError) {
+      console.log('⏱️ Optimized elimination timed out');
     }
     
-    console.log('⚠️ Both RPC functions failed, falling back to regular method');
+    console.log('⚠️ All RPC functions failed/timed out, using emergency fallback');
   } catch (e) {
     console.error('❌ RPC functions threw error:', e);
-    console.log('⚠️ Using fallback method due to exception');
+    console.log('⚠️ Using emergency fallback due to exception');
   }
   
-  // Fallback to original method if RPC doesn't exist yet
-  console.log('📝 Using fallback elimination method (fetch + update)');
-  const { data: room, error } = await supabase
-    .from('rooms')
-    .select('*')
-    .eq('id', roomCode)
-    .single();
-
-  if (error) {
-    console.error('❌ Failed to fetch room for elimination:', error);
-    throw error;
-  }
-
-  if (!room.players[playerUid]) {
-    throw new Error(`Player ${playerUid} not found in room`);
-  }
-
-  const updatedPlayers = { ...room.players };
-  updatedPlayers[playerUid].isAlive = false;
-  updatedPlayers[playerUid].eliminatedAt = Date.now();
-  if (eliminatedBy) {
-    updatedPlayers[playerUid].eliminatedBy = eliminatedBy;
-  }
-
-  console.log('📝 Updating player elimination in database');
+  // Emergency fallback: More efficient than old fetch+modify+update approach
+  console.log('🚨 Using emergency elimination fallback (efficient raw SQL)');
   const { error: updateError } = await supabase
     .from('rooms')
-    .update({ players: updatedPlayers })
-    .eq('id', roomCode);
+    .update({
+      players: supabase.raw(`
+        players || jsonb_build_object(
+          '${playerUid}', 
+          players->'${playerUid}' || jsonb_build_object(
+            'isAlive', false,
+            'eliminatedAt', ${Date.now()}
+            ${eliminatedBy ? `, 'eliminatedBy', '${eliminatedBy}'` : ''}
+          )
+        )
+      `)
+    })
+    .eq('id', roomCode)
+    .eq('status', 'active'); // Only eliminate during active games
 
   if (updateError) {
-    console.error('❌ Failed to update room with elimination:', updateError);
+    console.error('❌ Emergency elimination failed:', updateError);
     throw updateError;
   }
   
-  console.log('✅ Player eliminated using fallback method');
+  console.log('✅ Player eliminated using emergency fallback');
   
-  await checkGameEnd(roomCode);
+  // Check game end asynchronously to not block the response
+  setTimeout(() => checkGameEnd(roomCode), 100);
 }
 
 export async function checkGameEnd(roomCode: string): Promise<void> {
@@ -1619,50 +1576,56 @@ export async function updatePlayerLocation(
   location: PlayerLocation
 ): Promise<void> {
   try {
-    console.log('updatePlayerLocation: Updating location for player:', playerUid, 'in room:', roomCode);
+    console.log('📍 updatePlayerLocation: Updating location for player:', playerUid);
     
-    const { data: room, error } = await supabase
+    // Try optimized RPC first (much faster - no fetch needed)
+    try {
+      const { error: rpcError } = await supabase.rpc('update_player_location_fast', {
+        p_room_id: roomCode,
+        p_player_uid: playerUid,
+        p_latitude: location.latitude,
+        p_longitude: location.longitude,
+        p_accuracy: location.accuracy || null
+      });
+      
+      if (!rpcError) {
+        console.log('✅ Location updated using optimized RPC');
+        return;
+      } else {
+        console.log('❌ Location RPC failed:', rpcError.message || rpcError);
+      }
+    } catch (rpcException) {
+      console.log('⚠️ Location RPC exception, using fallback');
+    }
+    
+    // Efficient fallback: Use raw SQL instead of fetch+modify+update
+    console.log('📍 Using efficient fallback (raw SQL)');
+    const { error } = await supabase
       .from('rooms')
-      .select('*')
-      .eq('id', roomCode)
-      .single();
-
-    if (error) {
-      console.error('updatePlayerLocation: Error fetching room:', error);
-      return;
-    }
-
-    if (!room.players[playerUid]) {
-      console.error('updatePlayerLocation: Player not found in room');
-      return;
-    }
-
-    // Only update location during active games
-    if (room.status !== 'active' && room.status !== 'headstart') {
-      console.log('updatePlayerLocation: Not updating location - game not active');
-      return;
-    }
-
-    // Update player's location and timestamp
-    const updatedPlayers = { ...room.players };
-    updatedPlayers[playerUid] = {
-      ...updatedPlayers[playerUid],
-      location,
-      lastLocationUpdate: Date.now(),
-    };
-
-    const { error: updateError } = await supabase
-      .from('rooms')
-      .update({ players: updatedPlayers })
+      .update({
+        players: supabase.raw(`
+          CASE 
+            WHEN status IN ('active', 'headstart') AND players->>'${playerUid}' IS NOT NULL
+            THEN players || jsonb_build_object(
+              '${playerUid}', 
+              players->'${playerUid}' || jsonb_build_object(
+                'location', '${JSON.stringify(location)}'::jsonb,
+                'lastLocationUpdate', ${Date.now()}
+              )
+            )
+            ELSE players
+          END
+        `)
+      })
       .eq('id', roomCode);
 
-    if (updateError) {
-      console.error('updatePlayerLocation: Error updating room:', updateError);
+    if (error) {
+      console.error('❌ Location fallback failed:', error);
     } else {
-      console.log('updatePlayerLocation: Successfully updated location for player:', playerUid);
+      console.log('✅ Location updated using efficient fallback');
     }
   } catch (error) {
-    console.error('updatePlayerLocation: Error:', error);
+    console.error('❌ updatePlayerLocation: Critical error:', error);
   }
 }
 

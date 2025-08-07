@@ -34,7 +34,6 @@ import { useSoundNotifications } from '@/hooks/useSoundNotifications';
 import { subscribeToRoom, eliminatePlayer, updatePlayerLocation, clearPlayerLocation, completeSkillcheck, markPlayerEscaped } from '@/lib/gameService';
 import { Room, Player } from '@/types/game';
 import { locationService, HIGH_FREQUENCY_LOCATION_OPTIONS } from '@/lib/locationService';
-import { clearRoomCache } from '@/lib/cacheUtils';
 import AuthGuard from '@/components/AuthGuard';
 import LocationPermissionModal from '@/components/LocationPermissionModal';
 import InteractiveGameMap from '@/components/InteractiveGameMap';
@@ -293,8 +292,6 @@ function GamePage({ params }: PageProps) {
     let errorTimeout: NodeJS.Timeout | null = null;
     let redirectTimeout: NodeJS.Timeout | null = null;
 
-    // Clear cache for this room to ensure fresh data
-    clearRoomCache(params.roomCode);
 
     const unsubscribe = subscribeToRoom(params.roomCode, (roomData) => {
       if (!isComponentMounted) return;
