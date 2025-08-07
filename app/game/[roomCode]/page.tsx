@@ -684,11 +684,11 @@ function GamePage({ params }: PageProps) {
   const isActive = room.status === 'active';
 
   return (
-    <main className="flex min-h-screen flex-col mobile-container max-w-4xl mx-auto relative">
+    <main className="flex min-h-screen flex-col native-full-width max-w-4xl mx-auto relative">
       {/* Background effects */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-granny-bg/80 to-granny-bg pointer-events-none" />
       
-      <div className="w-full glass-modal p-6 text-granny-text mb-4 relative z-10">
+      <div className="w-full glass-modal p-4 text-granny-text mb-3 relative z-10">
         <div className="text-center mb-6">
           <h1 className={`text-4xl font-bold mb-3 animate-glow flex items-center justify-center gap-3 ${
             isHeadstart ? 'text-granny-warning' : 'text-granny-danger'
@@ -817,21 +817,6 @@ function GamePage({ params }: PageProps) {
                 </div>
               )}
 
-              {/* Manual Escape Button for Testing */}
-              {user?.id === room.host_uid && nearbyEscapeArea && !currentPlayer.hasEscaped && (
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-                  <button
-                    onClick={handleEscape}
-                    disabled={escaping}
-                    className="w-full bg-purple-500 text-white py-2 px-4 rounded-lg font-bold hover:bg-purple-600 disabled:opacity-50"
-                  >
-                    {escaping ? '⏳ Escaping...' : '🏃 Manual Escape (Testing)'}
-                  </button>
-                  <div className="text-xs text-purple-600 mt-1">
-                    Host testing escape functionality
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </div>
