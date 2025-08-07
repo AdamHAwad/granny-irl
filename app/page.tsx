@@ -98,7 +98,7 @@ function AuthenticatedHome() {
   if (loading) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center native-full-width">
-        <div className="glass-card-mobile p-6 text-center max-w-sm w-full mx-2">
+        <div className="glass-card-mobile p-6 text-center max-w-sm w-full mx-auto">
           <div className="text-lg text-granny-text mb-4">Loading profile...</div>
           <div className="w-8 h-8 border-2 border-granny-danger border-t-transparent rounded-full animate-spin mx-auto" />
         </div>
@@ -109,7 +109,7 @@ function AuthenticatedHome() {
   if (needsSetup) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center native-full-width">
-        <div className="glass-modal p-6 max-w-md w-full mx-2 animate-slide-up-mobile">
+        <div className="glass-modal p-6 max-w-md w-full mx-auto animate-slide-up-mobile">
           <ProfileSetup
             existingProfile={profile}
             onComplete={() => {
@@ -140,7 +140,7 @@ function AuthenticatedHome() {
         {/* Background effects */}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-granny-bg/80 to-granny-bg" />
         
-        <div className="glass-card-mobile p-6 text-center mb-6 max-w-lg w-full mx-2 animate-slide-up-mobile relative z-10">
+        <div className="glass-card-mobile p-6 text-center mb-6 max-w-lg w-full mx-auto animate-slide-up-mobile relative z-10">
           <div className="mb-6">
             {profile?.profile_picture_url ? (
               <img
@@ -220,7 +220,7 @@ function AuthenticatedHome() {
           <CurrentRoom />
         </div>
         
-        <div className="flex flex-col sm:flex-row gap-4 w-full max-w-lg relative z-10 px-2">
+        <div className="flex flex-col sm:flex-row gap-4 w-full max-w-lg relative z-10">
           <button
             onClick={() => setShowCreateModal(true)}
             className="btn-primary btn-mobile flex-1 text-lg font-semibold animate-glow"
@@ -264,7 +264,7 @@ function UnauthenticatedHome() {
       {/* Background effects */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-granny-bg/50 to-granny-bg" />
       
-      <div className="glass-card-mobile p-6 text-center max-w-md w-full mx-2 animate-slide-up-mobile relative z-10">
+      <div className="glass-card-mobile p-6 text-center max-w-md w-full mx-auto animate-slide-up-mobile relative z-10">
         <div className="mb-6">
           <h1 className="text-4xl sm:text-5xl font-bold mb-4 text-granny-text bg-gradient-to-r from-granny-danger to-granny-survivor bg-clip-text text-transparent animate-float">
             Granny IRL
