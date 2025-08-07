@@ -31,6 +31,24 @@ body {
   background-image: 
     radial-gradient(circle at 25% 25%, rgba(196, 30, 58, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 75% 75%, rgba(45, 90, 61, 0.05) 0%, transparent 50%);
+  
+  /* iOS optimization */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  
+  /* Prevent pull-to-refresh and overscroll bounce on iOS */
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+  
+  /* Prevent text selection on touch */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  
+  /* Support for safe areas */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
 
 @layer components {
@@ -43,19 +61,28 @@ body {
   }
   
   .btn-primary {
-    @apply bg-granny-danger hover:bg-granny-danger/90 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-granny-danger/20 focus:outline-none focus:ring-2 focus:ring-granny-danger/50;
+    @apply bg-granny-danger hover:bg-granny-danger/90 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-granny-danger/20 focus:outline-none focus:ring-2 focus:ring-granny-danger/50 active:scale-95 select-none;
   }
   
   .btn-secondary {
-    @apply bg-granny-survivor hover:bg-granny-survivor/90 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-granny-survivor/20 focus:outline-none focus:ring-2 focus:ring-granny-survivor/50;
+    @apply bg-granny-survivor hover:bg-granny-survivor/90 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-granny-survivor/20 focus:outline-none focus:ring-2 focus:ring-granny-survivor/50 active:scale-95 select-none;
   }
   
   .btn-ghost {
-    @apply bg-transparent hover:bg-granny-surface-light text-granny-text border border-granny-border hover:border-granny-border font-medium py-2 px-4 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-granny-border;
+    @apply bg-transparent hover:bg-granny-surface-light text-granny-text border border-granny-border hover:border-granny-border font-medium py-2 px-4 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-granny-border active:scale-95 select-none;
   }
   
   .input-field {
     @apply bg-granny-surface border border-granny-border text-granny-text placeholder-granny-text-muted rounded-lg px-4 py-3 focus:outline-none focus:border-granny-danger/50 focus:ring-2 focus:ring-granny-danger/20 transition-all duration-200;
+    /* Prevent iOS zoom on focus */
+    font-size: max(16px, 1rem);
+  }
+  
+  .input-field-mobile {
+    @apply input-field min-h-[48px] text-base;
+    /* Enhanced mobile usability */
+    -webkit-appearance: none;
+    -webkit-tap-highlight-color: transparent;
   }
   
   .slider {
@@ -105,5 +132,69 @@ body {
   
   .animate-float {
     animation: subtle-float 3s ease-in-out infinite;
+  }
+  
+  /* Mobile-optimized safe area utilities for sleek experience */
+  .mobile-container {
+    @apply px-6 py-8 sm:px-8 sm:py-12;
+    /* Add safe area insets for devices with notches */
+    padding-top: max(2rem, env(safe-area-inset-top));
+    padding-bottom: max(2rem, env(safe-area-inset-bottom));
+    padding-left: max(1.5rem, env(safe-area-inset-left));
+    padding-right: max(1.5rem, env(safe-area-inset-right));
+  }
+  
+  .mobile-content {
+    @apply px-4 sm:px-6;
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+  
+  .mobile-card {
+    @apply glass-card p-6 sm:p-8;
+    /* Ensure cards have proper spacing from edges on mobile */
+    margin: 0 max(0.5rem, env(safe-area-inset-left)) 0 max(0.5rem, env(safe-area-inset-right));
+  }
+  
+  /* Enhanced glass effects for mobile */
+  .glass-card-mobile {
+    @apply glass-card;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(196, 30, 58, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  /* Mobile-friendly button enhancements */
+  .btn-mobile {
+    @apply min-h-[48px] text-base font-semibold;
+    /* Ensure minimum touch target size */
+    min-width: 44px;
+  }
+  
+  /* Refined animations for mobile performance */
+  .animate-slide-up-mobile {
+    animation: slideUpMobile 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  @keyframes slideUpMobile {
+    0% { 
+      transform: translateY(32px) scale(0.95); 
+      opacity: 0;
+    }
+    100% { 
+      transform: translateY(0) scale(1); 
+      opacity: 1;
+    }
+  }
+  
+  /* Mobile typography improvements */
+  .heading-mobile {
+    @apply text-3xl sm:text-4xl font-bold leading-tight;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  }
+  
+  .subheading-mobile {
+    @apply text-lg sm:text-xl font-medium;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   }
 }

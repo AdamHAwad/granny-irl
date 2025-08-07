@@ -97,8 +97,8 @@ function AuthenticatedHome() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center p-4">
-        <div className="glass-card p-8 text-center">
+      <main className="flex min-h-screen flex-col items-center justify-center mobile-container">
+        <div className="glass-card-mobile p-8 text-center max-w-sm w-full">
           <div className="text-lg text-granny-text mb-4">Loading profile...</div>
           <div className="w-8 h-8 border-2 border-granny-danger border-t-transparent rounded-full animate-spin mx-auto" />
         </div>
@@ -108,8 +108,8 @@ function AuthenticatedHome() {
 
   if (needsSetup) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center p-4">
-        <div className="glass-modal p-8 max-w-md w-full animate-slide-up">
+      <main className="flex min-h-screen flex-col items-center justify-center mobile-container">
+        <div className="glass-modal p-6 sm:p-8 max-w-md w-full animate-slide-up-mobile">
           <ProfileSetup
             existingProfile={profile}
             onComplete={() => {
@@ -136,33 +136,33 @@ function AuthenticatedHome() {
 
   return (
     <>
-      <main className="flex min-h-screen flex-col items-center justify-center p-4 relative">
+      <main className="flex min-h-screen flex-col items-center justify-center mobile-container relative">
         {/* Background effects */}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-granny-bg/80 to-granny-bg" />
         
-        <div className="glass-card p-8 text-center mb-8 max-w-lg w-full animate-slide-up relative z-10">
+        <div className="glass-card-mobile p-6 sm:p-8 text-center mb-6 sm:mb-8 max-w-lg w-full animate-slide-up-mobile relative z-10">
           <div className="mb-6">
             {profile?.profile_picture_url ? (
               <img
                 src={profile.profile_picture_url}
                 alt="Profile"
-                className="w-20 h-20 rounded-full mx-auto object-cover border-3 border-granny-border shadow-lg"
+                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full mx-auto object-cover border-2 border-granny-border shadow-xl"
               />
             ) : (
-              <div className="w-20 h-20 rounded-full mx-auto bg-granny-surface flex items-center justify-center border-3 border-granny-border shadow-lg">
-                <span className="text-2xl text-granny-text font-semibold">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full mx-auto bg-granny-surface flex items-center justify-center border-2 border-granny-border shadow-xl">
+                <span className="text-2xl sm:text-3xl text-granny-text font-semibold">
                   {displayName?.[0]?.toUpperCase()}
                 </span>
               </div>
             )}
           </div>
           
-          <h1 className="text-4xl font-bold mb-3 text-granny-text">
+          <h1 className="heading-mobile mb-3 text-granny-text">
             Granny IRL
           </h1>
-          <div className="w-12 h-1 bg-gradient-to-r from-granny-danger to-granny-survivor mx-auto mb-4 rounded-full" />
-          <p className="text-xl mb-6 text-granny-text font-medium">
-            Welcome back, <span className="text-granny-danger">{displayName}</span>!
+          <div className="w-12 h-1 bg-gradient-to-r from-granny-danger to-granny-survivor mx-auto mb-4 rounded-full shadow-sm" />
+          <p className="subheading-mobile mb-6 text-granny-text">
+            Welcome back, <span className="text-granny-danger font-semibold">{displayName}</span>!
           </p>
           
           {/* Location status indicator */}
@@ -220,16 +220,16 @@ function AuthenticatedHome() {
           <CurrentRoom />
         </div>
         
-        <div className="flex flex-col sm:flex-row gap-4 w-full max-w-lg relative z-10">
+        <div className="flex flex-col sm:flex-row gap-4 w-full max-w-lg relative z-10 mobile-content">
           <button
             onClick={() => setShowCreateModal(true)}
-            className="btn-primary flex-1 text-lg font-semibold animate-glow"
+            className="btn-primary btn-mobile flex-1 text-lg font-semibold animate-glow"
           >
             🎮 Create Room
           </button>
           <button
             onClick={() => setShowJoinModal(true)}
-            className="btn-secondary flex-1 text-lg font-semibold"
+            className="btn-secondary btn-mobile flex-1 text-lg font-semibold"
           >
             🚪 Join Room
           </button>
@@ -260,20 +260,20 @@ function AuthenticatedHome() {
 
 function UnauthenticatedHome() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 relative overflow-hidden">
+    <main className="flex min-h-screen flex-col items-center justify-center mobile-container relative overflow-hidden">
       {/* Background effects */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-granny-bg/50 to-granny-bg" />
       
-      <div className="glass-card p-8 text-center max-w-md w-full animate-slide-up relative z-10">
+      <div className="glass-card-mobile p-6 sm:p-8 text-center max-w-md w-full animate-slide-up-mobile relative z-10">
         <div className="mb-6">
-          <h1 className="text-5xl font-bold mb-4 text-granny-text bg-gradient-to-r from-granny-danger to-granny-survivor bg-clip-text text-transparent animate-float">
+          <h1 className="text-4xl sm:text-5xl font-bold mb-4 text-granny-text bg-gradient-to-r from-granny-danger to-granny-survivor bg-clip-text text-transparent animate-float">
             Granny IRL
           </h1>
-          <div className="w-16 h-1 bg-gradient-to-r from-granny-danger to-granny-survivor mx-auto mb-6 rounded-full" />
+          <div className="w-16 h-1 bg-gradient-to-r from-granny-danger to-granny-survivor mx-auto mb-6 rounded-full shadow-sm" />
         </div>
         
-        <p className="text-xl mb-4 text-granny-text font-medium">Real-life horror tag</p>
-        <p className="text-granny-text-muted mb-8 leading-relaxed">
+        <p className="subheading-mobile mb-4 text-granny-text">Real-life horror tag</p>
+        <p className="text-granny-text-muted mb-8 leading-relaxed text-sm sm:text-base">
           Outdoor multiplayer game with GPS tracking, skillchecks, and escape mechanics
         </p>
         
@@ -285,10 +285,10 @@ function UnauthenticatedHome() {
         </div>
       </div>
       
-      {/* Floating elements for atmosphere */}
-      <div className="absolute top-20 left-20 w-2 h-2 bg-granny-danger/30 rounded-full animate-pulse" />
-      <div className="absolute bottom-32 right-24 w-3 h-3 bg-granny-survivor/20 rounded-full animate-pulse delay-1000" />
-      <div className="absolute top-1/3 right-20 w-1 h-1 bg-granny-warning/40 rounded-full animate-pulse delay-500" />
+      {/* Floating elements for atmosphere - positioned safely away from edges */}
+      <div className="absolute top-24 left-8 w-2 h-2 bg-granny-danger/30 rounded-full animate-pulse hidden sm:block" />
+      <div className="absolute bottom-40 right-8 w-3 h-3 bg-granny-survivor/20 rounded-full animate-pulse delay-1000 hidden sm:block" />
+      <div className="absolute top-1/3 right-12 w-1 h-1 bg-granny-warning/40 rounded-full animate-pulse delay-500 hidden sm:block" />
     </main>
   );
 }

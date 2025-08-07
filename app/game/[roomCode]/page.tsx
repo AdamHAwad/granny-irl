@@ -650,7 +650,7 @@ function GamePage({ params }: PageProps) {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center p-4">
+      <main className="flex min-h-screen flex-col items-center justify-center mobile-container">
         <div className="glass-card p-8 text-center animate-slide-up">
           <div className="text-xl text-granny-text mb-4 flex items-center justify-center gap-2">
             🎮 Loading game...
@@ -663,7 +663,7 @@ function GamePage({ params }: PageProps) {
 
   if (error || !room) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center p-4 relative">
+      <main className="flex min-h-screen flex-col items-center justify-center mobile-container relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-granny-bg/80 to-granny-bg pointer-events-none" />
         <div className="glass-card p-8 text-center animate-slide-up relative z-10">
           <div className="text-6xl mb-4">⚠️</div>
@@ -684,7 +684,7 @@ function GamePage({ params }: PageProps) {
   const isActive = room.status === 'active';
 
   return (
-    <main className="flex min-h-screen flex-col p-4 max-w-4xl mx-auto relative">
+    <main className="flex min-h-screen flex-col mobile-container max-w-4xl mx-auto relative">
       {/* Background effects */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-granny-bg/80 to-granny-bg pointer-events-none" />
       
@@ -1640,7 +1640,7 @@ const PlayerCard = memo(function PlayerCard({ player, onClick, canClick }: {
 export default function GamePageWrapper({ params }: PageProps) {
   return (
     <AuthGuard fallback={
-      <main className="flex min-h-screen flex-col items-center justify-center p-4">
+      <main className="flex min-h-screen flex-col items-center justify-center mobile-container">
         <p>Please sign in to access this game.</p>
       </main>
     }>
