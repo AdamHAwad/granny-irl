@@ -344,7 +344,8 @@ function GamePage({ params }: PageProps) {
       setLoading(false);
 
       // Show location modal when game starts (headstart phase)
-      if (roomData.status === 'headstart' && !showLocationModal && !locationEnabled) {
+      if ((roomData.status === 'headstart' || roomData.status === 'active') && !showLocationModal && !locationEnabled) {
+        console.log('🗺️ Showing location permission modal');
         setShowLocationModal(true);
       }
 
@@ -971,6 +972,7 @@ function GamePage({ params }: PageProps) {
                 skillchecks={room?.skillchecks}
                 escapeArea={getEscapeArea(room)}
                 className="mb-4"
+                onEnableLocation={() => setShowLocationModal(true)}
               />
             )}
             
@@ -1031,6 +1033,7 @@ function GamePage({ params }: PageProps) {
                     skillchecks={room?.skillchecks}
                     escapeArea={room?.escapeArea}
                     className="mb-4"
+                    onEnableLocation={() => setShowLocationModal(true)}
                   />
                 )}
               </div>

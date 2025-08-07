@@ -65,6 +65,7 @@ interface InteractiveGameMapProps {
   className?: string;
   skillchecks?: Skillcheck[]; // Optional skillchecks to display
   escapeArea?: EscapeArea; // Optional escape area to display (survivors only)
+  onEnableLocation?: () => void; // Callback to enable location
 }
 
 // Custom icon for skillchecks
@@ -192,7 +193,8 @@ function InteractiveGameMap({
   onMapClick,
   className = '',
   skillchecks = [],
-  escapeArea
+  escapeArea,
+  onEnableLocation
 }: InteractiveGameMapProps) {
   const [map, setMap] = useState<L.Map | null>(null);
   const [center, setCenter] = useState<[number, number]>([37.7749, -122.4194]); // Default to SF
@@ -478,7 +480,15 @@ function InteractiveGameMap({
       <div className={`glass-card border border-granny-border/30 p-6 text-center ${className}`}>
         <div className="text-granny-text">
           <p className="font-semibold text-lg mb-2">{waitingMessage}</p>
-          <p className="text-sm text-granny-text-muted">{subMessage}</p>
+          <p className="text-sm text-granny-text-muted mb-4">{subMessage}</p>
+          {!currentPlayer?.location && onEnableLocation && (
+            <button
+              onClick={onEnableLocation}
+              className="btn-primary px-4 py-2 text-sm"
+            >
+              📍 Enable My Location
+            </button>
+          )}
         </div>
       </div>
     );
