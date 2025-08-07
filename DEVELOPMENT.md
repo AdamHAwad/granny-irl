@@ -1,11 +1,12 @@
 # Granny IRL Development Guide
 
-## Quick Context
-- **Production-ready** real-life tag game app with refined UX
+## Quick Context (December 2025)
+- **Status**: Production-ready with hybrid optimization architecture and modern UI design
 - **Tech Stack**: Next.js 14 + Supabase + Leaflet maps + TypeScript + Tailwind CSS
 - **Live**: https://granny-irl.vercel.app
 - **Repo**: https://github.com/AdamHAwad/granny-irl
-- **Status**: All major features implemented with robust error handling
+- **Recent Achievement**: Solved location tracking vs action responsiveness loop with 3-tier optimization
+- **Performance**: All actions complete within 5-6 seconds maximum with timeout protection
 
 ## Branching Strategy
 

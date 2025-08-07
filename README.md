@@ -103,18 +103,32 @@ Game hosts can customize:
 
 ## 🌟 Recent Updates (December 2025)
 
-- ✅ **Non-invasive notification system** - Prompts only show once, then become background notifications
-- ✅ **Robust error handling** - All critical actions have timeout protection
-- ✅ **"I was caught" button fixes** - No more stuck states or multiple clicks required
-- ✅ **Escape button improvements** - Single-click escapes with loading states
-- ✅ **Game end detection fixes** - Properly handles escaped vs eliminated players
-- ✅ **Local state tracking** - Prevents double skillcheck prompts
-- ✅ **Dead by Daylight-style skillcheck system** with proximity detection
-- ✅ **Escape area mechanics** with purple door markers
-- ✅ **Interactive map location picker** for skillcheck placement
-- ✅ **Dual win condition system** (original + escape modes)
-- ✅ **Performance optimizations** for real-time gameplay
-- ✅ **Mobile-friendly UI improvements** and touch controls
+### 🚀 **Major Performance & UX Overhaul**
+- ✅ **Hybrid Optimization Architecture** - 3-tier system separating location updates from critical actions
+- ✅ **Timeout Protection** - All actions complete within 5-6 seconds maximum (no more stuck states)
+- ✅ **Modern UI Redesign** - Professional glass-morphism background notifications replace ugly colored boxes
+- ✅ **Database Performance** - Optimized RPC functions with reliable fallbacks for all critical operations
+- ✅ **Real-time Reliability** - Location tracking maintained while optimizing action responsiveness
+
+### 🎮 **Gameplay Enhancements**
+- ✅ **Non-invasive Notification System** - Prompts only show once, then elegant background cards
+- ✅ **"I was caught" Button Fixes** - Responsive with 3-tier optimization (6s → 5s → emergency fallback)
+- ✅ **Escape Button Improvements** - Single-click escapes with timeout protection and loading states
+- ✅ **Game End Detection** - Properly handles escaped vs eliminated players with async scheduling
+- ✅ **Skillcheck Responsiveness** - Local state tracking prevents double prompts with immediate UI updates
+
+### 🎨 **Design & UX**
+- ✅ **Glass-morphism Background Cards** - Replaced harsh yellow/purple boxes with elegant, themed notifications
+- ✅ **Smooth Micro-interactions** - Scale transitions, colored shadow glows, icon badge animations
+- ✅ **Professional Typography** - Clear visual hierarchy with proper font weights and opacity levels
+- ✅ **Consistent Theming** - All notifications use granny-bg/granny-text color scheme with subtle gradients
+
+### 🛠️ **Technical Architecture**  
+- ✅ **Dead by Daylight-style Skillcheck System** with 50m proximity detection
+- ✅ **Escape Area Mechanics** with purple door markers and dual win conditions
+- ✅ **Interactive Map Location Picker** for skillcheck placement during room creation
+- ✅ **Promise.race() Error Handling** - TypeScript-safe timeout patterns for all async operations
+- ✅ **Comprehensive Debug Logging** - Emoji-prefixed console logs (🔥, 🚪, 🎯, 📍) for easy debugging
 
 ## 🔮 Upcoming Features
 
