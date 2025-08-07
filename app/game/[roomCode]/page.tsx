@@ -1340,32 +1340,31 @@ function GamePage({ params }: PageProps) {
           
           {/* Visual Status Indicators */}
           <div className="text-xs mb-3 p-2 bg-white rounded border text-black">
-            {/* @ts-expect-error: room is checked above but TypeScript doesn't recognize it */}
-            <div>Skillchecks: {room.skillchecks?.filter(sc => sc.isCompleted).length || 0}/{room.skillchecks?.length || 0}</div>
-            <div>All Complete: {(room.allskillcheckscompleted || room.allSkillchecksCompleted) ? '✅' : '❌'}</div>
-            <div>Escape Area Exists: {(room.escapearea || room.escapeArea) ? '✅' : '❌'}</div>
-            <div>Escape Area Revealed: {(room.escapearea?.isRevealed || room.escapeArea?.isRevealed) ? '✅' : '❌'}</div>
-            <div>Escape Timer: {room.escape_timer_started_at ? '✅' : '❌'}</div>
+            <div>Skillchecks: {room?.skillchecks?.filter(sc => sc.isCompleted).length || 0}/{room?.skillchecks?.length || 0}</div>
+            <div>All Complete: {(room?.allskillcheckscompleted || room?.allSkillchecksCompleted) ? '✅' : '❌'}</div>
+            <div>Escape Area Exists: {(room?.escapearea || room?.escapeArea) ? '✅' : '❌'}</div>
+            <div>Escape Area Revealed: {(room?.escapearea?.isRevealed || room?.escapeArea?.isRevealed) ? '✅' : '❌'}</div>
+            <div>Escape Timer: {room?.escape_timer_started_at ? '✅' : '❌'}</div>
             <div className="mt-2 pt-2 border-t border-gray-200">
               <div className="font-bold">Game State Debug:</div>
-              <div>Room Status: {room.status}</div>
+              <div>Room Status: {room?.status}</div>
               <div>Alive Survivors: {aliveSurvivors.length}</div>
               <div>Escaped Survivors: {escapedPlayers.filter(p => p.role === 'survivor').length}</div>
               <div>Eliminated Survivors: {players.filter(p => p.role === 'survivor' && !p.isAlive && !p.hasEscaped).length}</div>
               <div>Current Player Escaped: {currentPlayer?.hasEscaped ? 'Yes' : 'No'}</div>
               <div>Current Player Alive: {currentPlayer?.isAlive ? 'Yes' : 'No'}</div>
             </div>
-            {(room.escapearea || room.escapeArea) && (
+            {(room?.escapearea || room?.escapeArea) && (
               <div className="mt-2 pt-2 border-t border-gray-200 text-black">
                 {(() => {
-                  const escapeArea = room.escapearea || room.escapeArea;
+                  const escapeArea = room?.escapearea || room?.escapeArea;
                   if (!escapeArea) return null;
                   return (
                     <>
-                      <div>Escape Area ID: {escapeArea.id}</div>
-                      <div>Escape Area Coords: {escapeArea.location?.latitude?.toFixed(6)}, {escapeArea.location?.longitude?.toFixed(6)}</div>
-                      <div>Revealed At: {escapeArea.revealedAt ? new Date(escapeArea.revealedAt).toLocaleTimeString() : 'Not set'}</div>
-                      <div>Escaped Players: {escapeArea.escapedPlayers?.length || 0}</div>
+                      <div>Escape Area ID: {escapeArea?.id}</div>
+                      <div>Escape Area Coords: {escapeArea?.location?.latitude?.toFixed(6)}, {escapeArea?.location?.longitude?.toFixed(6)}</div>
+                      <div>Revealed At: {escapeArea?.revealedAt ? new Date(escapeArea!.revealedAt!).toLocaleTimeString() : 'Not set'}</div>
+                      <div>Escaped Players: {escapeArea?.escapedPlayers?.length || 0}</div>
                     </>
                   );
                 })()}
@@ -1374,18 +1373,18 @@ function GamePage({ params }: PageProps) {
           </div>
           
           {/* Skillcheck Testing */}
-          {room.skillchecks && room.skillchecks.length > 0 && (
+          {room?.skillchecks && room?.skillchecks?.length! > 0 && (
             <div className="mb-3">
               <div className="text-xs text-yellow-700 mb-1">Complete Skillchecks:</div>
               <div className="flex flex-wrap gap-1">
-                {room.skillchecks.map((skillcheck, index) => (
+                {room?.skillchecks?.map((skillcheck, index) => (
                   <button
                     key={skillcheck.id}
                     onClick={async () => {
                       if (!skillcheck.isCompleted) {
                         console.log('🛠️ DEBUG: Completing skillcheck', skillcheck.id);
                         const { completeSkillcheck } = await import('@/lib/gameService');
-                        await completeSkillcheck(room.id, skillcheck.id, user.id, true); // Debug mode = true
+                        await completeSkillcheck(room?.id!, skillcheck.id, user?.id!, true); // Debug mode = true
                         console.log('🛠️ DEBUG: Skillcheck completion request sent');
                       }
                     }}
@@ -1404,12 +1403,12 @@ function GamePage({ params }: PageProps) {
           )}
 
           {/* Manual Escape Area Reveal */}
-          {!(room.escapearea || room.escapeArea) && (isActive || room.status === 'active') && (
+          {!(room?.escapearea || room?.escapeArea) && (isActive || room?.status === 'active') && (
             <button
               onClick={async () => {
                 console.log('🛠️ DEBUG: Force revealing escape area');
                 const { revealEscapeAreaOnTimer } = await import('@/lib/gameService');
-                await revealEscapeAreaOnTimer(room.id);
+                await revealEscapeAreaOnTimer(room?.id!);
                 console.log('🛠️ DEBUG: Escape area reveal request sent');
               }}
               className="w-full mb-2 px-3 py-2 bg-purple-200 text-purple-800 text-xs rounded hover:bg-purple-300"
@@ -1421,24 +1420,24 @@ function GamePage({ params }: PageProps) {
           {/* Map Debug Info */}
           <div className="text-xs bg-gray-100 p-2 rounded mb-2 text-black">
             <div className="font-bold mb-1">Map Debug:</div>
-            <div>escapeArea prop: {room.escapeArea ? 'Present' : 'Missing'}</div>
+            <div>escapeArea prop: {room?.escapeArea ? 'Present' : 'Missing'}</div>
             <div>Map visibility: {showMap ? 'Visible' : 'Hidden'}</div>
             <div>Current role: {currentPlayer?.role || 'unknown'}</div>
             <div>Is eliminated: {currentPlayer?.isAlive === false ? 'Yes' : 'No'}</div>
-            {room.escapeArea && currentPlayer?.role === 'survivor' && (
+            {room?.escapeArea && currentPlayer?.role === 'survivor' && (
               <div className="mt-1 pt-1 border-t border-gray-300">
-                <div>Should see escape area: {room.escapeArea.isRevealed && (currentPlayer?.role === 'survivor' || !currentPlayer?.isAlive) ? 'YES' : 'NO'}</div>
+                <div>Should see escape area: {room?.escapeArea?.isRevealed && (currentPlayer?.role === 'survivor' || !currentPlayer?.isAlive) ? 'YES' : 'NO'}</div>
               </div>
             )}
           </div>
 
           {/* Manual Escape (for testing win conditions) */}
-          {(room.escapearea?.isRevealed || room.escapeArea?.isRevealed) && (
+          {(room?.escapearea?.isRevealed || room?.escapeArea?.isRevealed) && (
             <button
               onClick={async () => {
                 console.log('🛠️ DEBUG: Force escaping player');
                 const { markPlayerEscaped } = await import('@/lib/gameService');
-                await markPlayerEscaped(room.id, user.id, true); // Debug mode = true
+                await markPlayerEscaped(room?.id!, user?.id!, true); // Debug mode = true
                 console.log('🛠️ DEBUG: Force escape request sent');
               }}
               className="w-full mb-2 px-3 py-2 bg-purple-300 text-purple-800 text-xs rounded hover:bg-purple-400"
@@ -1452,7 +1451,7 @@ function GamePage({ params }: PageProps) {
             onClick={async () => {
               console.log('🛠️ DEBUG: Manually checking game end');
               const { checkGameEnd } = await import('@/lib/gameService');
-              await checkGameEnd(room.id);
+              await checkGameEnd(room?.id!);
               console.log('🛠️ DEBUG: Game end check completed');
             }}
             className="w-full mb-2 px-3 py-2 bg-red-300 text-red-800 text-xs rounded hover:bg-red-400"
@@ -1461,11 +1460,11 @@ function GamePage({ params }: PageProps) {
           </button>
 
           {/* Force Timer Expiration */}
-          {room.escape_timer_started_at && (
+          {room?.escape_timer_started_at && (
             <button
               onClick={async () => {
                 const { checkEscapeTimerExpired } = await import('@/lib/gameService');
-                await checkEscapeTimerExpired(room.id);
+                await checkEscapeTimerExpired(room?.id!);
               }}
               className="w-full mb-2 px-3 py-2 bg-red-200 text-red-800 text-xs rounded hover:bg-red-300"
             >
@@ -1477,7 +1476,7 @@ function GamePage({ params }: PageProps) {
           <button
             onClick={async () => {
               const { checkGameEnd } = await import('@/lib/gameService');
-              await checkGameEnd(room.id);
+              await checkGameEnd(room?.id!);
             }}
             className="w-full px-3 py-2 bg-gray-200 text-gray-800 text-xs rounded hover:bg-gray-300"
           >
