@@ -308,6 +308,30 @@ Dead by Daylight-inspired skillcheck minigames that survivors must complete to r
 - Compass may not work on all devices
 - Location accuracy depends on device GPS
 
+## Debug Features (Hidden in Production)
+
+### Host Debug Panel
+The game includes a comprehensive debug panel for hosts during skillcheck games:
+- **Status**: HIDDEN in production (controlled by `false &&` condition)
+- **Location**: `app/game/[roomCode]/page.tsx:1337`
+- **Features**: 
+  - Visual skillcheck completion status
+  - Escape area state tracking
+  - Game end logic debugging
+  - Manual game control buttons
+- **To Enable**: Change `{false &&` to `{true &&` in the condition
+- **Usage**: Only visible to room host in skillcheck-enabled games
+
+### Access Pattern:
+```typescript
+// Currently hidden in production
+{false && room && user?.id === room.host_uid && room.settings.skillchecks?.enabled && (
+  <div className="fixed bottom-4 right-4 bg-yellow-100...">
+    {/* Debug Panel Content */}
+  </div>
+)}
+```
+
 ## Pending Tasks
 1. **Add killer notifications when skillchecks are completed** - Notify killers in real-time
 2. **Remove old skillcheck penalties (timer extension)** - Clean up deprecated code

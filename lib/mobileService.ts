@@ -125,26 +125,32 @@ export const mobileService = {
 
     // On mobile, use Capacitor's permission request
     try {
+      console.log('🔍 Checking current location permission status...');
       const result = await Geolocation.checkPermissions();
-      console.log('Current location permissions:', result);
+      console.log('📍 Current location permissions:', result);
       
       if (result.location === 'granted') {
+        console.log('✅ Location permission already granted');
         return { state: 'granted' };
       } else if (result.location === 'denied') {
+        console.log('❌ Location permission already denied');
         return { state: 'denied' };
       } else {
-        // Request permission
+        console.log('🔄 Location permission not determined, requesting...');
+        // Request permission - this should trigger the Android dialog
         const permission = await Geolocation.requestPermissions();
-        console.log('Permission request result:', permission);
+        console.log('📱 Permission request result:', permission);
         
         if (permission.location === 'granted') {
+          console.log('✅ Location permission granted after request');
           return { state: 'granted' };
         } else {
+          console.log('❌ Location permission denied after request');
           return { state: 'denied' };
         }
       }
     } catch (error) {
-      console.error('Error requesting location permission:', error);
+      console.error('💥 Error requesting location permission:', error);
       return { state: 'denied' };
     }
   },

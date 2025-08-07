@@ -153,9 +153,9 @@ function GameHistoryPage() {
                       : 'border-granny-error/30 hover:border-granny-error/50 hover:shadow-lg hover:shadow-granny-error/10'
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className={`px-4 py-2 rounded-xl text-sm font-bold ${
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                      <div className={`px-3 py-2 rounded-xl text-xs sm:text-sm font-bold inline-flex items-center gap-1 ${
                         game.playerWon 
                           ? 'bg-granny-success/20 text-granny-success border border-granny-success/30' 
                           : 'bg-granny-error/20 text-granny-error border border-granny-error/30'
@@ -163,7 +163,7 @@ function GameHistoryPage() {
                         {game.playerWon ? '🏆 WON' : '💀 LOST'}
                       </div>
                       
-                      <div className={`px-4 py-2 rounded-xl text-sm font-bold ${
+                      <div className={`px-3 py-2 rounded-xl text-xs sm:text-sm font-bold inline-flex items-center gap-1 ${
                         game.playerRole === 'killer' 
                           ? 'bg-granny-danger/20 text-granny-danger border border-granny-danger/30' 
                           : 'bg-granny-survivor/20 text-granny-survivor border border-granny-survivor/30'
@@ -171,14 +171,17 @@ function GameHistoryPage() {
                         {game.playerRole === 'killer' ? '🔪 KILLER' : '🛡️ SURVIVOR'}
                       </div>
                       
-                      <div className="text-sm text-granny-text-muted font-mono">
+                      <div className="text-xs sm:text-sm text-granny-text-muted font-mono">
                         Room: <span className="text-granny-text font-semibold">{game.room_id}</span>
                       </div>
                     </div>
                     
-                    <div className="text-right">
-                      <div className="text-sm font-semibold text-granny-text">
-                        {formatDate(game.game_ended_at)} at {formatTime(game.game_ended_at)}
+                    <div className="text-left sm:text-right flex-shrink-0">
+                      <div className="text-xs sm:text-sm font-semibold text-granny-text">
+                        {formatDate(game.game_ended_at)}
+                      </div>
+                      <div className="text-xs sm:text-sm font-semibold text-granny-text">
+                        at {formatTime(game.game_ended_at)}
                       </div>
                       <div className="text-xs text-granny-text-muted mt-1">
                         ⏱️ {game.gameDurationMinutes} min • 📍 Placement: #{game.placement}

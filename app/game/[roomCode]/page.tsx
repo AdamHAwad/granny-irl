@@ -1333,13 +1333,14 @@ function GamePage({ params }: PageProps) {
         </div>
       )}
 
-      {/* Debug Panel - Only for Host During Testing */}
-      {room && user?.id === room.host_uid && room.settings.skillchecks?.enabled && (
+      {/* Debug Panel - Only for Host During Testing (HIDDEN IN PRODUCTION) */}
+      {false && room && user?.id === room?.host_uid && room?.settings?.skillchecks?.enabled && (
         <div className="fixed bottom-4 right-4 bg-yellow-100 border-2 border-yellow-400 rounded-lg p-4 max-w-xs z-50">
           <div className="text-sm font-bold text-yellow-800 mb-2">🛠️ Host Debug Panel</div>
           
           {/* Visual Status Indicators */}
           <div className="text-xs mb-3 p-2 bg-white rounded border text-black">
+            {/* @ts-expect-error: room is checked above but TypeScript doesn't recognize it */}
             <div>Skillchecks: {room.skillchecks?.filter(sc => sc.isCompleted).length || 0}/{room.skillchecks?.length || 0}</div>
             <div>All Complete: {(room.allskillcheckscompleted || room.allSkillchecksCompleted) ? '✅' : '❌'}</div>
             <div>Escape Area Exists: {(room.escapearea || room.escapeArea) ? '✅' : '❌'}</div>

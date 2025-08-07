@@ -191,9 +191,11 @@ class PermissionManager {
    */
   async requestPermissionsOnStartup(): Promise<PermissionRequestResult> {
     if (this.hasRequestedOnStartup) {
-      console.log('PermissionManager: Permissions already requested on startup');
+      console.log('PermissionManager: Permissions already requested on startup, checking status');
+      // Still check current status even if we've requested before
+      await this.checkAllPermissions();
       return {
-        success: true,
+        success: this.hasCriticalPermissions(),
         permissions: this.currentPermissions,
         errors: []
       };
@@ -202,8 +204,9 @@ class PermissionManager {
     this.hasRequestedOnStartup = true;
     console.log('PermissionManager: Requesting permissions on app startup');
 
-    // Add a small delay to avoid overwhelming the user immediately
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // For mobile, be more immediate about permission requests
+    const delay = mobileService.isMobile() ? 500 : 1000;
+    await new Promise(resolve => setTimeout(resolve, delay));
 
     return await this.requestAllPermissions();
   }

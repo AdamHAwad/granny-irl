@@ -93,10 +93,15 @@ function ResultsPage({ params }: PageProps) {
           <h1 className="text-4xl font-bold text-granny-text mb-4 flex items-center justify-center gap-3">
             🏆 Game Results
           </h1>
-          <div className={`text-8xl font-bold mb-6 animate-glow ${
-            gameResult.winners === 'killers' ? 'text-granny-danger' : 'text-granny-survivor'
-          }`}>
-            {gameResult.winners === 'killers' ? '💀 KILLERS WIN!' : '🛡️ SURVIVORS WIN!'}
+          <div className="mb-8 px-4">
+            <div className="text-6xl mb-4">
+              {gameResult.winners === 'killers' ? '💀' : '🛡️'}
+            </div>
+            <div className={`text-3xl sm:text-5xl md:text-6xl font-bold mb-4 animate-glow break-words ${
+              gameResult.winners === 'killers' ? 'text-granny-danger' : 'text-granny-survivor'
+            }`}>
+              {gameResult.winners === 'killers' ? 'KILLERS WIN!' : 'SURVIVORS WIN!'}
+            </div>
           </div>
           <div className="glass-card p-4 border border-granny-border/30 inline-block">
             <p className="text-granny-text-muted flex items-center gap-2">
@@ -126,12 +131,14 @@ function ResultsPage({ params }: PageProps) {
                 const player = gameResult.final_players[uid];
                 if (!player) return null;
                 return (
-                  <div key={uid} className="glass-card border border-granny-error/30 bg-granny-error/5">
-                    <div className="flex items-center gap-4 p-4">
-                      <div className="w-10 h-10 bg-granny-error/20 border border-granny-error/50 rounded-full flex items-center justify-center">
-                        <span className="text-granny-error font-bold text-sm">#{index + 1}</span>
+                  <div key={uid} className="glass-card border border-granny-error/30 bg-granny-error/5 p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-granny-error/20 border border-granny-error/50 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-granny-error font-bold text-xs sm:text-sm">#{index + 1}</span>
                       </div>
-                      <PlayerCard player={player} isWinner={false} showElimination={true} />
+                      <div className="flex-1 min-w-0">
+                        <PlayerCard player={player} isWinner={false} showElimination={true} />
+                      </div>
                     </div>
                   </div>
                 );
@@ -211,10 +218,10 @@ function PlayerCard({
           </div>
         )}
         
-        <div className="flex-1">
-          <p className="font-semibold text-granny-text">{player.displayName}</p>
-          <div className="flex items-center gap-2">
-            <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-granny-text text-sm sm:text-base truncate">{player.displayName}</p>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mt-1">
+            <span className={`text-xs font-medium px-2 py-1 rounded-full inline-flex items-center gap-1 ${
               player.role === 'killer' 
                 ? 'bg-granny-danger/20 text-granny-danger' 
                 : 'bg-granny-survivor/20 text-granny-survivor'
@@ -222,13 +229,13 @@ function PlayerCard({
               {player.role === 'killer' ? '🔪' : '🛡️'} {player.role?.toUpperCase()}
             </span>
             {isWinner && (
-              <span className="text-xs font-medium px-2 py-1 rounded-full bg-granny-success/20 text-granny-success">
+              <span className="text-xs font-medium px-2 py-1 rounded-full bg-granny-success/20 text-granny-success inline-flex items-center gap-1">
                 🏆 WINNER
               </span>
             )}
           </div>
           {showElimination && player.eliminatedAt && (
-            <p className="text-xs text-granny-text-muted mt-1 flex items-center gap-1">
+            <p className="text-xs text-granny-text-muted mt-2 flex items-center gap-1">
               ⏰ Eliminated at {new Date(player.eliminatedAt).toLocaleTimeString()}
             </p>
           )}
