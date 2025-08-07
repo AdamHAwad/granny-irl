@@ -57,78 +57,72 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       });
 
-      // Handle deep link callbacks (custom URL scheme) - Enhanced for OAuth
+      // Handle deep link callbacks (custom URL scheme) for OAuth
       mobileService.onUrlChange(async (url) => {
         console.log('🔗 Deep link received:', url);
         
         if (url.includes('oauth') || url.includes('com.grannyirl.app')) {
-          console.log('✅ OAuth deep link detected, processing authentication...');
+          console.log('✅ OAuth deep link detected');
           
-          // Add a small delay to ensure the app is fully active
-          setTimeout(async () => {
-            try {
-              console.log('🔄 Processing deep link authentication...');
+          try {
+            // The URL might look like: com.grannyirl.app://oauth#access_token=...&refresh_token=...
+            // Or it might be: com.grannyirl.app://oauth?code=...
+            
+            // Check if it's a code-based OAuth callback
+            if (url.includes('code=')) {
+              console.log('🔄 OAuth code detected, exchanging for session...');
               
-              // Method 1: Try to extract tokens from URL
-              const fragment = url.split('#')[1] || url.split('?')[1] || '';
-              if (fragment) {
-                const urlParams = new URLSearchParams(fragment);
-                console.log('📋 URL fragment found:', fragment);
+              const urlParams = new URLSearchParams(url.split('?')[1] || '');
+              const code = urlParams.get('code');
+              
+              if (code) {
+                // Exchange the code for a session
+                const { data, error } = await supabase.auth.exchangeCodeForSession(code);
                 
-                const accessToken = urlParams.get('access_token');
-                const refreshToken = urlParams.get('refresh_token');
-                
-                if (accessToken) {
-                  console.log('🔑 Found access token in deep link, establishing session...');
-                  
-                  const { data, error } = await supabase.auth.setSession({
-                    access_token: accessToken,
-                    refresh_token: refreshToken || '',
-                  });
-                  
-                  if (!error && data.session) {
-                    console.log('✅ Session established from deep link tokens');
-                    setSession(data.session);
-                    setUser(data.session.user);
-                    alert('🎉 Successfully signed in via Chrome! Welcome to Granny IRL.');
-                    return;
-                  }
+                if (!error && data.session) {
+                  console.log('✅ Session established from OAuth code');
+                  setSession(data.session);
+                  setUser(data.session.user);
+                  return;
                 }
               }
-              
-              // Method 2: Check if Supabase automatically handled the session
-              console.log('🔍 No tokens in URL, checking for established session...');
-              const { data: { session }, error } = await supabase.auth.getSession();
-              
-              if (session && !user) {
-                console.log('✅ Found established session after deep link');
-                setSession(session);
-                setUser(session.user);
-                alert('🎉 Successfully signed in! Welcome to Granny IRL.');
-                return;
-              }
-              
-              // Method 3: Try to refresh session in case it's there but not detected
-              console.log('🔄 Attempting session refresh...');
-              const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-              
-              if (refreshData.session && !refreshError) {
-                console.log('✅ Session refreshed successfully');
-                setSession(refreshData.session);
-                setUser(refreshData.session.user);
-                alert('🎉 Successfully signed in! Welcome to Granny IRL.');
-                return;
-              }
-              
-              // If we get here, authentication didn't work
-              console.error('❌ No valid session found after deep link processing');
-              alert('⚠️ Returned from Chrome but authentication incomplete. Please try signing in again.');
-              
-            } catch (error) {
-              console.error('❌ Error processing OAuth deep link:', error);
-              alert('⚠️ Error processing authentication. Please try again.');
             }
-          }, 500); // 500ms delay to ensure app is active
+            
+            // Check if it's a token-based callback (from implicit flow)
+            const fragment = url.split('#')[1] || '';
+            if (fragment) {
+              const urlParams = new URLSearchParams(fragment);
+              const accessToken = urlParams.get('access_token');
+              const refreshToken = urlParams.get('refresh_token');
+              
+              if (accessToken) {
+                console.log('🔑 Found tokens in deep link, establishing session...');
+                
+                const { data, error } = await supabase.auth.setSession({
+                  access_token: accessToken,
+                  refresh_token: refreshToken || '',
+                });
+                
+                if (!error && data.session) {
+                  console.log('✅ Session established from tokens');
+                  setSession(data.session);
+                  setUser(data.session.user);
+                  return;
+                }
+              }
+            }
+            
+            // Fallback: Check if session was already established
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session && !user) {
+              console.log('✅ Found established session');
+              setSession(session);
+              setUser(session.user);
+            }
+            
+          } catch (error) {
+            console.error('❌ Error processing OAuth deep link:', error);
+          }
         }
       });
     }
@@ -144,70 +138,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       console.log('signInWithGoogle called');
-      console.log('NODE_ENV:', process.env.NODE_ENV);
-      console.log('Is Mobile App:', mobileService.isMobile());
-      console.log('Window location:', window.location.href);
-      console.log('User agent:', navigator.userAgent);
       
-      // Check if running in Capacitor app by multiple methods
-      const urlParams = new URLSearchParams(window.location.search);
-      const hasCapacitorParam = urlParams.get('capacitor') === 'true';
-      const isCapacitorApp = hasCapacitorParam || 
-                            navigator.userAgent.includes('GrannyIRLApp') || 
+      // Check if running in Capacitor app
+      const isCapacitorApp = mobileService.isMobile() || 
                             (window as any).Capacitor !== undefined ||
-                            mobileService.isMobile();
-      
-      console.log('Is Capacitor App:', isCapacitorApp);
-      console.log('Has capacitor param:', hasCapacitorParam);
-      console.log('Capacitor object:', (window as any).Capacitor);
+                            window.location.href.includes('capacitor=true');
       
       if (isCapacitorApp) {
-        console.log('📱 Mobile Auth: Using manual session transfer method');
+        console.log('📱 Mobile OAuth: Using custom URL scheme for seamless auth');
         
-        // Show instructions for manual authentication
-        const proceed = confirm(
-          '🔐 Mobile Authentication Required\n\n' +
-          'Due to Google\'s mobile restrictions, please:\n\n' +
-          '1. Open https://granny-irl.vercel.app in your browser\n' +
-          '2. Sign in with Google there\n' +
-          '3. Go to your profile and copy the "Mobile Auth Code"\n' +
-          '4. Return here and enter the code\n\n' +
-          'Click OK to get your auth code, or Cancel to try guest mode.'
-        );
+        // Use custom URL scheme for mobile deep linking
+        const redirectUrl = 'com.grannyirl.app://oauth';
         
-        if (proceed) {
-          // Open web app in system browser for authentication
-          await mobileService.openInSystemBrowser('https://granny-irl.vercel.app/?mobile-auth=true');
-          
-          // Show input dialog for auth code
-          setTimeout(() => {
-            const authCode = prompt(
-              '🔑 Enter Mobile Auth Code\n\n' +
-              'After signing in on the web:\n' +
-              '1. Click your profile picture\n' +
-              '2. Copy the "Mobile Auth Code"\n' +
-              '3. Paste it below:'
-            );
-            
-            if (authCode && authCode.trim()) {
-              exchangeAuthCode(authCode.trim());
-            } else {
-              alert('❌ No auth code entered. You can try again later or use guest mode.');
-            }
-          }, 2000);
-          
-        } else {
-          // Offer guest mode
-          const useGuest = confirm(
-            '🎮 Guest Mode Available\n\n' +
-            'You can play as a guest without signing in.\n' +
-            'Your progress won\'t be saved, but you can join games immediately.\n\n' +
-            'Use Guest Mode?'
-          );
-          
-          if (useGuest) {
-            signInAsGuest();
-          }
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: redirectUrl,
+            skipBrowserRedirect: true, // Get the URL instead of redirecting
+          },
+        });
+        
+        if (error) {
+          console.error('OAuth error:', error);
+          alert('Failed to start authentication. Please try again.');
+          return;
+        }
+        
+        if (data?.url) {
+          console.log('Opening OAuth URL in browser:', data.url);
+          // Open in system browser using Capacitor Browser plugin
+          await mobileService.openInSystemBrowser(data.url);
+          // The app will handle the redirect via deep link in the useEffect
         }
       } else {
         // Standard web flow
@@ -240,64 +201,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Helper function to exchange auth code for session
-  const exchangeAuthCode = async (authCode: string) => {
-    try {
-      console.log('🔄 Exchanging auth code for session...');
-      
-      // Call a serverless function to exchange the code
-      const response = await fetch('https://granny-irl.vercel.app/api/mobile-auth', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ authCode }),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Auth code exchange failed');
-      }
-      
-      const { session } = await response.json();
-      
-      if (session) {
-        console.log('✅ Session received from auth code');
-        setSession(session);
-        setUser(session.user);
-        alert('🎉 Successfully authenticated! Welcome to Granny IRL.');
-      } else {
-        throw new Error('No session in response');
-      }
-      
-    } catch (error) {
-      console.error('❌ Auth code exchange failed:', error);
-      alert('❌ Invalid or expired auth code. Please try again.');
-    }
-  };
-
-  // Helper function for guest mode
-  const signInAsGuest = async () => {
-    try {
-      console.log('🎮 Signing in as guest...');
-      
-      // Create anonymous session
-      const { data, error } = await supabase.auth.signInAnonymously();
-      
-      if (error) {
-        throw error;
-      }
-      
-      console.log('✅ Guest session created');
-      setSession(data.session);
-      setUser(data.user);
-      
-      alert('🎮 Signed in as Guest! You can play games but progress won\'t be saved.');
-      
-    } catch (error) {
-      console.error('❌ Guest sign-in failed:', error);
-      alert('❌ Guest mode failed. Please check your internet connection.');
-    }
-  };
 
   const value = {
     user,
