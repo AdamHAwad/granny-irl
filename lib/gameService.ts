@@ -484,7 +484,7 @@ export async function markPlayerEscaped(roomCode: string, playerUid: string, isD
         console.log('❌ Optimized escape marking failed:', rpcError);
       }
     } catch (error) {
-      console.log('⚠️ Escape RPC failed/timed out, using fallback:', error.message || error);
+      console.log('⚠️ Escape RPC failed/timed out, using fallback:', (error as Error)?.message || error);
     }
 
     // Efficient fallback using raw SQL (avoid fetch+modify+update)
@@ -566,7 +566,7 @@ export async function completeSkillcheck(
         console.log('❌ Optimized skillcheck completion failed:', rpcError);
       }
     } catch (error) {
-      console.log('⚠️ Skillcheck RPC failed/timed out, using fallback:', error.message || error);
+      console.log('⚠️ Skillcheck RPC failed/timed out, using fallback:', (error as Error)?.message || error);
     }
 
     // Fallback to original method
