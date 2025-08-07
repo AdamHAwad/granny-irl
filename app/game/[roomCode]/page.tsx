@@ -150,9 +150,12 @@ function GamePage({ params }: PageProps) {
     vibrate([100, 50, 100]);
   };
 
+  // Get current player for boundary checking
+  const currentPlayer = room ? room.players[user?.id || ''] : null;
+
   // Handle escape area interaction
   const handleEscape = useCallback(async () => {
-    if (!user || escaping) return;
+    if (!user || escaping) return; // Prevent if already escaping
     
     console.log('🏃 Player attempting escape!');
     setEscaping(true);
@@ -166,13 +169,23 @@ function GamePage({ params }: PageProps) {
       // Add timeout protection to prevent multiple rapid clicks
       const escapePromise = markPlayerEscaped(params.roomCode, user.id, false);
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Escape timeout')), 10000)
+        setTimeout(() => reject(new Error('Escape timeout')), 15000)
       );
       
       await Promise.race([escapePromise, timeoutPromise]);
       
       console.log('✅ Escape processing completed');
       vibrate([200, 100, 200, 100, 200]);
+      
+      // Force check game end immediately after escape
+      setTimeout(async () => {
+        console.log('Force checking game end after escape');
+        const { checkGameEnd } = await import('@/lib/gameService');
+        await checkGameEnd(params.roomCode);
+      }, 500);
+      
+      // Keep button disabled until we see the escape in the room data
+      
     } catch (error) {
       console.error('❌ Error escaping:', error);
       
@@ -185,9 +198,6 @@ function GamePage({ params }: PageProps) {
         alert('Failed to escape. Please try again.');
       }
     }
-    
-    // Reset escaping state after a delay regardless of success/failure
-    setTimeout(() => setEscaping(false), 2000);
   }, [user, params.roomCode, vibrate, escaping]);
 
   // Handle clicking on a player to view their location
@@ -210,12 +220,8 @@ function GamePage({ params }: PageProps) {
     }
   };
 
-
-  // Get current player for boundary checking
-  const currentPlayer = room ? room.players[user?.id || ''] : null;
-
   const handleEliminate = useCallback(async () => {
-    if (!user || !room) return;
+    if (!user || !room || eliminating) return; // Prevent double clicks
 
     setEliminating(true);
     
@@ -223,7 +229,7 @@ function GamePage({ params }: PageProps) {
     const timeout = setTimeout(() => {
       console.warn('Elimination timeout - resetting button state');
       setEliminating(false);
-    }, 10000); // 10 second timeout
+    }, 15000); // 15 second timeout
 
     try {
       // Find a random alive killer to attribute the elimination to
@@ -236,10 +242,15 @@ function GamePage({ params }: PageProps) {
       playElimination();
       vibrate([300, 100, 300, 100, 300]);
       
-      // Wait a brief moment for real-time update, then reset state
-      setTimeout(() => {
-        setEliminating(false);
-      }, 2000);
+      // Force check game end immediately after elimination
+      setTimeout(async () => {
+        console.log('Force checking game end after elimination');
+        const { checkGameEnd } = await import('@/lib/gameService');
+        await checkGameEnd(params.roomCode);
+      }, 500);
+      
+      // Keep button disabled until we see the elimination in the room data
+      // This prevents multiple clicks
       
     } catch (error) {
       console.error('Error eliminating player:', error);
@@ -247,7 +258,7 @@ function GamePage({ params }: PageProps) {
     } finally {
       clearTimeout(timeout);
     }
-  }, [user, room, params.roomCode, playElimination, vibrate]);
+  }, [user, room, params.roomCode, playElimination, vibrate, eliminating]);
 
   // Reset eliminating state when player is actually eliminated via real-time updates
   useEffect(() => {
@@ -256,6 +267,14 @@ function GamePage({ params }: PageProps) {
       setEliminating(false);
     }
   }, [currentPlayer?.isAlive, eliminating]);
+
+  // Reset escaping state when player successfully escapes via real-time updates
+  useEffect(() => {
+    if (currentPlayer?.hasEscaped && escaping) {
+      console.log('Player escaped via real-time update - resetting button state');
+      setEscaping(false);
+    }
+  }, [currentPlayer?.hasEscaped, escaping]);
 
   const handleGameEnd = useCallback(async () => {
     if (!user) return;
@@ -415,7 +434,20 @@ function GamePage({ params }: PageProps) {
     updateTimers();
     const interval = setInterval(updateTimers, 1000);
 
-    return () => clearInterval(interval);
+    // Add automatic game end checking every second during active phase
+    let gameCheckInterval: NodeJS.Timeout | null = null;
+    if (room.status === 'active') {
+      gameCheckInterval = setInterval(async () => {
+        console.log('Auto-checking game end status');
+        const { checkGameEnd } = await import('@/lib/gameService');
+        await checkGameEnd(params.roomCode);
+      }, 1000); // Check every second
+    }
+
+    return () => {
+      clearInterval(interval);
+      if (gameCheckInterval) clearInterval(gameCheckInterval);
+    };
   }, [room, gameStartSoundPlayed, playGameStart, playCountdown, vibrate, params.roomCode]);
 
   const handleLocationPermissionGranted = () => {

@@ -45,7 +45,7 @@ export default function CreateRoomModal({
     headstartMinutes: 3,
     maxPlayers: 15,
   });
-  const [skillchecksEnabled, setSkillchecksEnabled] = useState(false);
+  const [skillchecksEnabled, setSkillchecksEnabled] = useState(true); // Always enabled
   const [skillcheckCount, setSkillcheckCount] = useState(3);
   const [skillcheckDistance, setSkillcheckDistance] = useState(200); // 200 meters default
   const [pinnedLocation, setPinnedLocation] = useState<PlayerLocation | null>(null);
@@ -100,7 +100,7 @@ export default function CreateRoomModal({
 
   // Get user's current location for initial map center
   useEffect(() => {
-    if (skillchecksEnabled && showLocationPicker) {
+    if (showLocationPicker) {
       locationService.getCurrentLocation()
         .then((location) => {
           setMapCenter([location.latitude, location.longitude]);
@@ -110,7 +110,7 @@ export default function CreateRoomModal({
           // Keep default location if GPS fails
         });
     }
-  }, [skillchecksEnabled, showLocationPicker]);
+  }, [showLocationPicker]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,8 +121,8 @@ export default function CreateRoomModal({
       console.log('CreateRoom: Starting room creation for user:', user.id);
       console.log('CreateRoom: Profile data:', profile);
       
-      // Check if location is required for skillchecks
-      if (skillchecksEnabled && !pinnedLocation) {
+      // Location is always required for skillchecks
+      if (!pinnedLocation) {
         setLocationError('Please pin a location for skillcheck placement');
         setLoading(false);
         return;
@@ -130,11 +130,11 @@ export default function CreateRoomModal({
 
       const finalSettings: RoomSettings = {
         ...settings,
-        skillchecks: skillchecksEnabled ? {
+        skillchecks: {
           enabled: true,
           count: skillcheckCount,
           maxDistanceFromHost: skillcheckDistance
-        } : undefined
+        }
       };
       
       console.log('CreateRoom: Settings:', finalSettings);
@@ -285,28 +285,18 @@ export default function CreateRoomModal({
             </select>
           </div>
 
-          {/* Skillcheck System Section */}
-          <div className="glass-card p-4 border border-granny-border/30">
-            <div className="flex items-start gap-3 mb-3">
-              <input
-                type="checkbox"
-                id="skillchecksEnabled"
-                checked={skillchecksEnabled}
-                onChange={(e) => setSkillchecksEnabled(e.target.checked)}
-                className="h-5 w-5 mt-0.5 text-granny-danger focus:ring-granny-danger/50 bg-granny-surface border-granny-border rounded"
-              />
-              <div>
-                <label htmlFor="skillchecksEnabled" className="text-sm font-semibold text-granny-text block">
-                  🎯 Enable Skillchecks (Dead by Daylight style)
-                </label>
-                <p className="text-xs text-granny-text-muted mt-1">
-                  Survivors must complete objectives while avoiding killers
-                </p>
+          {/* Skillcheck System Section - Always Enabled */}
+          <div className="glass-card p-4 border border-granny-survivor/30 bg-granny-survivor/5">
+            <div className="mb-3">
+              <div className="text-sm font-semibold text-granny-survivor flex items-center gap-2">
+                🎯 Skillcheck Configuration (Required)
               </div>
+              <p className="text-xs text-granny-text-muted mt-1">
+                Survivors must complete objectives while avoiding killers
+              </p>
             </div>
 
-            {skillchecksEnabled && (
-              <div className="space-y-4">
+            <div className="space-y-4">
                 {locationError && (
                   <div className="bg-granny-error/10 border border-granny-error/30 rounded-lg p-3">
                     <p className="text-granny-error text-sm">⚠️ {locationError}</p>
@@ -450,7 +440,6 @@ export default function CreateRoomModal({
                   </ul>
                 </div>
               </div>
-            )}
           </div>
 
         </form>
