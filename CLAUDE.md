@@ -22,6 +22,8 @@
 - **Maps**: Leaflet + OpenStreetMap (free, no API keys)
 - **Deployment**: Vercel (automatic from GitHub main branch)
 - **Real-time**: Supabase subscriptions + 2-second polling fallback
+- **Mobile**: Capacitor 7 (iOS/Android wrapper with native API access)
+- **Permissions**: Native mobile permission system with web fallbacks
 
 ## Database Schema (Supabase PostgreSQL)
 
@@ -108,6 +110,108 @@
 - Sound/vibration notifications
 - Game history tracking
 - Player statistics
+
+## Mobile App Implementation
+
+### 7. Capacitor Integration (NEW)
+The app now includes full native mobile app wrappers for iOS and Android using Capacitor 7.
+
+#### **Configuration & Setup**
+- **Capacitor Config**: `capacitor.config.ts` configured to load production web app
+- **Server URL**: Points to `https://granny-irl.vercel.app?capacitor=true`
+- **Custom URL Scheme**: `com.grannyirl.app://` for OAuth deep linking
+- **Android Intent Filters**: Configured in AndroidManifest.xml for URL handling
+- **Build System**: `npx cap sync` → `npx cap open android/ios`
+
+#### **Native Features Implemented**
+- **📍 Location Services**: Native GPS with precise location access
+- **📷 Camera Access**: Profile picture uploads via device camera/gallery  
+- **🔄 App State Management**: Detects when app becomes active/inactive
+- **🌐 OAuth Integration**: Custom URL scheme for seamless Google sign-in
+- **🔒 Permission System**: Native Android/iOS permission requests
+
+#### **Permission Manager System**
+**File**: `lib/permissionManager.ts`
+- **Auto-Request**: Requests all permissions 2 seconds after app startup
+- **App Resume**: Re-checks permissions when mobile app becomes active
+- **Graceful Degradation**: App works with denied permissions
+- **Status Tracking**: Comprehensive permission state management
+- **User-Friendly**: Clear permission explanations and fallback instructions
+
+**Supported Permissions**:
+- **Location** (critical): Fine/coarse location for gameplay
+- **Device Orientation**: Compass features for directional arrows
+- **Camera**: Profile picture capture on mobile
+- **Notifications**: Enhanced user experience (optional)
+
+#### **Android Manifest Permissions**
+**File**: `android/app/src/main/AndroidManifest.xml`
+```xml
+<!-- Location permissions for gameplay -->
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+<!-- Camera permission for profile pictures -->
+<uses-permission android:name="android.permission.CAMERA" />
+
+<!-- File system permissions for image storage -->
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+<!-- Network state and connectivity -->
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+<uses-permission android:name="android.permission.INTERNET" />
+
+<!-- Optional: Wake lock and vibration for gameplay -->
+<uses-permission android:name="android.permission.WAKE_LOCK" />
+<uses-permission android:name="android.permission.VIBRATE" />
+```
+
+#### **Mobile Service Integration**
+**File**: `lib/mobileService.ts`
+- **Platform Detection**: `Capacitor.isNativePlatform()` 
+- **Enhanced Location**: Native GPS with fallback to browser geolocation
+- **OAuth Handling**: Custom URL scheme for seamless authentication
+- **Camera Integration**: Native camera/gallery access
+- **Permission Requests**: Comprehensive permission management with logging
+
+### 8. OAuth Integration (Mobile-Optimized)
+**File**: `contexts/AuthContext.tsx`
+- **Custom URL Scheme**: `com.grannyirl.app://oauth` for mobile redirects  
+- **Deep Link Handling**: Processes OAuth tokens from URL callbacks
+- **Dual Platform Support**: Native mobile flow + web fallback
+- **Supabase Integration**: Seamless session management across platforms
+- **Auto-Detection**: Automatically detects mobile vs web environment
+
+#### **OAuth Flow**:
+1. **User clicks "Sign In"** → Detects mobile/web platform
+2. **Mobile**: Opens system browser with Google OAuth
+3. **After Sign-In**: Redirects to `com.grannyirl.app://oauth`
+4. **Android**: Intent filter opens Granny IRL app
+5. **App**: Extracts tokens from URL and establishes session
+
+### 9. UI/UX Mobile Optimization
+#### **Responsive Design Overhaul**
+- **Mobile-First**: All layouts optimized for touch interfaces
+- **Breakpoint System**: `sm:`, `md:`, `lg:` responsive classes throughout
+- **Touch Targets**: Minimum 44px tap areas for accessibility
+- **Text Sizing**: Responsive typography (text-xs → text-sm → text-base)
+- **Card Layouts**: Flexible layouts that adapt to screen sizes
+
+#### **Fixed UI Issues (January 2025)**
+- **Game History**: Fixed cramped cards and overlapping elements
+- **Game Results**: Fixed text wrapping in win screen ("KILLERS WIN!")
+- **Player Cards**: Better spacing and alignment on mobile
+- **Badge Layouts**: Responsive role/status indicators
+- **Button Spacing**: Proper touch-friendly spacing
+
+#### **Location Permission Modal**
+**File**: `components/LocationPermissionModal.tsx`
+- **Platform-Aware**: Different instructions for mobile vs web
+- **Mobile Instructions**: "Settings → Apps → Granny IRL → Permissions"
+- **Web Instructions**: "Click location icon in address bar"
+- **Privacy Focused**: Clear explanation of location usage
+- **Non-Blocking**: Graceful degradation if permissions denied
 
 ## File Structure
 
@@ -337,7 +441,10 @@ The game includes a comprehensive debug panel for hosts during skillcheck games:
 2. **Remove old skillcheck penalties (timer extension)** - Clean up deprecated code
 3. **Add heat maps** - Visualize player movement density
 4. **Implement trail history** - Track and display player paths
-5. **Create mobile app wrappers** - Native iOS/Android apps
+5. ~~**Create mobile app wrappers** - Native iOS/Android apps~~ ✅ **COMPLETED (January 2025)**
+6. **iOS App Development** - Create iOS version using existing Capacitor setup
+7. **App Store Deployment** - Prepare for iOS App Store and Google Play Store
+8. **Push Notifications** - Real-time game alerts via native notifications
 
 ## Required SQL Migration
 The escape area system requires running this SQL in Supabase:
@@ -377,12 +484,40 @@ ADD COLUMN allSkillchecksCompleted BOOLEAN DEFAULT false;
    - Ensure all imports have proper fallbacks
 
 ## Development Workflow
+
+### Web Development
 ```bash
 npm run dev          # Local development
 npm run build        # Production build
 npm run lint         # Code linting
 git push            # Auto-deploy to Vercel
 ```
+
+### Mobile Development (NEW)
+```bash
+# Sync web code to mobile platforms
+npm run build        # Build web app first
+npx cap sync         # Copy to android/ios directories
+
+# Android Development
+npx cap open android # Open in Android Studio
+# Then build and run from Android Studio
+
+# iOS Development (when available)
+npx cap open ios     # Open in Xcode
+# Then build and run from Xcode
+
+# Update Capacitor
+npx cap update       # Update Capacitor plugins
+```
+
+### Mobile Development Notes
+- **Always build web app first** before syncing to mobile
+- **Android Studio**: Required for Android development
+- **Xcode**: Required for iOS development (macOS only)
+- **Real Device Testing**: Recommended for location/camera features
+- **Permissions**: Test permission flows on actual devices
+- **Deep Links**: Test OAuth flow with real Google sign-in
 
 ## Testing Credentials
 - Use any Google account for authentication
@@ -500,14 +635,19 @@ git push            # Deploy to Vercel (automatic)
 - Use multiple browser tabs to simulate multiple players
 
 ---
-**Last Updated**: December 2025 (Major Performance & UX Overhaul Complete)
-**Status**: Production-ready with hybrid optimization architecture and modern UI design
+**Last Updated**: January 2025 (Mobile Integration & UI Polish Complete)
+**Status**: Production-ready with full mobile app integration and polished UI
 **Recent Achievements**: 
 - ✅ Solved location tracking vs action responsiveness loop
 - ✅ Implemented 3-tier timeout protection for all critical actions  
 - ✅ Redesigned background notifications with modern UI best practices
 - ✅ Added comprehensive error handling with Promise.race() patterns
 - ✅ Maintained real-time functionality while optimizing performance
+- ✅ **NEW: Complete mobile app implementation with native permissions**
+- ✅ **NEW: Comprehensive permission manager for app startup**
+- ✅ **NEW: Fixed all UI alignment issues across mobile and web**
+- ✅ **NEW: Android app fully integrated with production web app**
+- ✅ **NEW: Debug panel hidden from production but preserved for development**
 
-**Session Context**: Full app implementation with hybrid optimization architecture, professional UI design, and robust error handling. All major bugs resolved with comprehensive documentation for future development.</content>
+**Session Context**: Complete mobile-ready application with Android app wrapper, native permission handling, responsive UI design, and production-ready deployment system.</content>
 </invoke>

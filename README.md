@@ -29,6 +29,8 @@ Real-life outdoor tag game coordinator. Think "Friday the 13th" meets "Pokémon 
 - **Battery-conscious** GPS tracking
 - **Responsive design** for all screen sizes
 - **Offline-capable** with graceful degradation
+- **NEW: Native Android app** with Capacitor wrapper 📲
+- **NEW: Automatic permission requests** on app startup 🔒
 
 ### 🏆 Game Management
 - **Host controls** (kick players, configure settings)

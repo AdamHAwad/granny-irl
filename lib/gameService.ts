@@ -893,15 +893,19 @@ export async function startGame(roomCode: string): Promise<void> {
     updatedPlayers[uid].role = 'survivor';
   });
 
-  const startTime = Date.now();
-  const { error: updateError } = await supabase
+  // Use current time and calculate game start time immediately for consistency
+  const headstartStartTime = Date.now();
+  const gameStartTime = headstartStartTime + (room.settings.headstartMinutes * 60 * 1000);
+  
+  const { data: updateData, error: updateError } = await supabase
     .from('rooms')
     .update({
       status: 'headstart',
-      headstart_started_at: startTime,
+      headstart_started_at: headstartStartTime,
       players: updatedPlayers,
     })
-    .eq('id', roomCode);
+    .eq('id', roomCode)
+    .select('headstart_started_at');
 
   if (updateError) throw updateError;
 
@@ -942,12 +946,12 @@ export async function startGame(roomCode: string): Promise<void> {
         }
       }
 
-      const gameStartTime = startTime + (currentRoom.settings.headstartMinutes * 60 * 1000);
+      // Use the pre-calculated game start time for perfect synchronization
       const { error } = await supabase
         .from('rooms')
         .update({
           status: 'active',
-          game_started_at: gameStartTime,
+          game_started_at: gameStartTime, // Use the time calculated when headstart began
           skillchecks: skillchecks.length > 0 ? skillchecks : undefined,
         })
         .eq('id', roomCode)
