@@ -75,7 +75,6 @@ function GamePage({ params }: PageProps) {
   // UI state
   const [showMap, setShowMap] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
-  const [showPracticeSkillcheck, setShowPracticeSkillcheck] = useState(false);
   const [activeSkillcheck, setActiveSkillcheck] = useState<string | null>(null);
   const [nearbyEscapeArea, setNearbyEscapeArea] = useState(false);
   
@@ -92,20 +91,6 @@ function GamePage({ params }: PageProps) {
   const [escaping, setEscaping] = useState(false); // Prevents multiple escape clicks
   const [showSkillcheckSuccess, setShowSkillcheckSuccess] = useState(false); // Success prompt
 
-  // Handle practice skillcheck
-  const handlePracticeSkillcheckSuccess = () => {
-    console.log('Practice skillcheck succeeded!');
-    setShowPracticeSkillcheck(false);
-    // You could add a success sound/vibration here
-    vibrate(200);
-  };
-
-  const handlePracticeSkillcheckFailure = () => {
-    console.log('Practice skillcheck failed!');
-    setShowPracticeSkillcheck(false);
-    // You could add a failure sound/vibration here
-    vibrate([100, 50, 100]);
-  };
 
   // Handle real skillcheck completion
   const handleSkillcheckSuccess = async (skillcheckId: string) => {
@@ -861,29 +846,6 @@ function GamePage({ params }: PageProps) {
               </div>
             </div>
             
-            {/* Practice Skillcheck Button (only if skillchecks are enabled) */}
-            {room?.settings.skillchecks?.enabled && (
-              <div className="glass-card border border-granny-survivor/30 bg-granny-survivor/5 p-6">
-                <div className="text-center mb-4">
-                  <div className="text-4xl mb-2">⚡</div>
-                  <div className="text-granny-survivor font-bold text-lg">
-                    Skillcheck Training
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowPracticeSkillcheck(true)}
-                  className="w-full bg-granny-survivor hover:bg-granny-survivor/90 text-white font-bold py-4 px-6 rounded-xl shadow-xl hover:shadow-granny-survivor/30 transition-all duration-300 flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  <span className="text-2xl">🎯</span>
-                  <span>Practice Mode</span>
-                </button>
-                <div className="glass-card border border-granny-text-muted/20 bg-granny-text-muted/5 p-3 mt-4">
-                  <p className="text-xs text-granny-text-muted text-center flex items-center justify-center gap-2">
-                    🎮 Perfect your timing before the real challenge
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
         )}
 
@@ -1165,14 +1127,6 @@ function GamePage({ params }: PageProps) {
         />
       )}
       
-      {/* Practice Skillcheck Minigame */}
-      <SkillcheckMinigame
-        isOpen={showPracticeSkillcheck}
-        onSuccess={handlePracticeSkillcheckSuccess}
-        onFailure={handlePracticeSkillcheckFailure}
-        onClose={() => setShowPracticeSkillcheck(false)}
-        skillcheckId="practice"
-      />
 
       {/* Real Skillcheck Minigame */}
       {activeSkillcheck && (
