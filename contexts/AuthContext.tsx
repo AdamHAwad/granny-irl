@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { mobileService } from '@/lib/mobileService';
+import { permissionManager } from '@/lib/permissionManager';
 
 interface AuthContextType {
   user: User | null;
@@ -30,6 +31,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     getSession();
 
+    // Request permissions on initial app load (web and mobile)
+    const requestInitialPermissions = async () => {
+      try {
+        console.log('🚀 Requesting permissions on app startup...');
+        const permissionResult = await permissionManager.requestPermissionsOnStartup();
+        console.log('🚀 Initial permission request result:', permissionResult.success ? '✅ Success' : '❌ Some failed', permissionResult.permissions);
+      } catch (error) {
+        console.error('🚀 Error requesting permissions on app startup:', error);
+      }
+    };
+
+    // Request permissions after a short delay to avoid overwhelming the user
+    setTimeout(requestInitialPermissions, 2000);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setSession(session);
@@ -44,6 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mobileService.onAppStateChange(async (isActive) => {
         if (isActive) {
           console.log('📱 App became active, checking auth state...');
+          
           // Check if user is now authenticated after returning from browser
           const { data: { session } } = await supabase.auth.getSession();
           if (session && !user) {
@@ -52,6 +68,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(session.user);
           } else if (isActive && !session && !user) {
             console.log('⚠️ App resumed but no session found');
+          }
+          
+          // Request permissions when app becomes active (if not already done)
+          try {
+            console.log('📱 Requesting permissions on app resume...');
+            const permissionResult = await permissionManager.requestPermissionsOnStartup();
+            console.log('📱 Permission request result:', permissionResult.success ? '✅ Success' : '❌ Some failed', permissionResult.permissions);
+          } catch (error) {
+            console.error('📱 Error requesting permissions on app resume:', error);
           }
         }
       });
