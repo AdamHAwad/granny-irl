@@ -353,16 +353,20 @@ function GamePage({ params }: PageProps) {
     const updateTimers = () => {
       // Simple, direct timer calculation using server timestamps
       const now = Date.now();
+      
+      // Apply 25-second offset for non-host players to sync timers
+      const isHost = user?.id === room.host_uid;
+      const clientOffset = isHost ? 0 : 25000; // 25 seconds for non-hosts
 
       if (room.status === 'headstart' && room.headstart_started_at) {
         const headstartEnd = room.headstart_started_at + (room.settings.headstartMinutes * 60 * 1000);
-        const remaining = Math.max(0, headstartEnd - now);
+        const remaining = Math.max(0, headstartEnd - now + clientOffset);
         setHeadstartRemaining(remaining);
       }
 
       if (room.status === 'active' && room.game_started_at) {
         const gameEnd = room.game_started_at + (room.settings.roundLengthMinutes * 60 * 1000);
-        const remaining = Math.max(0, gameEnd - now);
+        const remaining = Math.max(0, gameEnd - now + clientOffset);
         setTimeRemaining(remaining);
 
         // Play game start sound when transitioning to active
@@ -391,7 +395,7 @@ function GamePage({ params }: PageProps) {
       const escapeArea = getEscapeArea(room);
       if (room.status === 'active' && room.escape_timer_started_at && escapeArea?.isRevealed) {
         const escapeEnd = room.escape_timer_started_at + (10 * 60 * 1000); // 10 minutes
-        const escapeRemaining = Math.max(0, escapeEnd - now);
+        const escapeRemaining = Math.max(0, escapeEnd - now + clientOffset);
         setEscapeTimerRemaining(escapeRemaining);
 
         // Play warning sounds in final 60 seconds
