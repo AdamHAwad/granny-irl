@@ -79,6 +79,25 @@ class LocationService {
       };
     }
 
+    // Use mobile service for native permission handling
+    if (mobileService.isMobile()) {
+      try {
+        const result = await mobileService.requestLocationPermission();
+        console.log('LocationService: Mobile permission result:', result);
+        
+        if (result.state === 'granted') {
+          return { granted: true, denied: false, prompt: false };
+        } else if (result.state === 'denied') {
+          return { granted: false, denied: true, prompt: false, error: 'Location permission denied. Please enable it in your device settings.' };
+        } else {
+          return { granted: false, denied: false, prompt: true };
+        }
+      } catch (error) {
+        console.error('LocationService: Mobile permission error:', error);
+        return { granted: false, denied: true, prompt: false, error: 'Failed to request location permission' };
+      }
+    }
+
     try {
       // Check current permission state
       if ('permissions' in navigator) {
@@ -149,6 +168,24 @@ class LocationService {
 
     if (!this.isSupported()) {
       throw new Error('Geolocation is not supported');
+    }
+
+    // Use mobile service on mobile devices
+    if (mobileService.isMobile()) {
+      try {
+        const position = await mobileService.getCurrentLocation();
+        const location: PlayerLocation = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+        };
+        console.log('LocationService: Got mobile location:', location);
+        this.lastKnownLocation = location;
+        return location;
+      } catch (error) {
+        console.error('LocationService: Mobile location error:', error);
+        throw new Error(`Location error: ${error}`);
+      }
     }
 
     return new Promise((resolve, reject) => {

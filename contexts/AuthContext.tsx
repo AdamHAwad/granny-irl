@@ -50,19 +50,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.log('✅ Found new session after app resumed from background');
             setSession(session);
             setUser(session.user);
-            alert('🎉 Authentication successful! Welcome back to Granny IRL.');
           } else if (isActive && !session && !user) {
             console.log('⚠️ App resumed but no session found');
           }
         }
       });
 
+      // Track if we've already processed an auth callback
+      let authProcessed = false;
+      
       // Handle deep link callbacks (custom URL scheme) for OAuth
       mobileService.onUrlChange(async (url) => {
         console.log('🔗 Deep link received:', url);
         
         if (url.includes('oauth') || url.includes('com.grannyirl.app')) {
+          // Prevent processing the same auth callback multiple times
+          if (authProcessed) {
+            console.log('⚠️ Auth already processed, skipping duplicate callback');
+            return;
+          }
+          
           console.log('✅ OAuth deep link detected');
+          authProcessed = true;
           
           try {
             // The URL might look like: com.grannyirl.app://oauth#access_token=...&refresh_token=...

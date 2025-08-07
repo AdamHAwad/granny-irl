@@ -123,12 +123,28 @@ export const mobileService = {
       return await navigator.permissions?.query({ name: 'geolocation' as PermissionName });
     }
 
-    // On mobile, permissions are handled by the Geolocation plugin
-    // Just try to get location, which will prompt if needed
+    // On mobile, use Capacitor's permission request
     try {
-      await this.getCurrentLocation();
-      return { state: 'granted' };
+      const result = await Geolocation.checkPermissions();
+      console.log('Current location permissions:', result);
+      
+      if (result.location === 'granted') {
+        return { state: 'granted' };
+      } else if (result.location === 'denied') {
+        return { state: 'denied' };
+      } else {
+        // Request permission
+        const permission = await Geolocation.requestPermissions();
+        console.log('Permission request result:', permission);
+        
+        if (permission.location === 'granted') {
+          return { state: 'granted' };
+        } else {
+          return { state: 'denied' };
+        }
+      }
     } catch (error) {
+      console.error('Error requesting location permission:', error);
       return { state: 'denied' };
     }
   },

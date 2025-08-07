@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { locationService, LocationPermissionStatus } from '@/lib/locationService';
+import { mobileService } from '@/lib/mobileService';
 
 interface LocationPermissionModalProps {
   isOpen: boolean;
@@ -113,9 +114,20 @@ export default function LocationPermissionModal({
                   🛠️ <strong>To enable location access:</strong>
                 </p>
                 <div className="text-xs text-granny-text-muted mt-2 space-y-1">
-                  <p>1. Click the location icon in your address bar</p>
-                  <p>2. Select &quot;Allow&quot; for location permissions</p>
-                  <p>3. Refresh the page and try again</p>
+                  {mobileService.isMobile() ? (
+                    <>
+                      <p>1. Open your device Settings</p>
+                      <p>2. Go to Apps → Granny IRL → Permissions</p>
+                      <p>3. Enable Location (with Precise Location if available)</p>
+                      <p>4. Return to the app and try again</p>
+                    </>
+                  ) : (
+                    <>
+                      <p>1. Click the location icon in your address bar</p>
+                      <p>2. Select &quot;Allow&quot; for location permissions</p>
+                      <p>3. Refresh the page and try again</p>
+                    </>
+                  )}
                 </div>
               </div>
               {onSkip && (
