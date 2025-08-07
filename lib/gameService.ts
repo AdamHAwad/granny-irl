@@ -893,11 +893,12 @@ export async function startGame(roomCode: string): Promise<void> {
     updatedPlayers[uid].role = 'survivor';
   });
 
+  const startTime = Date.now();
   const { error: updateError } = await supabase
     .from('rooms')
     .update({
       status: 'headstart',
-      headstart_started_at: Date.now(),
+      headstart_started_at: startTime,
       players: updatedPlayers,
     })
     .eq('id', roomCode);
@@ -905,6 +906,7 @@ export async function startGame(roomCode: string): Promise<void> {
   if (updateError) throw updateError;
 
   // Auto-transition from headstart to active after headstart time
+  // Use the same startTime to ensure consistency across clients
   setTimeout(async () => {
     try {
       console.log('Headstart timer expired, transitioning to active phase for room:', roomCode);
@@ -940,14 +942,16 @@ export async function startGame(roomCode: string): Promise<void> {
         }
       }
 
+      const gameStartTime = startTime + (currentRoom.settings.headstartMinutes * 60 * 1000);
       const { error } = await supabase
         .from('rooms')
         .update({
           status: 'active',
-          game_started_at: Date.now(),
+          game_started_at: gameStartTime,
           skillchecks: skillchecks.length > 0 ? skillchecks : undefined,
         })
-        .eq('id', roomCode);
+        .eq('id', roomCode)
+        .eq('status', 'headstart'); // Only update if still in headstart to prevent race conditions
 
       if (error) {
         console.error('Error transitioning to active:', error);

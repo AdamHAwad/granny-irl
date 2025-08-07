@@ -351,23 +351,18 @@ function GamePage({ params }: PageProps) {
     if (!room) return;
 
     const updateTimers = () => {
-      // More synchronized timer calculation
+      // Simple, direct timer calculation using server timestamps
       const now = Date.now();
-      
-      // Use server timestamps directly for better synchronization
-      // The timestamps from Supabase are already in UTC milliseconds
-      // Round to nearest 500ms to reduce micro-variations between clients
-      const syncedNow = Math.floor(now / 500) * 500;
 
       if (room.status === 'headstart' && room.headstart_started_at) {
         const headstartEnd = room.headstart_started_at + (room.settings.headstartMinutes * 60 * 1000);
-        const remaining = Math.max(0, headstartEnd - syncedNow);
+        const remaining = Math.max(0, headstartEnd - now);
         setHeadstartRemaining(remaining);
       }
 
       if (room.status === 'active' && room.game_started_at) {
         const gameEnd = room.game_started_at + (room.settings.roundLengthMinutes * 60 * 1000);
-        const remaining = Math.max(0, gameEnd - syncedNow);
+        const remaining = Math.max(0, gameEnd - now);
         setTimeRemaining(remaining);
 
         // Play game start sound when transitioning to active
@@ -396,7 +391,7 @@ function GamePage({ params }: PageProps) {
       const escapeArea = getEscapeArea(room);
       if (room.status === 'active' && room.escape_timer_started_at && escapeArea?.isRevealed) {
         const escapeEnd = room.escape_timer_started_at + (10 * 60 * 1000); // 10 minutes
-        const escapeRemaining = Math.max(0, escapeEnd - syncedNow);
+        const escapeRemaining = Math.max(0, escapeEnd - now);
         setEscapeTimerRemaining(escapeRemaining);
 
         // Play warning sounds in final 60 seconds
@@ -425,8 +420,8 @@ function GamePage({ params }: PageProps) {
     };
 
     updateTimers();
-    // Update every 500ms for better timer synchronization between clients
-    const interval = setInterval(updateTimers, 500);
+    // Update every second - more frequent updates can cause worse sync issues
+    const interval = setInterval(updateTimers, 1000);
 
     // Add automatic game end checking every second during active phase
     let gameCheckInterval: NodeJS.Timeout | null = null;
