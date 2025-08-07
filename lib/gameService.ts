@@ -1613,85 +1613,33 @@ export async function getPlayerGameStats(uid: string): Promise<PlayerGameStats> 
   }
 }
 
-/**
- * Optimized player location updates with batching and caching
- * This reduces database queries from 494,310 calls to much fewer batched updates
- */
-let locationUpdateBatch: Map<string, Map<string, PlayerLocation>> = new Map();
-let locationBatchTimeout: NodeJS.Timeout | null = null;
-const LOCATION_BATCH_DELAY = 1000; // 1 second batching for location updates
-
 export async function updatePlayerLocation(
   roomCode: string,
   playerUid: string,
   location: PlayerLocation
 ): Promise<void> {
-  // Add to batch instead of immediate update
-  if (!locationUpdateBatch.has(roomCode)) {
-    locationUpdateBatch.set(roomCode, new Map());
-  }
-  
-  locationUpdateBatch.get(roomCode)!.set(playerUid, location);
-  
-  if (locationBatchTimeout) {
-    clearTimeout(locationBatchTimeout);
-  }
-  
-  locationBatchTimeout = setTimeout(async () => {
-    await flushLocationBatch();
-  }, LOCATION_BATCH_DELAY);
-}
-
-async function flushLocationBatch(): Promise<void> {
-  const batchedUpdates = new Map(locationUpdateBatch);
-  locationUpdateBatch.clear();
-  locationBatchTimeout = null;
-  
-  for (const [roomCode, playerUpdates] of Array.from(batchedUpdates.entries())) {
-    try {
-      // Try optimized RPC function first
-      const locationsObject = Object.fromEntries(
-        Array.from(playerUpdates.entries()).map(([playerId, location]) => [
-          playerId,
-          { ...location, timestamp: Date.now() }
-        ])
-      );
-      
-      const { error: rpcError } = await supabase
-        .rpc('batch_update_player_locations', {
-          p_room_code: roomCode,
-          p_locations: locationsObject
-        });
-        
-      if (rpcError) {
-        throw rpcError;
-      }
-      
-      console.log(`📍 Batched location update for ${playerUpdates.size} players in room ${roomCode}`);
-    } catch (error) {
-      console.warn('⚠️ RPC batch update failed, falling back to individual updates:', error);
-      
-      // Fallback to individual updates
-      for (const [playerUid, location] of Array.from(playerUpdates.entries())) {
-        await updatePlayerLocationFallback(roomCode, playerUid, location);
-      }
-    }
-  }
-}
-
-async function updatePlayerLocationFallback(
-  roomCode: string,
-  playerUid: string,
-  location: PlayerLocation
-): Promise<void> {
   try {
-    const room = await getRoomOptimized(roomCode, true);
-    if (!room || !room.players[playerUid]) {
+    console.log('updatePlayerLocation: Updating location for player:', playerUid, 'in room:', roomCode);
+    
+    const { data: room, error } = await supabase
+      .from('rooms')
+      .select('*')
+      .eq('id', roomCode)
+      .single();
+
+    if (error) {
+      console.error('updatePlayerLocation: Error fetching room:', error);
+      return;
+    }
+
+    if (!room.players[playerUid]) {
+      console.error('updatePlayerLocation: Player not found in room');
       return;
     }
 
     // Only update location during active games
     if (room.status !== 'active' && room.status !== 'headstart') {
+      console.log('updatePlayerLocation: Not updating location - game not active');
       return;
     }
 
@@ -1710,6 +1658,8 @@ async function updatePlayerLocationFallback(
 
     if (updateError) {
       console.error('updatePlayerLocation: Error updating room:', updateError);
+    } else {
+      console.log('updatePlayerLocation: Successfully updated location for player:', playerUid);
     }
   } catch (error) {
     console.error('updatePlayerLocation: Error:', error);
