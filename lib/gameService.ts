@@ -487,41 +487,61 @@ export async function markPlayerEscaped(roomCode: string, playerUid: string, isD
       console.log('⚠️ Escape RPC failed/timed out, using fallback:', (error as Error)?.message || error);
     }
 
-    // Efficient fallback using raw SQL (avoid fetch+modify+update)
-    console.log('🚪 Using efficient escape fallback (raw SQL)');
+    // Fallback to original method (fetch+modify+update)
+    console.log('🚪 Using escape fallback (fetch+update)');
+    const { data: room, error } = await supabase
+      .from('rooms')
+      .select('*')
+      .eq('id', roomCode)
+      .single();
+
+    if (error) {
+      console.error('❌ Failed to fetch room for escape marking:', error);
+      throw error;
+    }
+    
+    // Check for escape area (handle PostgreSQL lowercase column names)
+    const escapeArea = room.escapearea || room.escapeArea;
+    if (!room || !escapeArea) {
+      console.error('❌ Room or escape area not found');
+      return;
+    }
+
+    const player = room.players[playerUid];
+    if (!player) {
+      console.log('⚠️ Player not found');
+      return;
+    }
+    
+    // Update player status
+    const updatedPlayers = { ...room.players };
+    updatedPlayers[playerUid] = {
+      ...player,
+      isAlive: true, // Escaped players are alive
+      hasEscaped: true,
+      escapedAt: Date.now(),
+    };
+
+    // Add to escape area's escaped players list
+    const updatedEscapeArea = {
+      ...escapeArea,
+      escapedPlayers: [...(escapeArea.escapedPlayers || []), playerUid],
+    };
+
     const { error: updateError } = await supabase
       .from('rooms')
       .update({
-        players: supabase.raw(`
-          players || jsonb_build_object(
-            '${playerUid}', 
-            players->'${playerUid}' || jsonb_build_object(
-              'hasEscaped', true,
-              'escapedAt', ${Date.now()}
-            )
-          )
-        `),
-        escapearea: supabase.raw(`
-          escapearea || jsonb_build_object(
-            'escapedPlayers', 
-            COALESCE(escapearea->'escapedPlayers', '[]'::jsonb) || 
-            CASE 
-              WHEN NOT (escapearea->'escapedPlayers' @> '"${playerUid}"'::jsonb)
-              THEN to_jsonb('${playerUid}'::text)
-              ELSE '[]'::jsonb
-            END
-          )
-        `)
+        players: updatedPlayers,
+        escapearea: updatedEscapeArea,
       })
-      .eq('id', roomCode)
-      .eq('status', 'active');
+      .eq('id', roomCode);
 
     if (updateError) {
       console.error('❌ Escape fallback failed:', updateError);
       throw updateError;
     }
     
-    console.log('✅ Player escaped using efficient fallback:', playerUid);
+    console.log('✅ Player escaped using fallback method:', playerUid);
     
     // Check game end asynchronously to not block the response
     setTimeout(() => checkGameEnd(roomCode), 100);
@@ -1001,24 +1021,34 @@ export async function eliminatePlayer(
     console.log('⚠️ Using emergency fallback due to exception');
   }
   
-  // Emergency fallback: More efficient than old fetch+modify+update approach
-  console.log('🚨 Using emergency elimination fallback (efficient raw SQL)');
+  // Emergency fallback: Original fetch+modify+update approach
+  console.log('🚨 Using emergency elimination fallback (fetch+update)');
+  const { data: room, error } = await supabase
+    .from('rooms')
+    .select('*')
+    .eq('id', roomCode)
+    .single();
+
+  if (error) {
+    console.error('❌ Failed to fetch room for elimination:', error);
+    throw error;
+  }
+
+  if (!room.players[playerUid]) {
+    throw new Error(`Player ${playerUid} not found in room`);
+  }
+
+  const updatedPlayers = { ...room.players };
+  updatedPlayers[playerUid].isAlive = false;
+  updatedPlayers[playerUid].eliminatedAt = Date.now();
+  if (eliminatedBy) {
+    updatedPlayers[playerUid].eliminatedBy = eliminatedBy;
+  }
+
   const { error: updateError } = await supabase
     .from('rooms')
-    .update({
-      players: supabase.raw(`
-        players || jsonb_build_object(
-          '${playerUid}', 
-          players->'${playerUid}' || jsonb_build_object(
-            'isAlive', false,
-            'eliminatedAt', ${Date.now()}
-            ${eliminatedBy ? `, 'eliminatedBy', '${eliminatedBy}'` : ''}
-          )
-        )
-      `)
-    })
-    .eq('id', roomCode)
-    .eq('status', 'active'); // Only eliminate during active games
+    .update({ players: updatedPlayers })
+    .eq('id', roomCode);
 
   if (updateError) {
     console.error('❌ Emergency elimination failed:', updateError);
@@ -1598,31 +1628,47 @@ export async function updatePlayerLocation(
       console.log('⚠️ Location RPC exception, using fallback');
     }
     
-    // Efficient fallback: Use raw SQL instead of fetch+modify+update
-    console.log('📍 Using efficient fallback (raw SQL)');
-    const { error } = await supabase
+    // Fallback: Original fetch+modify+update approach
+    console.log('📍 Using location fallback (fetch+update)');
+    const { data: room, error } = await supabase
       .from('rooms')
-      .update({
-        players: supabase.raw(`
-          CASE 
-            WHEN status IN ('active', 'headstart') AND players->>'${playerUid}' IS NOT NULL
-            THEN players || jsonb_build_object(
-              '${playerUid}', 
-              players->'${playerUid}' || jsonb_build_object(
-                'location', '${JSON.stringify(location)}'::jsonb,
-                'lastLocationUpdate', ${Date.now()}
-              )
-            )
-            ELSE players
-          END
-        `)
-      })
-      .eq('id', roomCode);
+      .select('*')
+      .eq('id', roomCode)
+      .single();
 
     if (error) {
-      console.error('❌ Location fallback failed:', error);
+      console.error('❌ Failed to fetch room for location update:', error);
+      return;
+    }
+
+    if (!room.players[playerUid]) {
+      console.error('❌ Player not found in room');
+      return;
+    }
+
+    // Only update location during active games
+    if (room.status !== 'active' && room.status !== 'headstart') {
+      console.log('📍 Not updating location - game not active');
+      return;
+    }
+
+    // Update player's location and timestamp
+    const updatedPlayers = { ...room.players };
+    updatedPlayers[playerUid] = {
+      ...updatedPlayers[playerUid],
+      location,
+      lastLocationUpdate: Date.now(),
+    };
+
+    const { error: updateError } = await supabase
+      .from('rooms')
+      .update({ players: updatedPlayers })
+      .eq('id', roomCode);
+
+    if (updateError) {
+      console.error('❌ Location fallback failed:', updateError);
     } else {
-      console.log('✅ Location updated using efficient fallback');
+      console.log('✅ Location updated using fallback method');
     }
   } catch (error) {
     console.error('❌ updatePlayerLocation: Critical error:', error);
