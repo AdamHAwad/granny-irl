@@ -4,7 +4,7 @@ import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Device } from '@capacitor/device';
 import { App } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
-import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
+// Removed Google Auth plugin - using manual auth instead
 
 export const mobileService = {
   // Check if we're running on a mobile platform
@@ -235,43 +235,7 @@ export const mobileService = {
     });
   },
 
-  // Native Google Sign-In (bypasses webview restrictions)
-  async signInWithGoogleNative() {
-    if (!this.isMobile()) {
-      throw new Error('Native Google Auth only available on mobile platforms');
-    }
-
-    try {
-      console.log('Attempting native Google sign-in...');
-      
-      // Initialize Google Auth
-      await GoogleAuth.initialize({
-        clientId: '20328927068-en1cmbti4ponfronn7g307lmqt5njabq.apps.googleusercontent.com',
-        scopes: ['profile', 'email'],
-        grantOfflineAccess: true,
-      });
-
-      // Sign in with native Google auth
-      const result = await GoogleAuth.signIn();
-      
-      console.log('Native Google sign-in successful:', result);
-      
-      return {
-        idToken: result.authentication.idToken,
-        accessToken: result.authentication.accessToken,
-        user: {
-          id: result.id,
-          email: result.email,
-          name: result.name,
-          imageUrl: result.imageUrl
-        }
-      };
-      
-    } catch (error) {
-      console.error('Native Google sign-in failed:', error);
-      throw error;
-    }
-  },
+  // Native Google Sign-In removed - using manual auth instead
 
   // Force open URL in system browser (Chrome) - bypasses in-app browser
   async openInSystemBrowser(url: string) {

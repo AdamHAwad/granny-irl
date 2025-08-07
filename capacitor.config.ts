@@ -29,11 +29,6 @@ const config: CapacitorConfig = {
       windowName: '_self',
       // Try to override system browser
       overrideUserAgent: 'GrannyIRLApp/1.0'
-    },
-    GoogleAuth: {
-      scopes: ['profile', 'email'],
-      serverClientId: '20328927068-en1cmbti4ponfronn7g307lmqt5njabq.apps.googleusercontent.com',
-      forceCodeForRefreshToken: true
     }
   }
 };
