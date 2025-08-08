@@ -9,7 +9,9 @@ const config: CapacitorConfig = {
     url: 'https://granny-irl.vercel.app?capacitor=true',
     androidScheme: 'https',
     // Remove OAuth domains from allowNavigation to force system browser
-    allowNavigation: ['granny-irl.vercel.app']
+    allowNavigation: ['granny-irl.vercel.app'],
+    // Disable caching to always get fresh content
+    cleartext: true
   },
   plugins: {
     // Configure native plugins
