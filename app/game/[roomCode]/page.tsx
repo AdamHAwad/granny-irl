@@ -293,6 +293,19 @@ function GamePage({ params }: PageProps) {
         }
         return;
       }
+      
+      // DEBUG: Log room data receipt with timing info
+      console.log('🔔 Room data received:', {
+        status: roomData.status,
+        isHost: user?.id === roomData.host_uid,
+        timestamps: {
+          headstart_started_at: roomData.headstart_started_at,
+          game_started_at: roomData.game_started_at,
+          created_at: roomData.created_at
+        },
+        receivedAt: Date.now(),
+        receivedAtDate: new Date().toISOString()
+      });
 
       // Clear any pending error timeouts
       if (errorTimeout) {
@@ -355,16 +368,63 @@ function GamePage({ params }: PageProps) {
       // All players use the same server timestamps for perfect synchronization
       // Removed client offset logic that was causing +25/+50 second desync issues
       const now = Date.now();
+      
+          // DEBUG: Comprehensive timer logging to identify desync source
+      const isHost = user?.id === room.host_uid;
+      
+      // POTENTIAL FIX: Account for network time synchronization
+      // Use server-side time adjustment to sync with database timestamps
+      const serverTimeOffset = 0; // We'll calculate this dynamically
+      const adjustedNow = now + serverTimeOffset;
+      
+      console.log('🕰️ TIMER DEBUG:', {
+        isHost,
+        playerRole: room.players[user?.id || '']?.role,
+        status: room.status,
+        clientTime: now,
+        clientTimeDate: new Date(now).toISOString(),
+        adjustedTime: adjustedNow,
+        headstart_started_at: room.headstart_started_at,
+        headstartDate: room.headstart_started_at ? new Date(room.headstart_started_at).toISOString() : null,
+        game_started_at: room.game_started_at,
+        gameStartDate: room.game_started_at ? new Date(room.game_started_at).toISOString() : null,
+        timeDiffFromHeadstart: room.headstart_started_at ? (adjustedNow - room.headstart_started_at) : null,
+        timeDiffFromGameStart: room.game_started_at ? (adjustedNow - room.game_started_at) : null,
+        roomCreatedAt: room.created_at,
+        headstartDurationMs: room.settings.headstartMinutes * 60 * 1000,
+        roundDurationMs: room.settings.roundLengthMinutes * 60 * 1000
+      });
+      
+      // Use adjusted time for calculations
+      const syncedNow = adjustedNow;
 
       if (room.status === 'headstart' && room.headstart_started_at) {
         const headstartEnd = room.headstart_started_at + (room.settings.headstartMinutes * 60 * 1000);
-        const remaining = Math.max(0, headstartEnd - now);
+        const remaining = Math.max(0, headstartEnd - syncedNow);
+        console.log('🟡 HEADSTART TIMER:', {
+          isHost,
+          headstartEnd,
+          headstartEndDate: new Date(headstartEnd).toISOString(),
+          remaining,
+          remainingSeconds: Math.floor(remaining / 1000),
+          calculation: `${headstartEnd} - ${syncedNow} = ${headstartEnd - syncedNow}`,
+          usingClientTime: `${headstartEnd} - ${now} = ${headstartEnd - now}`
+        });
         setHeadstartRemaining(remaining);
       }
 
       if (room.status === 'active' && room.game_started_at) {
         const gameEnd = room.game_started_at + (room.settings.roundLengthMinutes * 60 * 1000);
-        const remaining = Math.max(0, gameEnd - now);
+        const remaining = Math.max(0, gameEnd - syncedNow);
+        console.log('🔴 ACTIVE TIMER:', {
+          isHost,
+          gameEnd,
+          gameEndDate: new Date(gameEnd).toISOString(),
+          remaining,
+          remainingSeconds: Math.floor(remaining / 1000),
+          calculation: `${gameEnd} - ${syncedNow} = ${gameEnd - syncedNow}`,
+          usingClientTime: `${gameEnd} - ${now} = ${gameEnd - now}`
+        });
         setTimeRemaining(remaining);
 
         // Play game start sound when transitioning to active
