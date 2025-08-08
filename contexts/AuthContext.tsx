@@ -184,30 +184,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Use custom URL scheme for mobile deep linking
         const redirectUrl = 'com.prowl.app://oauth';
         
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: redirectUrl,
-            skipBrowserRedirect: true, // Get the URL instead of redirecting
-          },
-        });
-        
-        if (error) {
-          console.error('OAuth error:', error);
-          alert('Failed to start authentication. Please try again.');
-          return;
-        }
-        
-        if (data?.url) {
-          console.log('Opening OAuth URL in browser:', data.url);
-          // Open in system browser using Capacitor Browser plugin
-          await mobileService.openInSystemBrowser(data.url);
-          // The app will handle the redirect via deep link in the useEffect
+        try {
+          // Try direct OAuth without skipBrowserRedirect first
+          const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+              redirectTo: redirectUrl,
+              // Don't skip browser redirect - let Supabase handle it
+            },
+          });
+          
+          if (error) {
+            console.error('OAuth error:', error);
+            // Fallback to manual URL approach
+            console.log('📱 Fallback: Getting OAuth URL manually...');
+            
+            const { data: urlData, error: urlError } = await supabase.auth.signInWithOAuth({
+              provider: 'google',
+              options: {
+                redirectTo: redirectUrl,
+                skipBrowserRedirect: true,
+              },
+            });
+            
+            if (urlError || !urlData?.url) {
+              console.error('Failed to get OAuth URL:', urlError);
+              alert('Failed to start authentication. Please try again.');
+              return;
+            }
+            
+            console.log('Opening OAuth URL in system browser:', urlData.url);
+            await mobileService.openInSystemBrowser(urlData.url);
+          }
+        } catch (browserError) {
+          console.error('Browser OAuth failed:', browserError);
+          alert('Failed to open authentication browser. Please try again.');
         }
       } else {
         // Standard web flow
         const redirectUrl = process.env.NODE_ENV === 'production' 
-          ? 'https://prowl-irl.vercel.app/' 
+          ? 'https://granny-irl.vercel.app/' 
           : `${window.location.origin}/`;
         
         const { error } = await supabase.auth.signInWithOAuth({

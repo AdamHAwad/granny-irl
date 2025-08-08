@@ -17,7 +17,7 @@ const config: CapacitorConfig = {
     // Configure native plugins
     SplashScreen: {
       launchShowDuration: 1000,
-      backgroundColor: '#ffffff', // Use white background to match splash images
+      backgroundColor: '#000000', // Use black background to match splash images
       showSpinner: false,
       // Hide the splash screen automatically
       launchAutoHide: true
