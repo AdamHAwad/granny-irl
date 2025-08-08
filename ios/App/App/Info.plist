@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>Granny IRL</string>
+        <string>Prowl</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -49,20 +49,20 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>com.grannyirl.app</string>
+			<string>com.prowl.app</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.grannyirl.app</string>
+				<string>com.prowl.app</string>
 			</array>
 		</dict>
 	</array>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Granny IRL needs location access to track your position during gameplay and show your location to other players on the map.</string>
+	<string>Prowl needs location access to track your position during gameplay and show your location to other players on the map.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Granny IRL needs location access to track your position during gameplay and show your location to other players on the map.</string>
+	<string>Prowl needs location access to track your position during gameplay and show your location to other players on the map.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Granny IRL needs camera access to let you take profile pictures.</string>
+	<string>Prowl needs camera access to let you take profile pictures.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Granny IRL needs photo library access to let you select profile pictures from your photos.</string>
+	<string>Prowl needs photo library access to let you select profile pictures from your photos.</string>
 </dict>
 </plist>

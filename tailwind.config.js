@@ -9,7 +9,7 @@ module.exports = {
     extend: {
       colors: {
         // Horror-themed dark palette
-        'granny': {
+        'prowl': {
           'bg': '#0a0a0b',
           'surface': '#1a1a1d',
           'surface-light': '#252529',

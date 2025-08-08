@@ -6,7 +6,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Granny IRL - Real-Life Game Coordinator',
+  title: 'Prowl - Real-Life Game Coordinator',
   description: 'Coordinate real-life outdoor tag games with your friends',
   manifest: '/manifest.json',
   themeColor: '#1a1a1a',
@@ -28,7 +28,7 @@ export default function RootLayout({
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="Granny IRL" />
+        <meta name="apple-mobile-web-app-title" content="Prowl" />
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
       </head>
       <body className={inter.className}>

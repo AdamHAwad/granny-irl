@@ -1,7 +1,7 @@
 /**
  * Game Page - Active Gameplay Interface
  * 
- * This is the main gameplay component for Granny IRL. Handles:
+ * This is the main gameplay component for Prowl. Handles:
  * - Real-time game state updates via Supabase subscriptions
  * - GPS location tracking with 5-second updates
  * - Proximity detection for skillchecks (50m radius)
@@ -643,10 +643,10 @@ function GamePage({ params }: PageProps) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center mobile-container">
         <div className="glass-card p-8 text-center animate-slide-up">
-          <div className="text-xl text-granny-text mb-4 flex items-center justify-center gap-2">
+          <div className="text-xl text-prowl-text mb-4 flex items-center justify-center gap-2">
             🎮 Loading game...
           </div>
-          <div className="w-8 h-8 border-2 border-granny-danger border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="w-8 h-8 border-2 border-prowl-danger border-t-transparent rounded-full animate-spin mx-auto" />
         </div>
       </main>
     );
@@ -655,11 +655,11 @@ function GamePage({ params }: PageProps) {
   if (error || !room) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center mobile-container relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-granny-bg/80 to-granny-bg pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-prowl-bg/80 to-prowl-bg pointer-events-none" />
         <div className="glass-card p-8 text-center animate-slide-up relative z-10">
           <div className="text-6xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-bold text-granny-text mb-4">Game Error</h1>
-          <p className="text-granny-error mb-6">{error || 'Game not found'}</p>
+          <h1 className="text-2xl font-bold text-prowl-text mb-4">Game Error</h1>
+          <p className="text-prowl-error mb-6">{error || 'Game not found'}</p>
           <button
             onClick={() => router.push('/')}
             className="btn-primary px-6 py-3"
@@ -677,22 +677,22 @@ function GamePage({ params }: PageProps) {
   return (
     <main className="flex min-h-screen flex-col native-full-width max-w-4xl mx-auto relative">
       {/* Background effects */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-granny-bg/80 to-granny-bg pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-prowl-bg/80 to-prowl-bg pointer-events-none" />
       
-      <div className="w-full glass-modal p-4 text-granny-text mb-3 relative z-10">
+      <div className="w-full glass-modal p-4 text-prowl-text mb-3 relative z-10">
         <div className="text-center mb-6">
           <h1 className={`text-4xl font-bold mb-3 animate-glow flex items-center justify-center gap-3 ${
-            isHeadstart ? 'text-granny-warning' : 'text-granny-danger'
+            isHeadstart ? 'text-prowl-warning' : 'text-prowl-danger'
           }`}>
             {isHeadstart ? '⚡ HEADSTART' : '🔥 GAME ACTIVE'}
           </h1>
           
           {isHeadstart && (
             <div className="mb-6">
-              <div className="text-5xl font-mono font-bold text-granny-warning animate-pulse">
+              <div className="text-5xl font-mono font-bold text-prowl-warning animate-pulse">
                 {formatTime(headstartRemaining)}
               </div>
-              <p className="text-granny-text-muted flex items-center justify-center gap-2">
+              <p className="text-prowl-text-muted flex items-center justify-center gap-2">
                 🏃 Time to hide and prepare
               </p>
             </div>
@@ -700,10 +700,10 @@ function GamePage({ params }: PageProps) {
 
           {isActive && (
             <div className="mb-6">
-              <div className="text-5xl font-mono font-bold text-granny-danger animate-pulse">
+              <div className="text-5xl font-mono font-bold text-prowl-danger animate-pulse">
                 {formatTime(timeRemaining)}
               </div>
-              <p className="text-granny-text-muted flex items-center justify-center gap-2">
+              <p className="text-prowl-text-muted flex items-center justify-center gap-2">
                 ⏰ Time remaining
               </p>
             </div>
@@ -711,24 +711,24 @@ function GamePage({ params }: PageProps) {
 
           {/* Escape Timer - only show when escape area is revealed */}
           {isActive && room?.escapeArea?.isRevealed && room?.settings.skillchecks?.enabled && escapeTimerRemaining > 0 && (
-            <div className="mb-6 glass-card border-2 border-granny-survivor/50 bg-granny-survivor/10 p-4">
-              <div className="text-4xl font-mono font-bold text-granny-survivor animate-pulse">
+            <div className="mb-6 glass-card border-2 border-prowl-survivor/50 bg-prowl-survivor/10 p-4">
+              <div className="text-4xl font-mono font-bold text-prowl-survivor animate-pulse">
                 🚪 {formatTime(escapeTimerRemaining)}
               </div>
-              <p className="text-granny-survivor font-semibold">ESCAPE TIMER - Reach the escape area!</p>
-              <p className="text-xs text-granny-text-muted mt-2">⚠️ Auto-elimination if time expires</p>
+              <p className="text-prowl-survivor font-semibold">ESCAPE TIMER - Reach the escape area!</p>
+              <p className="text-xs text-prowl-text-muted mt-2">⚠️ Auto-elimination if time expires</p>
             </div>
           )}
 
           <div className="flex justify-center">
             <div className={`glass-card px-6 py-3 border-2 ${
               currentPlayer?.role === 'killer' 
-                ? 'border-granny-danger/50 bg-granny-danger/10' 
-                : 'border-granny-survivor/50 bg-granny-survivor/10'
+                ? 'border-prowl-danger/50 bg-prowl-danger/10' 
+                : 'border-prowl-survivor/50 bg-prowl-survivor/10'
             }`}>
-              <span className="font-semibold text-granny-text">
+              <span className="font-semibold text-prowl-text">
                 Your role: <span className={`font-bold ${
-                  currentPlayer?.role === 'killer' ? 'text-granny-danger' : 'text-granny-survivor'
+                  currentPlayer?.role === 'killer' ? 'text-prowl-danger' : 'text-prowl-survivor'
                 }`}>
                   {currentPlayer?.role === 'killer' ? '🔪 KILLER' : '🛡️ SURVIVOR'}
                 </span>
@@ -741,25 +741,25 @@ function GamePage({ params }: PageProps) {
             <div className="mt-6 space-y-4">
               {/* Skillcheck Progress */}
               {room.skillchecks && room.skillchecks.length > 0 && (
-                <div className="glass-card border border-granny-survivor/30 bg-granny-survivor/5 p-4">
+                <div className="glass-card border border-prowl-survivor/30 bg-prowl-survivor/5 p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-semibold text-granny-survivor flex items-center gap-2">
+                    <span className="text-sm font-semibold text-prowl-survivor flex items-center gap-2">
                       ⚡ Skillcheck Progress
                     </span>
-                    <span className="text-xs text-granny-survivor font-mono bg-granny-survivor/20 px-2 py-1 rounded">
+                    <span className="text-xs text-prowl-survivor font-mono bg-prowl-survivor/20 px-2 py-1 rounded">
                       {room.skillchecks.filter(sc => sc.isCompleted).length} / {room.skillchecks.length}
                     </span>
                   </div>
-                  <div className="w-full bg-granny-surface rounded-full h-3 overflow-hidden">
+                  <div className="w-full bg-prowl-surface rounded-full h-3 overflow-hidden">
                     <div 
-                      className="bg-gradient-to-r from-granny-survivor/60 to-granny-survivor h-3 rounded-full transition-all duration-500 shadow-sm"
+                      className="bg-gradient-to-r from-prowl-survivor/60 to-prowl-survivor h-3 rounded-full transition-all duration-500 shadow-sm"
                       style={{ 
                         width: `${(room.skillchecks.filter(sc => sc.isCompleted).length / room.skillchecks.length) * 100}%` 
                       }}
                     />
                   </div>
                   {(room.allskillcheckscompleted || room.allSkillchecksCompleted) && (
-                    <div className="text-xs text-granny-success mt-2 font-semibold animate-pulse flex items-center gap-1">
+                    <div className="text-xs text-prowl-success mt-2 font-semibold animate-pulse flex items-center gap-1">
                       ✅ All skillchecks completed! Escape area revealed.
                     </div>
                   )}
@@ -768,23 +768,23 @@ function GamePage({ params }: PageProps) {
 
               {/* Escape Area Status */}
               {room.escapeArea?.isRevealed && (
-                <div className="glass-card border border-granny-survivor/50 bg-granny-survivor/10 p-4">
+                <div className="glass-card border border-prowl-survivor/50 bg-prowl-survivor/10 p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-semibold text-granny-survivor flex items-center gap-2">
+                    <span className="text-sm font-semibold text-prowl-survivor flex items-center gap-2">
                       🚪 Escape Area Active
                     </span>
                     {room.escapeArea.escapedPlayers.length > 0 && (
-                      <span className="text-xs text-granny-success font-mono bg-granny-success/20 px-2 py-1 rounded">
+                      <span className="text-xs text-prowl-success font-mono bg-prowl-success/20 px-2 py-1 rounded">
                         {room.escapeArea.escapedPlayers.length} escaped
                       </span>
                     )}
                   </div>
-                  <div className="text-xs text-granny-text-muted flex items-start gap-2">
-                    <span className="text-granny-survivor">🗺️</span>
+                  <div className="text-xs text-prowl-text-muted flex items-start gap-2">
+                    <span className="text-prowl-survivor">🗺️</span>
                     <div>
                       Find the purple door on the map to escape!{' '}
                       {escapeTimerRemaining > 0 && (
-                        <span className="text-granny-warning font-semibold">
+                        <span className="text-prowl-warning font-semibold">
                           {Math.ceil(escapeTimerRemaining / 60000)} min left!
                         </span>
                       )}
@@ -795,14 +795,14 @@ function GamePage({ params }: PageProps) {
 
               {/* Player Escaped Status */}
               {currentPlayer.hasEscaped && (
-                <div className="glass-card border border-granny-success/50 bg-granny-success/10 p-4">
-                  <div className="text-sm font-semibold text-granny-success flex items-center gap-2">
+                <div className="glass-card border border-prowl-success/50 bg-prowl-success/10 p-4">
+                  <div className="text-sm font-semibold text-prowl-success flex items-center gap-2">
                     🎉 You Escaped!
                   </div>
-                  <div className="text-xs text-granny-success mt-2">
+                  <div className="text-xs text-prowl-success mt-2">
                     Congratulations! You&apos;ve won the game for all survivors.
                   </div>
-                  <div className="text-xs text-granny-text-muted mt-1 flex items-center gap-1">
+                  <div className="text-xs text-prowl-text-muted mt-1 flex items-center gap-1">
                     ⏳ Game should end automatically...
                   </div>
                 </div>
@@ -814,17 +814,17 @@ function GamePage({ params }: PageProps) {
 
         {currentPlayer?.isAlive && currentPlayer?.role === 'survivor' && isActive && (
           <div className="mb-6 space-y-4">
-            <div className="glass-card border border-granny-error/30 bg-granny-error/5 p-6">
+            <div className="glass-card border border-prowl-error/30 bg-prowl-error/5 p-6">
               <div className="text-center mb-4">
                 <div className="text-4xl mb-2">💀</div>
-                <div className="text-granny-error font-bold text-lg">
+                <div className="text-prowl-error font-bold text-lg">
                   Survivor Emergency
                 </div>
               </div>
               <button
                 onClick={handleEliminate}
                 disabled={eliminating}
-                className="w-full bg-granny-error hover:bg-granny-error/90 text-white font-bold py-4 px-8 rounded-xl text-lg disabled:opacity-50 shadow-xl hover:shadow-granny-error/30 transition-all duration-300 flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98]"
+                className="w-full bg-prowl-error hover:bg-prowl-error/90 text-white font-bold py-4 px-8 rounded-xl text-lg disabled:opacity-50 shadow-xl hover:shadow-prowl-error/30 transition-all duration-300 flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98]"
               >
                 {eliminating ? (
                   <>
@@ -838,8 +838,8 @@ function GamePage({ params }: PageProps) {
                   </>
                 )}
               </button>
-              <div className="glass-card border border-granny-warning/20 bg-granny-warning/10 p-3 mt-4">
-                <p className="text-xs text-granny-warning font-medium text-center flex items-center justify-center gap-2">
+              <div className="glass-card border border-prowl-warning/20 bg-prowl-warning/10 p-3 mt-4">
+                <p className="text-xs text-prowl-warning font-medium text-center flex items-center justify-center gap-2">
                   ⚠️ Only press if you were physically tagged by a killer
                 </p>
               </div>
@@ -850,14 +850,14 @@ function GamePage({ params }: PageProps) {
 
         {currentPlayer?.isAlive && currentPlayer?.role === 'killer' && isActive && (
           <div className="mb-6">
-            <div className="glass-card border border-granny-danger/50 bg-granny-danger/10 p-6">
+            <div className="glass-card border border-prowl-danger/50 bg-prowl-danger/10 p-6">
               <div className="text-center mb-4">
-                <div className="font-bold text-2xl mb-3 text-granny-danger animate-glow flex items-center justify-center gap-2">
+                <div className="font-bold text-2xl mb-3 text-prowl-danger animate-glow flex items-center justify-center gap-2">
                   🔪 You are a KILLER!
                 </div>
-                <p className="text-sm text-granny-text flex items-center justify-center gap-2">
+                <p className="text-sm text-prowl-text flex items-center justify-center gap-2">
                   🏃 Hunt down the survivors! They have{' '}
-                  <span className="font-bold text-granny-danger">
+                  <span className="font-bold text-prowl-danger">
                     {Math.max(0, Math.floor(timeRemaining / 60000))} minutes
                   </span>{' '}
                   left to hide.
@@ -866,20 +866,20 @@ function GamePage({ params }: PageProps) {
               
               {/* Killer notifications for skillcheck progress */}
               {room?.settings.skillchecks?.enabled && room?.skillchecks && (
-                <div className="mt-4 pt-4 border-t border-granny-danger/30">
-                  <div className="text-xs font-semibold text-granny-danger mb-2 flex items-center gap-2">
+                <div className="mt-4 pt-4 border-t border-prowl-danger/30">
+                  <div className="text-xs font-semibold text-prowl-danger mb-2 flex items-center gap-2">
                     ⚡ Skillcheck Progress
                   </div>
-                  <div className="text-xs text-granny-text-muted mb-3 flex items-center gap-2">
+                  <div className="text-xs text-prowl-text-muted mb-3 flex items-center gap-2">
                     📊 {room.skillchecks.filter(sc => sc.isCompleted).length} / {room.skillchecks.length} completed by survivors
                   </div>
                   {(room.allskillcheckscompleted || room.allSkillchecksCompleted) && (
-                    <div className="glass-card text-xs bg-granny-error/20 border border-granny-error/50 text-granny-error px-3 py-2 rounded-lg mt-2 animate-pulse">
+                    <div className="glass-card text-xs bg-prowl-error/20 border border-prowl-error/50 text-prowl-error px-3 py-2 rounded-lg mt-2 animate-pulse">
                       🚨 ALL SKILLCHECKS COMPLETE - Escape area is now active!
                     </div>
                   )}
                   {room.escapeArea?.isRevealed && !(room.allskillcheckscompleted || room.allSkillchecksCompleted) && (
-                    <div className="glass-card text-xs bg-granny-error/20 border border-granny-error/50 text-granny-error px-3 py-2 rounded-lg mt-2 animate-pulse">
+                    <div className="glass-card text-xs bg-prowl-error/20 border border-prowl-error/50 text-prowl-error px-3 py-2 rounded-lg mt-2 animate-pulse">
                       🚨 Timer expired - Escape area is now active!
                     </div>
                   )}
@@ -892,10 +892,10 @@ function GamePage({ params }: PageProps) {
         {/* Map Section - Available to all alive players during active game */}
         {currentPlayer?.isAlive && isActive && (
           <div className="mb-6">
-            <div className="glass-card border border-granny-border/30 p-4">
+            <div className="glass-card border border-prowl-border/30 p-4">
               <div className="flex items-center justify-between mb-4">
                 <h2 className={`text-lg font-semibold flex items-center gap-2 ${
-                  currentPlayer?.role === 'killer' ? 'text-granny-danger' : 'text-granny-survivor'
+                  currentPlayer?.role === 'killer' ? 'text-prowl-danger' : 'text-prowl-survivor'
                 }`}>
                   🗺️ {currentPlayer?.role === 'killer' ? 'Tracking Map' : 'Survivor Map'}
                 </h2>
@@ -903,8 +903,8 @@ function GamePage({ params }: PageProps) {
                   onClick={() => setShowMap(!showMap)}
                   className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
                     currentPlayer?.role === 'killer' 
-                      ? 'bg-granny-danger/20 text-granny-danger border border-granny-danger/50 hover:bg-granny-danger/30' 
-                      : 'bg-granny-survivor/20 text-granny-survivor border border-granny-survivor/50 hover:bg-granny-survivor/30'
+                      ? 'bg-prowl-danger/20 text-prowl-danger border border-prowl-danger/50 hover:bg-prowl-danger/30' 
+                      : 'bg-prowl-survivor/20 text-prowl-survivor border border-prowl-survivor/50 hover:bg-prowl-survivor/30'
                   }`}
                 >
                   {showMap ? '👁️ Hide Map' : '🗺️ Show Map'}
@@ -929,12 +929,12 @@ function GamePage({ params }: PageProps) {
               {!showMap && (
                 <div className={`glass-card border-2 border-dashed p-6 text-center ${
                   currentPlayer?.role === 'killer' 
-                    ? 'border-granny-danger/30 bg-granny-danger/5' 
-                    : 'border-granny-survivor/30 bg-granny-survivor/5'
+                    ? 'border-prowl-danger/30 bg-prowl-danger/5' 
+                    : 'border-prowl-survivor/30 bg-prowl-survivor/5'
                 }`}>
                   <div className="text-4xl mb-2">🗺️</div>
                   <p className={`text-sm font-medium ${
-                    currentPlayer?.role === 'killer' ? 'text-granny-danger' : 'text-granny-survivor'
+                    currentPlayer?.role === 'killer' ? 'text-prowl-danger' : 'text-prowl-survivor'
                   }`}>
                     Click &quot;Show Map&quot; to see {currentPlayer?.role === 'killer' ? 'survivor locations' : 'your location and other survivors'}
                   </p>
@@ -947,10 +947,10 @@ function GamePage({ params }: PageProps) {
         {!currentPlayer?.isAlive && (
           <div className="mb-6">
             <div className="text-center mb-6">
-              <div className="glass-card border border-granny-text-muted/30 bg-granny-text-muted/10 p-6">
+              <div className="glass-card border border-prowl-text-muted/30 bg-prowl-text-muted/10 p-6">
                 <div className="text-6xl mb-4">💀</div>
-                <div className="font-bold text-xl mb-3 text-granny-text">You have been eliminated</div>
-                <p className="text-sm text-granny-text-muted">
+                <div className="font-bold text-xl mb-3 text-prowl-text">You have been eliminated</div>
+                <p className="text-sm text-prowl-text-muted">
                   Watch the remaining players battle it out!
                 </p>
               </div>
@@ -958,14 +958,14 @@ function GamePage({ params }: PageProps) {
             
             {/* Spectator Map */}
             {isActive && (
-              <div className="glass-card border border-granny-border/30 p-4">
+              <div className="glass-card border border-prowl-border/30 p-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-granny-text flex items-center gap-2">
+                  <h2 className="text-lg font-semibold text-prowl-text flex items-center gap-2">
                     👻 Spectator Map
                   </h2>
                   <button
                     onClick={() => setShowMap(!showMap)}
-                    className="px-4 py-2 bg-granny-surface border border-granny-border text-granny-text rounded-lg hover:bg-granny-surface-light text-sm font-semibold transition-all duration-200"
+                    className="px-4 py-2 bg-prowl-surface border border-prowl-border text-prowl-text rounded-lg hover:bg-prowl-surface-light text-sm font-semibold transition-all duration-200"
                   >
                     {showMap ? '👁️ Hide Map' : '🗺️ Show Map'}
                   </button>
@@ -993,7 +993,7 @@ function GamePage({ params }: PageProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <h2 className="text-lg font-semibold mb-4 text-granny-danger flex items-center gap-2">
+            <h2 className="text-lg font-semibold mb-4 text-prowl-danger flex items-center gap-2">
               🔪 Killers ({aliveKillers.length})
             </h2>
             <div className="space-y-3">
@@ -1012,7 +1012,7 @@ function GamePage({ params }: PageProps) {
           </div>
 
           <div>
-            <h2 className="text-lg font-semibold mb-4 text-granny-survivor flex items-center gap-2">
+            <h2 className="text-lg font-semibold mb-4 text-prowl-survivor flex items-center gap-2">
               🛡️ Survivors ({aliveSurvivors.length})
             </h2>
             <div className="space-y-3">
@@ -1033,7 +1033,7 @@ function GamePage({ params }: PageProps) {
 
         {deadPlayers.length > 0 && (
           <div className="mt-6">
-            <h2 className="text-lg font-semibold mb-4 text-granny-error flex items-center gap-2">
+            <h2 className="text-lg font-semibold mb-4 text-prowl-error flex items-center gap-2">
               💀 Eliminated ({deadPlayers.length})
             </h2>
             <div className="space-y-3">
@@ -1057,7 +1057,7 @@ function GamePage({ params }: PageProps) {
         {/* Escaped Players Section */}
         {escapedPlayers.length > 0 && (
           <div className="mt-6">
-            <h2 className="text-lg font-semibold mb-4 text-granny-success flex items-center gap-2">
+            <h2 className="text-lg font-semibold mb-4 text-prowl-success flex items-center gap-2">
               🎉 Escaped ({escapedPlayers.length})
             </h2>
             <div className="space-y-3">
@@ -1090,8 +1090,8 @@ function GamePage({ params }: PageProps) {
 
       {/* Location Error Display */}
       {locationError && (
-        <div className="mt-4 glass-card p-4 border border-granny-warning/30 bg-granny-warning/10">
-          <p className="text-granny-warning text-sm font-medium flex items-center gap-2">
+        <div className="mt-4 glass-card p-4 border border-prowl-warning/30 bg-prowl-warning/10">
+          <p className="text-prowl-warning text-sm font-medium flex items-center gap-2">
             ⚠️ {locationError}
           </p>
         </div>
@@ -1099,8 +1099,8 @@ function GamePage({ params }: PageProps) {
 
       {/* Location Status */}
       {locationEnabled && (
-        <div className="mt-4 glass-card p-4 border border-granny-success/30 bg-granny-success/10">
-          <p className="text-granny-success text-sm font-medium flex items-center gap-2">
+        <div className="mt-4 glass-card p-4 border border-prowl-success/30 bg-prowl-success/10">
+          <p className="text-prowl-success text-sm font-medium flex items-center gap-2">
             📍 Location sharing enabled
           </p>
         </div>
@@ -1151,17 +1151,17 @@ function GamePage({ params }: PageProps) {
                    setActiveSkillcheck(backgroundSkillcheck);
                    setBackgroundSkillcheck(null);
                  }}>
-              <div className="glass-card border border-granny-border/20 bg-granny-bg/95 backdrop-blur-md text-granny-text rounded-xl p-4 shadow-2xl cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-amber-500/20 hover:shadow-xl">
+              <div className="glass-card border border-prowl-border/20 bg-prowl-bg/95 backdrop-blur-md text-prowl-text rounded-xl p-4 shadow-2xl cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-amber-500/20 hover:shadow-xl">
                 <div className="flex items-center gap-3">
                   <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-200">
                     <span className="text-white text-lg font-bold">⚡</span>
                   </div>
                   <div className="flex-1">
-                    <div className="font-semibold text-granny-text mb-1">Skillcheck Available</div>
-                    <div className="text-xs text-granny-text-muted opacity-80">Tap to start minigame</div>
+                    <div className="font-semibold text-prowl-text mb-1">Skillcheck Available</div>
+                    <div className="text-xs text-prowl-text-muted opacity-80">Tap to start minigame</div>
                   </div>
-                  <div className="flex-shrink-0 w-6 h-6 bg-granny-border/20 rounded-full flex items-center justify-center">
-                    <span className="text-granny-text-muted text-xs">→</span>
+                  <div className="flex-shrink-0 w-6 h-6 bg-prowl-border/20 rounded-full flex items-center justify-center">
+                    <span className="text-prowl-text-muted text-xs">→</span>
                   </div>
                 </div>
                 {/* Subtle glow effect */}
@@ -1174,17 +1174,17 @@ function GamePage({ params }: PageProps) {
           {backgroundEscape && !escaping && (
             <div className="relative group"
                  onClick={handleEscape}>
-              <div className="glass-card border border-granny-border/20 bg-granny-bg/95 backdrop-blur-md text-granny-text rounded-xl p-4 shadow-2xl cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-purple-500/20 hover:shadow-xl">
+              <div className="glass-card border border-prowl-border/20 bg-prowl-bg/95 backdrop-blur-md text-prowl-text rounded-xl p-4 shadow-2xl cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-purple-500/20 hover:shadow-xl">
                 <div className="flex items-center gap-3">
                   <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-200">
                     <span className="text-white text-lg">🚪</span>
                   </div>
                   <div className="flex-1">
-                    <div className="font-semibold text-granny-text mb-1">Escape Zone Ready</div>
-                    <div className="text-xs text-granny-text-muted opacity-80">Tap to escape and win</div>
+                    <div className="font-semibold text-prowl-text mb-1">Escape Zone Ready</div>
+                    <div className="text-xs text-prowl-text-muted opacity-80">Tap to escape and win</div>
                   </div>
-                  <div className="flex-shrink-0 w-6 h-6 bg-granny-border/20 rounded-full flex items-center justify-center">
-                    <span className="text-granny-text-muted text-xs">→</span>
+                  <div className="flex-shrink-0 w-6 h-6 bg-prowl-border/20 rounded-full flex items-center justify-center">
+                    <span className="text-prowl-text-muted text-xs">→</span>
                   </div>
                 </div>
                 {/* Subtle glow effect */}
@@ -1198,11 +1198,11 @@ function GamePage({ params }: PageProps) {
       {/* Skillcheck Proximity Prompt */}
       {showSkillcheckPrompt && !activeSkillcheck && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-40 p-4">
-          <div className="glass-modal max-w-md w-full text-granny-text text-center animate-slide-up">
+          <div className="glass-modal max-w-md w-full text-prowl-text text-center animate-slide-up">
             <div className="p-6">
               <div className="text-4xl mb-4">⚡</div>
-              <div className="text-2xl font-bold text-granny-warning mb-4">Skillcheck Detected!</div>
-              <p className="text-granny-text-muted mb-6">
+              <div className="text-2xl font-bold text-prowl-warning mb-4">Skillcheck Detected!</div>
+              <p className="text-prowl-text-muted mb-6">
                 You&apos;re near a skillcheck. Complete it to help your team progress!
               </p>
               <div className="flex gap-3">
@@ -1240,14 +1240,14 @@ function GamePage({ params }: PageProps) {
       {/* Escape Area Proximity Prompt */}
       {showEscapePrompt && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-40 p-4">
-          <div className="glass-modal max-w-md w-full text-granny-text text-center animate-slide-up">
+          <div className="glass-modal max-w-md w-full text-prowl-text text-center animate-slide-up">
             <div className="p-6">
               <div className="text-4xl mb-4">🚪</div>
               <div className="text-2xl font-bold text-purple-400 mb-4">Escape Area Found!</div>
-              <p className="text-granny-text-muted mb-6">
+              <p className="text-prowl-text-muted mb-6">
                 You&apos;ve reached the escape zone! Escape now to save yourself!
                 {escapeTimerRemaining > 0 && (
-                  <span className="block mt-2 text-granny-warning font-semibold">
+                  <span className="block mt-2 text-prowl-warning font-semibold">
                     ⏰ Time left: {Math.ceil(escapeTimerRemaining / 1000)}s
                   </span>
                 )}
@@ -1436,15 +1436,15 @@ function GamePage({ params }: PageProps) {
           <div className="glass-modal max-w-sm w-full mx-4 text-center animate-slide-up pointer-events-auto">
             <div className="p-6">
               <div className="text-6xl mb-4 animate-bounce">✅</div>
-              <div className="text-2xl font-bold text-granny-success mb-2">
+              <div className="text-2xl font-bold text-prowl-success mb-2">
                 Skillcheck Complete!
               </div>
-              <p className="text-granny-text-muted text-sm">
+              <p className="text-prowl-text-muted text-sm">
                 Great timing! Keep it up.
               </p>
               <div className="mt-4">
-                <div className="w-full bg-granny-surface rounded-full h-2 overflow-hidden">
-                  <div className="bg-gradient-to-r from-granny-success/60 to-granny-success h-2 rounded-full animate-pulse" />
+                <div className="w-full bg-prowl-surface rounded-full h-2 overflow-hidden">
+                  <div className="bg-gradient-to-r from-prowl-success/60 to-prowl-success h-2 rounded-full animate-pulse" />
                 </div>
               </div>
             </div>
@@ -1468,15 +1468,15 @@ const PlayerCard = memo(function PlayerCard({ player, onClick, canClick }: {
 
   const cardStyles = useMemo(() => {
     const isInactive = !player.isAlive || player.hasEscaped;
-    const roleColor = player.role === 'killer' ? 'granny-danger' : 'granny-survivor';
+    const roleColor = player.role === 'killer' ? 'prowl-danger' : 'prowl-survivor';
     
     return {
       container: `glass-card p-4 border transition-all duration-200 ${
         isInactive 
-          ? 'border-granny-text-muted/30 bg-granny-text-muted/10 opacity-75' 
+          ? 'border-prowl-text-muted/30 bg-prowl-text-muted/10 opacity-75' 
           : `border-${roleColor}/30 hover:border-${roleColor}/50`
       } ${canClick && player.location ? 'cursor-pointer hover:scale-[1.02]' : ''}`,
-      name: `font-semibold text-granny-text ${isInactive ? 'line-through opacity-75' : ''}`
+      name: `font-semibold text-prowl-text ${isInactive ? 'line-through opacity-75' : ''}`
     };
   }, [player.isAlive, player.hasEscaped, player.role, canClick, player.location]);
 
@@ -1499,17 +1499,17 @@ const PlayerCard = memo(function PlayerCard({ player, onClick, canClick }: {
             alt={player.displayName}
             className={`w-12 h-12 rounded-full object-cover border-2 ${
               player.role === 'killer' 
-                ? 'border-granny-danger/50' 
-                : 'border-granny-survivor/50'
+                ? 'border-prowl-danger/50' 
+                : 'border-prowl-survivor/50'
             }`}
           />
           {player.hasEscaped && (
-            <div className="absolute -top-1 -right-1 w-6 h-6 bg-granny-success rounded-full flex items-center justify-center">
+            <div className="absolute -top-1 -right-1 w-6 h-6 bg-prowl-success rounded-full flex items-center justify-center">
               <span className="text-xs">🎉</span>
             </div>
           )}
           {!player.isAlive && !player.hasEscaped && (
-            <div className="absolute -top-1 -right-1 w-6 h-6 bg-granny-error rounded-full flex items-center justify-center">
+            <div className="absolute -top-1 -right-1 w-6 h-6 bg-prowl-error rounded-full flex items-center justify-center">
               <span className="text-xs">💀</span>
             </div>
           )}
@@ -1518,20 +1518,20 @@ const PlayerCard = memo(function PlayerCard({ player, onClick, canClick }: {
         <div className="relative">
           <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center ${
             player.role === 'killer' 
-              ? 'bg-granny-danger/20 border-granny-danger/50' 
-              : 'bg-granny-survivor/20 border-granny-survivor/50'
+              ? 'bg-prowl-danger/20 border-prowl-danger/50' 
+              : 'bg-prowl-survivor/20 border-prowl-survivor/50'
           }`}>
-            <span className="text-lg font-bold text-granny-text">
+            <span className="text-lg font-bold text-prowl-text">
               {player.displayName[0]?.toUpperCase()}
             </span>
           </div>
           {player.hasEscaped && (
-            <div className="absolute -top-1 -right-1 w-6 h-6 bg-granny-success rounded-full flex items-center justify-center">
+            <div className="absolute -top-1 -right-1 w-6 h-6 bg-prowl-success rounded-full flex items-center justify-center">
               <span className="text-xs">🎉</span>
             </div>
           )}
           {!player.isAlive && !player.hasEscaped && (
-            <div className="absolute -top-1 -right-1 w-6 h-6 bg-granny-error rounded-full flex items-center justify-center">
+            <div className="absolute -top-1 -right-1 w-6 h-6 bg-prowl-error rounded-full flex items-center justify-center">
               <span className="text-xs">💀</span>
             </div>
           )}
@@ -1544,24 +1544,24 @@ const PlayerCard = memo(function PlayerCard({ player, onClick, canClick }: {
         <div className="flex items-center gap-2 mt-1">
           <span className={`text-xs font-medium px-2 py-1 rounded-full ${
             player.role === 'killer' 
-              ? 'bg-granny-danger/20 text-granny-danger' 
-              : 'bg-granny-survivor/20 text-granny-survivor'
+              ? 'bg-prowl-danger/20 text-prowl-danger' 
+              : 'bg-prowl-survivor/20 text-prowl-survivor'
           }`}>
             {player.role === 'killer' ? '🔪' : '🛡️'} {player.role?.toUpperCase()}
           </span>
           {player.hasEscaped && (
-            <span className="text-xs font-medium px-2 py-1 rounded-full bg-granny-success/20 text-granny-success">
+            <span className="text-xs font-medium px-2 py-1 rounded-full bg-prowl-success/20 text-prowl-success">
               🎉 ESCAPED
             </span>
           )}
           {!player.isAlive && !player.hasEscaped && (
-            <span className="text-xs font-medium px-2 py-1 rounded-full bg-granny-error/20 text-granny-error">
+            <span className="text-xs font-medium px-2 py-1 rounded-full bg-prowl-error/20 text-prowl-error">
               💀 ELIMINATED
             </span>
           )}
         </div>
         {statusTime && (
-          <p className="text-xs text-granny-text-muted mt-1 flex items-center gap-1">
+          <p className="text-xs text-prowl-text-muted mt-1 flex items-center gap-1">
             ⏰ {statusTime.type === 'escaped' ? 'Escaped' : 'Eliminated'} at {statusTime.time}
           </p>
         )}
@@ -1569,10 +1569,10 @@ const PlayerCard = memo(function PlayerCard({ player, onClick, canClick }: {
       
       <div className="flex flex-col items-center gap-1">
         {player.hasEscaped && <div className="text-3xl animate-bounce">🎉</div>}
-        {!player.isAlive && !player.hasEscaped && <div className="text-2xl text-granny-error">💀</div>}
+        {!player.isAlive && !player.hasEscaped && <div className="text-2xl text-prowl-error">💀</div>}
         {player.isAlive && !player.hasEscaped && (
           <div className={`text-2xl ${
-            player.role === 'killer' ? 'text-granny-danger' : 'text-granny-survivor'
+            player.role === 'killer' ? 'text-prowl-danger' : 'text-prowl-survivor'
           }`}>
             {player.role === 'killer' ? '🔪' : '🛡️'}
           </div>

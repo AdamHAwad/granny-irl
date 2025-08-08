@@ -83,13 +83,13 @@ export default function LocationPermissionModal({
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="glass-modal max-w-md w-full text-granny-text animate-slide-up">
+      <div className="glass-modal max-w-md w-full text-prowl-text animate-slide-up">
         <div className="p-6">
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-granny-text mb-2 flex items-center justify-center gap-2">
+            <h2 className="text-2xl font-bold text-prowl-text mb-2 flex items-center justify-center gap-2">
               📍 Location Access
             </h2>
-            <p className="text-sm text-granny-text-muted">
+            <p className="text-sm text-prowl-text-muted">
               Enhanced tracking for the ultimate horror experience
             </p>
           </div>
@@ -97,27 +97,27 @@ export default function LocationPermissionModal({
           {permissionStatus?.granted ? (
             <div className="text-center">
               <div className="text-6xl mb-4">✅</div>
-              <div className="text-granny-success text-lg font-semibold mb-4">Location access granted!</div>
-              <p className="text-sm text-granny-text-muted">
+              <div className="text-prowl-success text-lg font-semibold mb-4">Location access granted!</div>
+              <p className="text-sm text-prowl-text-muted">
                 Your location will be shared with other players during the game for real-time hunting.
               </p>
             </div>
           ) : permissionStatus?.denied ? (
             <div className="text-center">
               <div className="text-6xl mb-4">🚫</div>
-              <div className="text-granny-error text-lg font-semibold mb-4">Location access denied</div>
-              <p className="text-sm text-granny-text-muted mb-6">
+              <div className="text-prowl-error text-lg font-semibold mb-4">Location access denied</div>
+              <p className="text-sm text-prowl-text-muted mb-6">
                 {permissionStatus.error || 'Location permission is required for the enhanced gameplay experience.'}
               </p>
-              <div className="glass-card p-4 border border-granny-warning/30 bg-granny-warning/10 mb-6">
-                <p className="text-xs text-granny-warning font-medium">
+              <div className="glass-card p-4 border border-prowl-warning/30 bg-prowl-warning/10 mb-6">
+                <p className="text-xs text-prowl-warning font-medium">
                   🛠️ <strong>To enable location access:</strong>
                 </p>
-                <div className="text-xs text-granny-text-muted mt-2 space-y-1">
+                <div className="text-xs text-prowl-text-muted mt-2 space-y-1">
                   {mobileService.isMobile() ? (
                     <>
                       <p>1. Open your device Settings</p>
-                      <p>2. Go to Apps → Granny IRL → Permissions</p>
+                      <p>2. Go to Apps → Prowl → Permissions</p>
                       <p>3. Enable Location (with Precise Location if available)</p>
                       <p>4. Return to the app and try again</p>
                     </>
@@ -144,43 +144,43 @@ export default function LocationPermissionModal({
               <div className="mb-6">
                 <div className="text-center mb-4">
                   <div className="text-4xl mb-3">🎯</div>
-                  <p className="text-granny-text font-semibold mb-1">Enhanced Gameplay Experience</p>
-                  <p className="text-xs text-granny-text-muted">Real-time tracking for immersive horror gameplay</p>
+                  <p className="text-prowl-text font-semibold mb-1">Enhanced Gameplay Experience</p>
+                  <p className="text-xs text-prowl-text-muted">Real-time tracking for immersive horror gameplay</p>
                 </div>
                 
                 <div className="space-y-3 mb-6">
-                  <div className="glass-card p-3 border border-granny-danger/20 bg-granny-danger/5">
-                    <p className="text-sm text-granny-text flex items-center gap-2">
-                      <span className="text-granny-danger">🔪</span> 
+                  <div className="glass-card p-3 border border-prowl-danger/20 bg-prowl-danger/5">
+                    <p className="text-sm text-prowl-text flex items-center gap-2">
+                      <span className="text-prowl-danger">🔪</span> 
                       <strong>Killers</strong> can track survivor locations on interactive maps
                     </p>
                   </div>
-                  <div className="glass-card p-3 border border-granny-warning/20 bg-granny-warning/5">
-                    <p className="text-sm text-granny-text flex items-center gap-2">
-                      <span className="text-granny-warning">⚠️</span> 
+                  <div className="glass-card p-3 border border-prowl-warning/20 bg-prowl-warning/5">
+                    <p className="text-sm text-prowl-text flex items-center gap-2">
+                      <span className="text-prowl-warning">⚠️</span> 
                       <strong>Proximity alerts</strong> when killers get dangerously close
                     </p>
                   </div>
-                  <div className="glass-card p-3 border border-granny-survivor/20 bg-granny-survivor/5">
-                    <p className="text-sm text-granny-text flex items-center gap-2">
-                      <span className="text-granny-survivor">🧭</span> 
+                  <div className="glass-card p-3 border border-prowl-survivor/20 bg-prowl-survivor/5">
+                    <p className="text-sm text-prowl-text flex items-center gap-2">
+                      <span className="text-prowl-survivor">🧭</span> 
                       <strong>Directional guidance</strong> helps hunters track their prey
                     </p>
                   </div>
-                  <div className="glass-card p-3 border border-granny-border/20">
-                    <p className="text-sm text-granny-text flex items-center gap-2">
-                      <span className="text-granny-text">🔒</span> 
+                  <div className="glass-card p-3 border border-prowl-border/20">
+                    <p className="text-sm text-prowl-text flex items-center gap-2">
+                      <span className="text-prowl-text">🔒</span> 
                       <strong>Privacy protected</strong> - only shared during active hunts
                     </p>
                   </div>
                 </div>
               </div>
               
-              <div className="glass-card p-4 border border-granny-survivor/30 bg-granny-survivor/10 mb-6">
-                <p className="text-xs text-granny-survivor font-semibold mb-1">
+              <div className="glass-card p-4 border border-prowl-survivor/30 bg-prowl-survivor/10 mb-6">
+                <p className="text-xs text-prowl-survivor font-semibold mb-1">
                   🔒 Privacy Guarantee
                 </p>
-                <p className="text-xs text-granny-text-muted">
+                <p className="text-xs text-prowl-text-muted">
                   Your location is only shared with other players during active games and is automatically cleared when games end. No tracking outside of gameplay sessions.
                 </p>
               </div>
@@ -212,7 +212,7 @@ export default function LocationPermissionModal({
                 </button>
               </div>
 
-              <div className="mt-4 text-xs text-granny-text-muted text-center">
+              <div className="mt-4 text-xs text-prowl-text-muted text-center">
                 💡 You can change this permission anytime in your browser settings
               </div>
             </div>

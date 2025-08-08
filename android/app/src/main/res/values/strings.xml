@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Granny IRL</string>
-    <string name="title_activity_main">Granny IRL</string>
-    <string name="package_name">com.grannyirl.app</string>
-    <string name="custom_url_scheme">com.grannyirl.app</string>
+    <string name="app_name">Prowl</string>
+    <string name="title_activity_main">Prowl</string>
+    <string name="package_name">com.prowl.app</string>
+    <string name="custom_url_scheme">com.prowl.app</string>
 </resources>

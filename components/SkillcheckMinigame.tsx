@@ -207,31 +207,31 @@ export default function SkillcheckMinigame({
 
   return (
     <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="glass-modal max-w-lg w-full text-granny-text text-center animate-slide-up">
+      <div className="glass-modal max-w-lg w-full text-prowl-text text-center animate-slide-up">
         <div className="p-8">
           <div className="mb-8">
             <div className="text-6xl mb-4">⚡</div>
-            <h2 className="text-3xl font-bold mb-3 text-granny-warning">SKILLCHECK</h2>
-            <p className="text-granny-text-muted mb-6">Hit the green zone when the needle passes through</p>
+            <h2 className="text-3xl font-bold mb-3 text-prowl-warning">SKILLCHECK</h2>
+            <p className="text-prowl-text-muted mb-6">Hit the green zone when the needle passes through</p>
             
             {/* Simplified Progress */}
             <div className="mb-6">
               <div className="flex justify-center items-center gap-6 mb-4">
                 <div className="text-center">
-                  <div className="text-4xl font-bold text-granny-success">{hits}</div>
-                  <div className="text-sm text-granny-text-muted">Hits</div>
+                  <div className="text-4xl font-bold text-prowl-success">{hits}</div>
+                  <div className="text-sm text-prowl-text-muted">Hits</div>
                 </div>
-                <div className="text-6xl text-granny-text-muted">/</div>
+                <div className="text-6xl text-prowl-text-muted">/</div>
                 <div className="text-center">
-                  <div className="text-4xl font-bold text-granny-text">{REQUIRED_HITS}</div>
-                  <div className="text-sm text-granny-text-muted">Required</div>
+                  <div className="text-4xl font-bold text-prowl-text">{REQUIRED_HITS}</div>
+                  <div className="text-sm text-prowl-text-muted">Required</div>
                 </div>
               </div>
               
               {/* Clean Progress Bar */}
-              <div className="w-full bg-granny-surface rounded-full h-2 mb-3 overflow-hidden">
+              <div className="w-full bg-prowl-surface rounded-full h-2 mb-3 overflow-hidden">
                 <div 
-                  className="bg-gradient-to-r from-granny-success/60 to-granny-success h-2 rounded-full transition-all duration-500"
+                  className="bg-gradient-to-r from-prowl-success/60 to-prowl-success h-2 rounded-full transition-all duration-500"
                   style={{ width: `${Math.min(100, (hits / REQUIRED_HITS) * 100)}%` }}
                 />
               </div>
@@ -243,7 +243,7 @@ export default function SkillcheckMinigame({
                     <div 
                       key={i}
                       className={`w-3 h-3 rounded-full border-2 ${
-                        i < misses ? 'bg-granny-error border-granny-error' : 'border-granny-border/50'
+                        i < misses ? 'bg-prowl-error border-prowl-error' : 'border-prowl-border/50'
                       }`}
                     />
                   ))}
@@ -254,7 +254,7 @@ export default function SkillcheckMinigame({
 
           {/* Skillcheck Circle - Simplified */}
           <div className="relative mx-auto mb-8" style={{ width: '280px', height: '280px' }}>
-            <div className="absolute inset-0 rounded-full bg-granny-surface/30 border-4 border-granny-border/50"></div>
+            <div className="absolute inset-0 rounded-full bg-prowl-surface/30 border-4 border-prowl-border/50"></div>
             
             <svg width="280" height="280" className="transform -rotate-90 relative z-10">
               {/* Main track */}
@@ -299,13 +299,13 @@ export default function SkillcheckMinigame({
             </svg>
             
             {/* Subtle glow effect */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-granny-warning/20 via-transparent to-granny-danger/20 animate-pulse"></div>
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-prowl-warning/20 via-transparent to-prowl-danger/20 animate-pulse"></div>
           </div>
 
           {/* Instructions - Simplified */}
-          <div className="space-y-3 text-granny-text-muted">
-            <div className="glass-card border border-granny-border/20 p-4">
-              <p className="font-medium text-granny-text mb-2">
+          <div className="space-y-3 text-prowl-text-muted">
+            <div className="glass-card border border-prowl-border/20 p-4">
+              <p className="font-medium text-prowl-text mb-2">
                 🎯 Hit the green zone to progress
               </p>
               <p className="text-sm">
@@ -314,8 +314,8 @@ export default function SkillcheckMinigame({
             </div>
             
             {misses > 0 && (
-              <div className="glass-card border border-granny-error/30 bg-granny-error/10 p-3">
-                <p className="text-sm text-granny-error font-medium">
+              <div className="glass-card border border-prowl-error/30 bg-prowl-error/10 p-3">
+                <p className="text-sm text-prowl-error font-medium">
                   ⚠️ {MAX_MISSES - misses} miss{MAX_MISSES - misses !== 1 ? 'es' : ''} remaining
                 </p>
               </div>

@@ -1,8 +1,8 @@
-# Granny IRL 🎯
+# Prowl 🎯
 
 Real-life outdoor tag game coordinator. Think "Friday the 13th" meets "Pokémon GO" with Dead by Daylight-style mechanics - killers hunt survivors in the real world using GPS tracking.
 
-**🌐 Live App**: https://granny-irl.vercel.app
+**🌐 Live App**: https://prowl.vercel.app
 
 ## ✨ Features
 

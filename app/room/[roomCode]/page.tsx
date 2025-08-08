@@ -93,10 +93,10 @@ function RoomPage({ params }: PageProps) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center mobile-container">
         <div className="glass-card p-8 text-center animate-slide-up">
-          <div className="text-xl text-granny-text mb-4 flex items-center justify-center gap-2">
+          <div className="text-xl text-prowl-text mb-4 flex items-center justify-center gap-2">
             🏠 Loading room...
           </div>
-          <div className="w-8 h-8 border-2 border-granny-danger border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="w-8 h-8 border-2 border-prowl-danger border-t-transparent rounded-full animate-spin mx-auto" />
         </div>
       </main>
     );
@@ -105,11 +105,11 @@ function RoomPage({ params }: PageProps) {
   if (error || !room) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center mobile-container relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-granny-bg/80 to-granny-bg pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-prowl-bg/80 to-prowl-bg pointer-events-none" />
         <div className="glass-card p-8 text-center animate-slide-up relative z-10">
           <div className="text-6xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-bold text-granny-text mb-4">Room Error</h1>
-          <p className="text-granny-error mb-6">{error || 'Room not found'}</p>
+          <h1 className="text-2xl font-bold text-prowl-text mb-4">Room Error</h1>
+          <p className="text-prowl-error mb-6">{error || 'Room not found'}</p>
           <button
             onClick={() => router.push('/')}
             className="btn-primary px-6 py-3"
@@ -128,49 +128,49 @@ function RoomPage({ params }: PageProps) {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center mobile-container max-w-2xl mx-auto relative">
       {/* Background effects */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-granny-bg/80 to-granny-bg pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-prowl-bg/80 to-prowl-bg pointer-events-none" />
       
-      <div className="w-full glass-modal p-8 text-granny-text animate-slide-up relative z-10">
+      <div className="w-full glass-modal p-8 text-prowl-text animate-slide-up relative z-10">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-granny-text mb-2 flex items-center justify-center gap-2">
+          <h1 className="text-3xl font-bold text-prowl-text mb-2 flex items-center justify-center gap-2">
             🏠 Room {room.id}
           </h1>
-          <p className="text-granny-text-muted">Share this code with friends to join the hunt</p>
+          <p className="text-prowl-text-muted">Share this code with friends to join the hunt</p>
         </div>
 
         <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 text-granny-text flex items-center gap-2">
+          <h2 className="text-xl font-semibold mb-4 text-prowl-text flex items-center gap-2">
             ⚙️ Game Settings
           </h2>
           <div className="grid grid-cols-2 gap-4">
-            <div className="glass-card p-4 border border-granny-border/30 text-center">
-              <div className="text-2xl font-bold text-granny-danger mb-1">{room.settings.killerCount}</div>
-              <div className="text-sm text-granny-text-muted">🔪 Killers</div>
+            <div className="glass-card p-4 border border-prowl-border/30 text-center">
+              <div className="text-2xl font-bold text-prowl-danger mb-1">{room.settings.killerCount}</div>
+              <div className="text-sm text-prowl-text-muted">🔪 Killers</div>
             </div>
-            <div className="glass-card p-4 border border-granny-border/30 text-center">
-              <div className="text-2xl font-bold text-granny-warning mb-1">{room.settings.roundLengthMinutes}</div>
-              <div className="text-sm text-granny-text-muted">⏱️ Round (min)</div>
+            <div className="glass-card p-4 border border-prowl-border/30 text-center">
+              <div className="text-2xl font-bold text-prowl-warning mb-1">{room.settings.roundLengthMinutes}</div>
+              <div className="text-sm text-prowl-text-muted">⏱️ Round (min)</div>
             </div>
-            <div className="glass-card p-4 border border-granny-border/30 text-center">
-              <div className="text-2xl font-bold text-granny-survivor mb-1">{room.settings.headstartMinutes}</div>
-              <div className="text-sm text-granny-text-muted">🏃 Headstart (min)</div>
+            <div className="glass-card p-4 border border-prowl-border/30 text-center">
+              <div className="text-2xl font-bold text-prowl-survivor mb-1">{room.settings.headstartMinutes}</div>
+              <div className="text-sm text-prowl-text-muted">🏃 Headstart (min)</div>
             </div>
-            <div className="glass-card p-4 border border-granny-border/30 text-center">
-              <div className="text-2xl font-bold text-granny-text mb-1">{room.settings.maxPlayers}</div>
-              <div className="text-sm text-granny-text-muted">👥 Max Players</div>
+            <div className="glass-card p-4 border border-prowl-border/30 text-center">
+              <div className="text-2xl font-bold text-prowl-text mb-1">{room.settings.maxPlayers}</div>
+              <div className="text-sm text-prowl-text-muted">👥 Max Players</div>
             </div>
           </div>
         </div>
 
         <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 text-granny-text flex items-center gap-2">
+          <h2 className="text-xl font-semibold mb-4 text-prowl-text flex items-center gap-2">
             👥 Players ({players.length}/{room.settings.maxPlayers})
           </h2>
           <div className="space-y-3">
             {players.map((player) => (
               <div
                 key={player.uid}
-                className="glass-card p-4 border border-granny-border/30 hover:border-granny-border/50 transition-all duration-200"
+                className="glass-card p-4 border border-prowl-border/30 hover:border-prowl-border/50 transition-all duration-200"
               >
                 <div className="flex items-center gap-4">
                   {player.profilePictureUrl ? (
@@ -178,39 +178,39 @@ function RoomPage({ params }: PageProps) {
                       <img
                         src={player.profilePictureUrl}
                         alt={player.displayName}
-                        className="w-12 h-12 rounded-full object-cover border-2 border-granny-survivor/50"
+                        className="w-12 h-12 rounded-full object-cover border-2 border-prowl-survivor/50"
                       />
                       {player.uid === room.host_uid && (
-                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-granny-warning rounded-full flex items-center justify-center">
+                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-prowl-warning rounded-full flex items-center justify-center">
                           <span className="text-xs">👑</span>
                         </div>
                       )}
                     </div>
                   ) : (
                     <div className="relative">
-                      <div className="w-12 h-12 rounded-full bg-granny-surface border-2 border-granny-border/50 flex items-center justify-center">
-                        <span className="text-lg font-bold text-granny-text">
+                      <div className="w-12 h-12 rounded-full bg-prowl-surface border-2 border-prowl-border/50 flex items-center justify-center">
+                        <span className="text-lg font-bold text-prowl-text">
                           {player.displayName[0]?.toUpperCase()}
                         </span>
                       </div>
                       {player.uid === room.host_uid && (
-                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-granny-warning rounded-full flex items-center justify-center">
+                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-prowl-warning rounded-full flex items-center justify-center">
                           <span className="text-xs">👑</span>
                         </div>
                       )}
                     </div>
                   )}
                   <div className="flex-1">
-                    <p className="font-semibold text-granny-text">{player.displayName}</p>
+                    <p className="font-semibold text-prowl-text">{player.displayName}</p>
                     {player.uid === room.host_uid && (
-                      <p className="text-xs text-granny-warning font-medium">👑 Host</p>
+                      <p className="text-xs text-prowl-warning font-medium">👑 Host</p>
                     )}
                   </div>
                   {isHost && player.uid !== room.host_uid && (
                     <button
                       onClick={() => handleKickPlayer(player.uid)}
                       disabled={kicking === player.uid}
-                      className="px-3 py-1 text-xs bg-granny-error hover:bg-granny-error/80 text-white rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                      className="px-3 py-1 text-xs bg-prowl-error hover:bg-prowl-error/80 text-white rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                     >
                       {kicking === player.uid ? '⏳ Kicking...' : '🚫 Kick'}
                     </button>
@@ -222,8 +222,8 @@ function RoomPage({ params }: PageProps) {
         </div>
 
         {error && (
-          <div className="mb-6 glass-card p-4 border border-granny-error/30 bg-granny-error/10">
-            <p className="text-granny-error text-sm font-medium flex items-center gap-2">
+          <div className="mb-6 glass-card p-4 border border-prowl-error/30 bg-prowl-error/10">
+            <p className="text-prowl-error text-sm font-medium flex items-center gap-2">
               ⚠️ {error}
             </p>
           </div>
@@ -256,7 +256,7 @@ function RoomPage({ params }: PageProps) {
         </div>
 
         {!canStart && isHost && (
-          <p className="text-center text-sm text-granny-text-muted mt-4 flex items-center justify-center gap-1">
+          <p className="text-center text-sm text-prowl-text-muted mt-4 flex items-center justify-center gap-1">
             ⚠️ Need at least {Math.max(2, room.settings.killerCount + 1)} players to start
           </p>
         )}
@@ -269,11 +269,11 @@ export default function RoomPageWrapper({ params }: PageProps) {
   return (
     <AuthGuard fallback={
       <main className="flex min-h-screen flex-col items-center justify-center mobile-container relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-granny-bg/80 to-granny-bg pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-prowl-bg/80 to-prowl-bg pointer-events-none" />
         <div className="glass-card p-8 text-center animate-slide-up relative z-10">
           <div className="text-6xl mb-4">🔒</div>
-          <p className="text-granny-text text-lg mb-4">Please sign in to access this room</p>
-          <p className="text-granny-text-muted text-sm">Join the hunt with other players</p>
+          <p className="text-prowl-text text-lg mb-4">Please sign in to access this room</p>
+          <p className="text-prowl-text-muted text-sm">Join the hunt with other players</p>
         </div>
       </main>
     }>

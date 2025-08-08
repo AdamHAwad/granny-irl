@@ -89,13 +89,13 @@ export default function ProfileSetup({ onComplete, existingProfile }: ProfileSet
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="glass-modal max-w-md w-full text-granny-text animate-slide-up">
+      <div className="glass-modal max-w-md w-full text-prowl-text animate-slide-up">
         <div className="p-6">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-granny-text mb-2 flex items-center justify-center gap-2">
+            <h2 className="text-2xl font-bold text-prowl-text mb-2 flex items-center justify-center gap-2">
               👤 Complete Your Profile
             </h2>
-            <p className="text-sm text-granny-text-muted">
+            <p className="text-sm text-prowl-text-muted">
               Customize your identity for the hunt
             </p>
           </div>
@@ -108,13 +108,13 @@ export default function ProfileSetup({ onComplete, existingProfile }: ProfileSet
                     <img
                       src={previewUrl}
                       alt="Profile preview"
-                      className="w-28 h-28 rounded-full mx-auto object-cover border-4 border-granny-survivor/50 shadow-lg"
+                      className="w-28 h-28 rounded-full mx-auto object-cover border-4 border-prowl-survivor/50 shadow-lg"
                     />
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-b from-transparent to-granny-bg/20 pointer-events-none" />
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-b from-transparent to-prowl-bg/20 pointer-events-none" />
                   </div>
                 ) : (
-                  <div className="w-28 h-28 rounded-full mx-auto bg-granny-surface border-4 border-granny-border/50 flex items-center justify-center shadow-lg">
-                    <span className="text-3xl text-granny-text-muted font-bold">
+                  <div className="w-28 h-28 rounded-full mx-auto bg-prowl-surface border-4 border-prowl-border/50 flex items-center justify-center shadow-lg">
+                    <span className="text-3xl text-prowl-text-muted font-bold">
                       {user?.user_metadata?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase()}
                     </span>
                   </div>
@@ -123,7 +123,7 @@ export default function ProfileSetup({ onComplete, existingProfile }: ProfileSet
               
               <div className="space-y-4">
                 <label className="block">
-                  <span className="text-sm font-semibold text-granny-text mb-3 block flex items-center gap-2 justify-center">
+                  <span className="text-sm font-semibold text-prowl-text mb-3 block flex items-center gap-2 justify-center">
                     📸 Profile Picture (optional)
                   </span>
                   <div className="relative">
@@ -131,7 +131,7 @@ export default function ProfileSetup({ onComplete, existingProfile }: ProfileSet
                       type="file"
                       accept="image/*"
                       onChange={handleImageChange}
-                      className="block w-full text-sm text-granny-text-muted file:mr-4 file:py-3 file:px-6 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-granny-surface file:text-granny-text file:border file:border-granny-border hover:file:bg-granny-surface-light file:transition-all file:duration-200 bg-granny-surface border border-granny-border rounded-lg focus:border-granny-survivor/50 focus:ring-2 focus:ring-granny-survivor/20 transition-all duration-200"
+                      className="block w-full text-sm text-prowl-text-muted file:mr-4 file:py-3 file:px-6 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-prowl-surface file:text-prowl-text file:border file:border-prowl-border hover:file:bg-prowl-surface-light file:transition-all file:duration-200 bg-prowl-surface border border-prowl-border rounded-lg focus:border-prowl-survivor/50 focus:ring-2 focus:ring-prowl-survivor/20 transition-all duration-200"
                       disabled={loading}
                     />
                   </div>
@@ -141,7 +141,7 @@ export default function ProfileSetup({ onComplete, existingProfile }: ProfileSet
                     type="button"
                     onClick={handleRemoveImage}
                     disabled={loading}
-                    className="text-sm text-granny-error hover:text-granny-error/80 font-medium disabled:opacity-50 transition-colors duration-200 flex items-center gap-1 mx-auto"
+                    className="text-sm text-prowl-error hover:text-prowl-error/80 font-medium disabled:opacity-50 transition-colors duration-200 flex items-center gap-1 mx-auto"
                   >
                     🗑️ Remove Picture
                   </button>
@@ -150,7 +150,7 @@ export default function ProfileSetup({ onComplete, existingProfile }: ProfileSet
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-granny-text mb-3 flex items-center gap-2">
+              <label className="block text-sm font-semibold text-prowl-text mb-3 flex items-center gap-2">
                 ✏️ Custom Username (optional)
               </label>
               <input
@@ -158,10 +158,10 @@ export default function ProfileSetup({ onComplete, existingProfile }: ProfileSet
                 value={customUsername}
                 onChange={(e) => setCustomUsername(e.target.value)}
                 placeholder={`Default: ${user?.user_metadata?.full_name || user?.email}`}
-                className="input-field w-full placeholder:text-granny-text-muted/60"
+                className="input-field w-full placeholder:text-prowl-text-muted/60"
                 maxLength={20}
               />
-              <p className="text-xs text-granny-text-muted mt-3 flex items-center gap-1">
+              <p className="text-xs text-prowl-text-muted mt-3 flex items-center gap-1">
                 👥 This will be displayed to other players during games
               </p>
             </div>

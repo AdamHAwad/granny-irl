@@ -1,6 +1,6 @@
 {
-  "name": "Granny IRL - Real-Life Game Coordinator",
-  "short_name": "Granny IRL",
+  "name": "Prowl - Real-Life Game Coordinator",
+  "short_name": "Prowl",
   "description": "Coordinate real-life outdoor tag games with your friends",
   "start_url": "/",
   "display": "standalone",

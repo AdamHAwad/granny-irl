@@ -68,15 +68,15 @@ export default function JoinRoomModal({
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="glass-modal p-8 w-full max-w-md text-granny-text animate-slide-up">
+      <div className="glass-modal p-8 w-full max-w-md text-prowl-text animate-slide-up">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h2 className="text-2xl font-bold text-granny-text mb-1">🚪 Join Room</h2>
-            <p className="text-sm text-granny-text-muted">Enter the 6-digit room code</p>
+            <h2 className="text-2xl font-bold text-prowl-text mb-1">🚪 Join Room</h2>
+            <p className="text-sm text-prowl-text-muted">Enter the 6-digit room code</p>
           </div>
           <button
             onClick={onClose}
-            className="text-granny-text-muted hover:text-granny-text text-2xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-granny-surface-light transition-colors"
+            className="text-prowl-text-muted hover:text-prowl-text text-2xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-prowl-surface-light transition-colors"
           >
             ×
           </button>
@@ -84,7 +84,7 @@ export default function JoinRoomModal({
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-semibold text-granny-text mb-4 flex items-center gap-2">
+            <label className="block text-sm font-semibold text-prowl-text mb-4 flex items-center gap-2">
               🔑 Room Code
             </label>
             <div className="relative">
@@ -93,20 +93,20 @@ export default function JoinRoomModal({
                 value={roomCode}
                 onChange={handleInputChange}
                 placeholder="ABC123"
-                className="w-full px-6 py-4 bg-granny-surface border-2 border-granny-border text-granny-text placeholder-granny-text-muted rounded-xl focus:outline-none focus:border-granny-survivor/50 focus:ring-2 focus:ring-granny-survivor/20 text-center text-3xl font-mono tracking-[0.3em] font-bold transition-all duration-200"
+                className="w-full px-6 py-4 bg-prowl-surface border-2 border-prowl-border text-prowl-text placeholder-prowl-text-muted rounded-xl focus:outline-none focus:border-prowl-survivor/50 focus:ring-2 focus:ring-prowl-survivor/20 text-center text-3xl font-mono tracking-[0.3em] font-bold transition-all duration-200"
                 maxLength={6}
                 autoComplete="off"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-granny-survivor/5 to-transparent pointer-events-none rounded-xl" />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-prowl-survivor/5 to-transparent pointer-events-none rounded-xl" />
             </div>
-            <p className="text-sm text-granny-text-muted mt-3 text-center">
+            <p className="text-sm text-prowl-text-muted mt-3 text-center">
               Ask the host for the room code to join the hunt
             </p>
           </div>
 
           {error && (
-            <div className="glass-card p-4 border border-granny-error/30 bg-granny-error/10">
-              <p className="text-granny-error text-sm font-medium flex items-center gap-2">
+            <div className="glass-card p-4 border border-prowl-error/30 bg-prowl-error/10">
+              <p className="text-prowl-error text-sm font-medium flex items-center gap-2">
                 ⚠️ {error}
               </p>
             </div>

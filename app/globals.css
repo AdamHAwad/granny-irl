@@ -4,17 +4,17 @@
 @tailwind utilities;
 
 :root {
-  --granny-bg: #0a0a0b;
-  --granny-surface: #1a1a1d;
-  --granny-surface-light: #252529;
-  --granny-border: #2a2a2d;
-  --granny-danger: #c41e3a;
-  --granny-survivor: #2d5a3d;
-  --granny-text: #f5f5f5;
-  --granny-text-muted: #a0a0a0;
-  --granny-warning: #f59e0b;
-  --granny-success: #4ade80;
-  --granny-error: #ef4444;
+  --prowl-bg: #0a0a0b;
+  --prowl-surface: #1a1a1d;
+  --prowl-surface-light: #252529;
+  --prowl-border: #2a2a2d;
+  --prowl-danger: #c41e3a;
+  --prowl-survivor: #2d5a3d;
+  --prowl-text: #f5f5f5;
+  --prowl-text-muted: #a0a0a0;
+  --prowl-warning: #f59e0b;
+  --prowl-success: #4ade80;
+  --prowl-error: #ef4444;
 }
 
 * {
@@ -23,8 +23,8 @@
 
 body {
   font-family: 'Inter', system-ui, sans-serif;
-  background-color: var(--granny-bg);
-  color: var(--granny-text);
+  background-color: var(--prowl-bg);
+  color: var(--prowl-text);
   margin: 0;
   padding: 0;
   min-height: 100vh;
@@ -53,27 +53,27 @@ body {
 
 @layer components {
   .glass-card {
-    @apply bg-granny-surface/50 backdrop-blur-md border border-granny-border/50 rounded-lg shadow-xl;
+    @apply bg-prowl-surface/50 backdrop-blur-md border border-prowl-border/50 rounded-lg shadow-xl;
   }
   
   .glass-modal {
-    @apply bg-granny-surface/80 backdrop-blur-lg border border-granny-border/30 rounded-xl shadow-2xl;
+    @apply bg-prowl-surface/80 backdrop-blur-lg border border-prowl-border/30 rounded-xl shadow-2xl;
   }
   
   .btn-primary {
-    @apply bg-granny-danger hover:bg-granny-danger/90 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-granny-danger/20 focus:outline-none focus:ring-2 focus:ring-granny-danger/50 active:scale-95 select-none;
+    @apply bg-prowl-danger hover:bg-prowl-danger/90 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-prowl-danger/20 focus:outline-none focus:ring-2 focus:ring-prowl-danger/50 active:scale-95 select-none;
   }
   
   .btn-secondary {
-    @apply bg-granny-survivor hover:bg-granny-survivor/90 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-granny-survivor/20 focus:outline-none focus:ring-2 focus:ring-granny-survivor/50 active:scale-95 select-none;
+    @apply bg-prowl-survivor hover:bg-prowl-survivor/90 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-prowl-survivor/20 focus:outline-none focus:ring-2 focus:ring-prowl-survivor/50 active:scale-95 select-none;
   }
   
   .btn-ghost {
-    @apply bg-transparent hover:bg-granny-surface-light text-granny-text border border-granny-border hover:border-granny-border font-medium py-2 px-4 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-granny-border active:scale-95 select-none;
+    @apply bg-transparent hover:bg-prowl-surface-light text-prowl-text border border-prowl-border hover:border-prowl-border font-medium py-2 px-4 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-prowl-border active:scale-95 select-none;
   }
   
   .input-field {
-    @apply bg-granny-surface border border-granny-border text-granny-text placeholder-granny-text-muted rounded-lg px-4 py-3 focus:outline-none focus:border-granny-danger/50 focus:ring-2 focus:ring-granny-danger/20 transition-all duration-200;
+    @apply bg-prowl-surface border border-prowl-border text-prowl-text placeholder-prowl-text-muted rounded-lg px-4 py-3 focus:outline-none focus:border-prowl-danger/50 focus:ring-2 focus:ring-prowl-danger/20 transition-all duration-200;
     /* Prevent iOS zoom on focus */
     font-size: max(16px, 1rem);
   }
@@ -99,9 +99,9 @@ body {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: var(--granny-danger);
+    background: var(--prowl-danger);
     cursor: pointer;
-    border: 2px solid var(--granny-text);
+    border: 2px solid var(--prowl-text);
     box-shadow: 0 2px 6px rgba(196, 30, 58, 0.3);
   }
   
@@ -109,9 +109,9 @@ body {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: var(--granny-danger);
+    background: var(--prowl-danger);
     cursor: pointer;
-    border: 2px solid var(--granny-text);
+    border: 2px solid var(--prowl-text);
     box-shadow: 0 2px 6px rgba(196, 30, 58, 0.3);
   }
 }

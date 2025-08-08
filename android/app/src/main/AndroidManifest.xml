@@ -27,7 +27,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="com.grannyirl.app" />
+                <data android:scheme="com.prowl.app" />
             </intent-filter>
 
             <!-- Override browser intents for OAuth domains -->

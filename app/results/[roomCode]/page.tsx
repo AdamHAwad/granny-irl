@@ -43,10 +43,10 @@ function ResultsPage({ params }: PageProps) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-4">
         <div className="glass-card p-8 text-center animate-slide-up">
-          <div className="text-xl text-granny-text mb-4 flex items-center justify-center gap-2">
+          <div className="text-xl text-prowl-text mb-4 flex items-center justify-center gap-2">
             🏆 Loading results...
           </div>
-          <div className="w-8 h-8 border-2 border-granny-warning border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="w-8 h-8 border-2 border-prowl-warning border-t-transparent rounded-full animate-spin mx-auto" />
         </div>
       </main>
     );
@@ -55,11 +55,11 @@ function ResultsPage({ params }: PageProps) {
   if (error || !gameResult) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center p-4 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-granny-bg/80 to-granny-bg pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-prowl-bg/80 to-prowl-bg pointer-events-none" />
         <div className="glass-card p-8 text-center animate-slide-up relative z-10">
           <div className="text-6xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-bold text-granny-text mb-4">Results Error</h1>
-          <p className="text-granny-error mb-6">{error || 'Results not found'}</p>
+          <h1 className="text-2xl font-bold text-prowl-text mb-4">Results Error</h1>
+          <p className="text-prowl-error mb-6">{error || 'Results not found'}</p>
           <button
             onClick={() => router.push('/')}
             className="btn-primary px-6 py-3"
@@ -86,11 +86,11 @@ function ResultsPage({ params }: PageProps) {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 max-w-3xl mx-auto relative">
       {/* Background effects */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-granny-bg/80 to-granny-bg pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-prowl-bg/80 to-prowl-bg pointer-events-none" />
       
-      <div className="w-full glass-modal p-8 text-granny-text animate-slide-up relative z-10">
+      <div className="w-full glass-modal p-8 text-prowl-text animate-slide-up relative z-10">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-granny-text mb-4 flex items-center justify-center gap-3">
+          <h1 className="text-4xl font-bold text-prowl-text mb-4 flex items-center justify-center gap-3">
             🏆 Game Results
           </h1>
           <div className="mb-8 px-4">
@@ -98,21 +98,21 @@ function ResultsPage({ params }: PageProps) {
               {gameResult.winners === 'killers' ? '💀' : '🛡️'}
             </div>
             <div className={`text-3xl sm:text-5xl md:text-6xl font-bold mb-4 animate-glow break-words ${
-              gameResult.winners === 'killers' ? 'text-granny-danger' : 'text-granny-survivor'
+              gameResult.winners === 'killers' ? 'text-prowl-danger' : 'text-prowl-survivor'
             }`}>
               {gameResult.winners === 'killers' ? 'KILLERS WIN!' : 'SURVIVORS WIN!'}
             </div>
           </div>
-          <div className="glass-card p-4 border border-granny-border/30 inline-block">
-            <p className="text-granny-text-muted flex items-center gap-2">
-              ⏱️ Game Duration: <span className="text-granny-text font-semibold">{gameDurationMin}m {gameDurationSec}s</span>
+          <div className="glass-card p-4 border border-prowl-border/30 inline-block">
+            <p className="text-prowl-text-muted flex items-center gap-2">
+              ⏱️ Game Duration: <span className="text-prowl-text font-semibold">{gameDurationMin}m {gameDurationSec}s</span>
             </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           <div>
-            <h2 className="text-2xl font-semibold mb-4 text-granny-success flex items-center gap-2">
+            <h2 className="text-2xl font-semibold mb-4 text-prowl-success flex items-center gap-2">
               🏆 Winners ({winners.length})
             </h2>
             <div className="space-y-3">
@@ -123,7 +123,7 @@ function ResultsPage({ params }: PageProps) {
           </div>
 
           <div>
-            <h2 className="text-2xl font-semibold mb-4 text-granny-error flex items-center gap-2">
+            <h2 className="text-2xl font-semibold mb-4 text-prowl-error flex items-center gap-2">
               💀 Eliminated ({losers.length})
             </h2>
             <div className="space-y-3">
@@ -131,10 +131,10 @@ function ResultsPage({ params }: PageProps) {
                 const player = gameResult.final_players[uid];
                 if (!player) return null;
                 return (
-                  <div key={uid} className="glass-card border border-granny-error/30 bg-granny-error/5 p-4">
+                  <div key={uid} className="glass-card border border-prowl-error/30 bg-prowl-error/5 p-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-granny-error/20 border border-granny-error/50 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-granny-error font-bold text-xs sm:text-sm">#{index + 1}</span>
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-prowl-error/20 border border-prowl-error/50 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-prowl-error font-bold text-xs sm:text-sm">#{index + 1}</span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <PlayerCard player={player} isWinner={false} showElimination={true} />
@@ -147,7 +147,7 @@ function ResultsPage({ params }: PageProps) {
           </div>
         </div>
 
-        <div className="flex justify-center pt-6 border-t border-granny-border/30">
+        <div className="flex justify-center pt-6 border-t border-prowl-border/30">
           <button
             onClick={() => router.push('/')}
             className="btn-primary px-8 py-4 text-lg"
@@ -172,10 +172,10 @@ function PlayerCard({
   return (
     <div className={`glass-card p-4 border transition-all duration-200 ${
       isWinner 
-        ? 'border-granny-success/50 bg-granny-success/10 hover:border-granny-success/70' 
+        ? 'border-prowl-success/50 bg-prowl-success/10 hover:border-prowl-success/70' 
         : showElimination 
           ? 'bg-transparent border-none p-0' 
-          : 'border-granny-border/30 hover:border-granny-border/50'
+          : 'border-prowl-border/30 hover:border-prowl-border/50'
     }`}>
       <div className="flex items-center gap-4">
         {player.profilePictureUrl ? (
@@ -185,14 +185,14 @@ function PlayerCard({
               alt={player.displayName}
               className={`w-12 h-12 rounded-full object-cover border-2 ${
                 isWinner 
-                  ? 'border-granny-success/70' 
+                  ? 'border-prowl-success/70' 
                   : player.role === 'killer' 
-                    ? 'border-granny-danger/50' 
-                    : 'border-granny-survivor/50'
+                    ? 'border-prowl-danger/50' 
+                    : 'border-prowl-survivor/50'
               }`}
             />
             {isWinner && (
-              <div className="absolute -top-1 -right-1 w-6 h-6 bg-granny-success rounded-full flex items-center justify-center">
+              <div className="absolute -top-1 -right-1 w-6 h-6 bg-prowl-success rounded-full flex items-center justify-center">
                 <span className="text-xs">🏆</span>
               </div>
             )}
@@ -201,17 +201,17 @@ function PlayerCard({
           <div className="relative">
             <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center ${
               isWinner 
-                ? 'bg-granny-success/20 border-granny-success/70' 
+                ? 'bg-prowl-success/20 border-prowl-success/70' 
                 : player.role === 'killer' 
-                  ? 'bg-granny-danger/20 border-granny-danger/50' 
-                  : 'bg-granny-survivor/20 border-granny-survivor/50'
+                  ? 'bg-prowl-danger/20 border-prowl-danger/50' 
+                  : 'bg-prowl-survivor/20 border-prowl-survivor/50'
             }`}>
-              <span className="text-sm font-bold text-granny-text">
+              <span className="text-sm font-bold text-prowl-text">
                 {player.displayName[0]?.toUpperCase()}
               </span>
             </div>
             {isWinner && (
-              <div className="absolute -top-1 -right-1 w-6 h-6 bg-granny-success rounded-full flex items-center justify-center">
+              <div className="absolute -top-1 -right-1 w-6 h-6 bg-prowl-success rounded-full flex items-center justify-center">
                 <span className="text-xs">🏆</span>
               </div>
             )}
@@ -219,23 +219,23 @@ function PlayerCard({
         )}
         
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-granny-text text-sm sm:text-base truncate">{player.displayName}</p>
+          <p className="font-semibold text-prowl-text text-sm sm:text-base truncate">{player.displayName}</p>
           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mt-1">
             <span className={`text-xs font-medium px-2 py-1 rounded-full inline-flex items-center gap-1 ${
               player.role === 'killer' 
-                ? 'bg-granny-danger/20 text-granny-danger' 
-                : 'bg-granny-survivor/20 text-granny-survivor'
+                ? 'bg-prowl-danger/20 text-prowl-danger' 
+                : 'bg-prowl-survivor/20 text-prowl-survivor'
             }`}>
               {player.role === 'killer' ? '🔪' : '🛡️'} {player.role?.toUpperCase()}
             </span>
             {isWinner && (
-              <span className="text-xs font-medium px-2 py-1 rounded-full bg-granny-success/20 text-granny-success inline-flex items-center gap-1">
+              <span className="text-xs font-medium px-2 py-1 rounded-full bg-prowl-success/20 text-prowl-success inline-flex items-center gap-1">
                 🏆 WINNER
               </span>
             )}
           </div>
           {showElimination && player.eliminatedAt && (
-            <p className="text-xs text-granny-text-muted mt-2 flex items-center gap-1">
+            <p className="text-xs text-prowl-text-muted mt-2 flex items-center gap-1">
               ⏰ Eliminated at {new Date(player.eliminatedAt).toLocaleTimeString()}
             </p>
           )}
@@ -243,7 +243,7 @@ function PlayerCard({
         
         <div className="flex flex-col items-center gap-1">
           {isWinner && <div className="text-3xl animate-bounce">🏆</div>}
-          {!isWinner && !player.isAlive && <div className="text-2xl text-granny-error">💀</div>}
+          {!isWinner && !player.isAlive && <div className="text-2xl text-prowl-error">💀</div>}
         </div>
       </div>
     </div>
@@ -254,11 +254,11 @@ export default function ResultsPageWrapper({ params }: PageProps) {
   return (
     <AuthGuard fallback={
       <main className="flex min-h-screen flex-col items-center justify-center p-4 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-granny-bg/80 to-granny-bg pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-prowl-bg/80 to-prowl-bg pointer-events-none" />
         <div className="glass-card p-8 text-center animate-slide-up relative z-10">
           <div className="text-6xl mb-4">🔒</div>
-          <p className="text-granny-text text-lg mb-4">Please sign in to view results</p>
-          <p className="text-granny-text-muted text-sm">See how the hunt concluded</p>
+          <p className="text-prowl-text text-lg mb-4">Please sign in to view results</p>
+          <p className="text-prowl-text-muted text-sm">See how the hunt concluded</p>
         </div>
       </main>
     }>

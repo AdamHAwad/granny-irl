@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.grannyirl.app',
-  appName: 'Granny IRL',
+  appId: 'com.prowl.app',
+  appName: 'Prowl',
   webDir: 'dist',
   server: {
     // Always use the live web app for cross-platform compatibility
@@ -14,12 +14,14 @@ const config: CapacitorConfig = {
   plugins: {
     // Configure native plugins
     SplashScreen: {
-      launchShowDuration: 2000,
-      backgroundColor: '#1a1a1a', // Match your dark theme
-      showSpinner: false
+      launchShowDuration: 1000,
+      backgroundColor: '#ffffff', // Use white background to match splash images
+      showSpinner: false,
+      // Hide the splash screen automatically
+      launchAutoHide: true
     },
     StatusBar: {
-      style: 'dark', // Match your app theme
+      style: 'light', // Better contrast for the app
       backgroundColor: '#1a1a1a'
     },
     Browser: {
@@ -28,7 +30,7 @@ const config: CapacitorConfig = {
       toolbarColor: '#1a1a1a',
       windowName: '_self',
       // Try to override system browser
-      overrideUserAgent: 'GrannyIRLApp/1.0'
+      overrideUserAgent: 'ProwlApp/1.0'
     }
   }
 };

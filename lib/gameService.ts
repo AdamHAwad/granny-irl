@@ -1,8 +1,8 @@
 /**
- * Game Service - Core business logic for Granny IRL
+ * Game Service - Core business logic for Prowl
  * 
  * This service handles all game-related operations for the real-life tag game app.
- * Granny IRL combines outdoor gameplay with Dead by Daylight-inspired mechanics.
+ * Prowl combines outdoor gameplay with Dead by Daylight-inspired mechanics.
  * 
  * 🎯 Core Features:
  * - Room-based multiplayer with 6-digit codes

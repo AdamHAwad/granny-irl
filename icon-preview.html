@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prowl Icon Preview</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f0f0f0;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .preview-item {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .icon-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 10px 0;
+            min-height: 100px;
+        }
+        .icon {
+            border: 1px solid #ddd;
+            border-radius: 22%;
+            background-color: #0a0a0b;
+            padding: 10px;
+        }
+        .splash-preview {
+            background-color: #0a0a0b;
+            border-radius: 8px;
+            padding: 40px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+        }
+        .splash-logo {
+            max-width: 200px;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+        .color-swatch {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            vertical-align: middle;
+            margin-right: 5px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Prowl App Icon & Branding Preview</h1>
+        
+        <h2>Brand Colors</h2>
+        <p>
+            <span class="color-swatch" style="background-color: #0a0a0b;"></span>
+            <code>#0a0a0b</code> - Background (Prowl Dark)
+        </p>
+        <p>
+            <span class="color-swatch" style="background-color: #c41e3a;"></span>
+            <code>#c41e3a</code> - Danger/Killers (Prowl Red)
+        </p>
+        <p>
+            <span class="color-swatch" style="background-color: #2d5a3d;"></span>
+            <code>#2d5a3d</code> - Survivors (Prowl Green)
+        </p>
+
+        <h2>App Icon Preview</h2>
+        <p>Place your <code>prowl-logo.png</code> in the project root to see previews</p>
+        
+        <div class="preview-grid">
+            <div class="preview-item">
+                <h3>iOS App Icon</h3>
+                <div class="icon-container">
+                    <div class="icon" style="width: 60px; height: 60px;">
+                        <img src="prowl-logo.png" alt="Prowl" style="width: 100%; height: 100%;" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔍</text></svg>'">
+                    </div>
+                </div>
+                <p>60x60 @2x</p>
+            </div>
+            
+            <div class="preview-item">
+                <h3>Android Icon</h3>
+                <div class="icon-container">
+                    <div class="icon" style="width: 96px; height: 96px; border-radius: 50%;">
+                        <img src="prowl-logo.png" alt="Prowl" style="width: 100%; height: 100%;" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔍</text></svg>'">
+                    </div>
+                </div>
+                <p>96x96 (xhdpi)</p>
+            </div>
+            
+            <div class="preview-item">
+                <h3>PWA Icon</h3>
+                <div class="icon-container">
+                    <div class="icon" style="width: 192px; height: 192px;">
+                        <img src="prowl-logo.png" alt="Prowl" style="width: 100%; height: 100%;" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔍</text></svg>'">
+                    </div>
+                </div>
+                <p>192x192</p>
+            </div>
+        </div>
+
+        <h2>Splash Screen Preview</h2>
+        <div class="splash-preview">
+            <img src="prowl-logo.png" alt="Prowl" class="splash-logo" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔍</text></svg>'">
+        </div>
+        <p>This is how the splash screen will look with the Prowl logo centered on the dark background</p>
+
+        <h2>Next Steps</h2>
+        <ol>
+            <li>Save your Prowl logo as <code>prowl-logo.png</code> in this directory</li>
+            <li>Run <code>./generate-icons.sh</code> to generate all app icons</li>
+            <li>Run <code>./generate-splash.sh</code> for splash screen setup</li>
+            <li>Run <code>npm run mobile:sync</code> to apply changes</li>
+        </ol>
+    </div>
+</body>
+</html>

@@ -8,7 +8,7 @@ export default function SignInButton() {
   return (
     <button
       onClick={signInWithGoogle}
-      className="glass-card hover:bg-granny-surface-light text-granny-text font-semibold py-4 px-6 flex items-center justify-center gap-3 transition-all duration-200 hover:shadow-lg hover:shadow-granny-danger/10 group w-full"
+      className="glass-card hover:bg-prowl-surface-light text-prowl-text font-semibold py-4 px-6 flex items-center justify-center gap-3 transition-all duration-200 hover:shadow-lg hover:shadow-prowl-danger/10 group w-full"
     >
       <svg className="w-5 h-5 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
         <path

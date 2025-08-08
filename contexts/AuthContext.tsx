@@ -88,7 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mobileService.onUrlChange(async (url) => {
         console.log('🔗 Deep link received:', url);
         
-        if (url.includes('oauth') || url.includes('com.grannyirl.app')) {
+        if (url.includes('oauth') || url.includes('com.prowl.app')) {
           // Prevent processing the same auth callback multiple times
           if (authProcessed) {
             console.log('⚠️ Auth already processed, skipping duplicate callback');
@@ -99,8 +99,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           authProcessed = true;
           
           try {
-            // The URL might look like: com.grannyirl.app://oauth#access_token=...&refresh_token=...
-            // Or it might be: com.grannyirl.app://oauth?code=...
+            // The URL might look like: com.prowl.app://oauth#access_token=...&refresh_token=...
+            // Or it might be: com.prowl.app://oauth?code=...
             
             // Check if it's a code-based OAuth callback
             if (url.includes('code=')) {
@@ -182,7 +182,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('📱 Mobile OAuth: Using custom URL scheme for seamless auth');
         
         // Use custom URL scheme for mobile deep linking
-        const redirectUrl = 'com.grannyirl.app://oauth';
+        const redirectUrl = 'com.prowl.app://oauth';
         
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
@@ -207,7 +207,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         // Standard web flow
         const redirectUrl = process.env.NODE_ENV === 'production' 
-          ? 'https://granny-irl.vercel.app/' 
+          ? 'https://prowl-irl.vercel.app/' 
           : `${window.location.origin}/`;
         
         const { error } = await supabase.auth.signInWithOAuth({

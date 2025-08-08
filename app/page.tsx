@@ -99,8 +99,8 @@ function AuthenticatedHome() {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center native-full-width">
         <div className="glass-card-mobile p-6 text-center max-w-sm w-full mx-auto">
-          <div className="text-lg text-granny-text mb-4">Loading profile...</div>
-          <div className="w-8 h-8 border-2 border-granny-danger border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="text-lg text-prowl-text mb-4">Loading profile...</div>
+          <div className="w-8 h-8 border-2 border-prowl-danger border-t-transparent rounded-full animate-spin mx-auto" />
         </div>
       </main>
     );
@@ -138,7 +138,7 @@ function AuthenticatedHome() {
     <>
       <main className="flex min-h-screen flex-col items-center justify-center native-full-width relative">
         {/* Background effects */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-granny-bg/80 to-granny-bg" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-prowl-bg/80 to-prowl-bg" />
         
         <div className="glass-card-mobile p-6 text-center mb-6 max-w-lg w-full mx-auto animate-slide-up-mobile relative z-10">
           <div className="mb-6">
@@ -146,39 +146,39 @@ function AuthenticatedHome() {
               <img
                 src={profile.profile_picture_url}
                 alt="Profile"
-                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full mx-auto object-cover border-2 border-granny-border shadow-xl"
+                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full mx-auto object-cover border-2 border-prowl-border shadow-xl"
               />
             ) : (
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full mx-auto bg-granny-surface flex items-center justify-center border-2 border-granny-border shadow-xl">
-                <span className="text-2xl sm:text-3xl text-granny-text font-semibold">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full mx-auto bg-prowl-surface flex items-center justify-center border-2 border-prowl-border shadow-xl">
+                <span className="text-2xl sm:text-3xl text-prowl-text font-semibold">
                   {displayName?.[0]?.toUpperCase()}
                 </span>
               </div>
             )}
           </div>
           
-          <h1 className="heading-mobile mb-3 text-granny-text">
-            Granny IRL
+          <h1 className="heading-mobile mb-3 text-prowl-text">
+            Prowl
           </h1>
-          <div className="w-12 h-1 bg-gradient-to-r from-granny-danger to-granny-survivor mx-auto mb-4 rounded-full shadow-sm" />
-          <p className="subheading-mobile mb-6 text-granny-text">
-            Welcome back, <span className="text-granny-danger font-semibold">{displayName}</span>!
+          <div className="w-12 h-1 bg-gradient-to-r from-prowl-danger to-prowl-survivor mx-auto mb-4 rounded-full shadow-sm" />
+          <p className="subheading-mobile mb-6 text-prowl-text">
+            Welcome back, <span className="text-prowl-danger font-semibold">{displayName}</span>!
           </p>
           
           {/* Location status indicator */}
           {locationPermissionChecked && (
             <div className={`mb-6 px-4 py-3 rounded-lg text-sm glass-card ${
               hasLocationPermission 
-                ? 'border-granny-success/30' 
-                : 'border-granny-warning/30'
+                ? 'border-prowl-success/30' 
+                : 'border-prowl-warning/30'
             }`}>
               {hasLocationPermission ? (
-                <div className="flex items-center justify-center space-x-2 text-granny-success">
+                <div className="flex items-center justify-center space-x-2 text-prowl-success">
                   <span>📍</span>
                   <span className="font-medium">Location enabled - ready for enhanced gameplay!</span>
                 </div>
               ) : (
-                <div className="flex items-center justify-center space-x-2 text-granny-warning">
+                <div className="flex items-center justify-center space-x-2 text-prowl-warning">
                   <span>📍</span>
                   <span>
                     Location disabled - 
@@ -197,19 +197,19 @@ function AuthenticatedHome() {
           <div className="flex flex-wrap gap-4 justify-center text-sm">
             <button
               onClick={() => setNeedsSetup(true)}
-              className="text-granny-danger hover:text-granny-danger/80 underline hover:no-underline transition-all font-medium"
+              className="text-prowl-danger hover:text-prowl-danger/80 underline hover:no-underline transition-all font-medium"
             >
               Edit Profile
             </button>
             <button
               onClick={() => router.push('/history')}
-              className="text-granny-survivor hover:text-granny-survivor/80 underline hover:no-underline transition-all font-medium"
+              className="text-prowl-survivor hover:text-prowl-survivor/80 underline hover:no-underline transition-all font-medium"
             >
               Game History
             </button>
             <button
               onClick={logout}
-              className="text-granny-text-muted hover:text-granny-text underline hover:no-underline transition-all font-medium"
+              className="text-prowl-text-muted hover:text-prowl-text underline hover:no-underline transition-all font-medium"
             >
               Sign out
             </button>
@@ -262,33 +262,33 @@ function UnauthenticatedHome() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center native-full-width relative overflow-hidden">
       {/* Background effects */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-granny-bg/50 to-granny-bg" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-prowl-bg/50 to-prowl-bg" />
       
       <div className="glass-card-mobile p-6 text-center max-w-md w-full mx-auto animate-slide-up-mobile relative z-10">
         <div className="mb-6">
-          <h1 className="text-4xl sm:text-5xl font-bold mb-4 text-granny-text bg-gradient-to-r from-granny-danger to-granny-survivor bg-clip-text text-transparent animate-float">
-            Granny IRL
+          <h1 className="text-4xl sm:text-5xl font-bold mb-4 text-prowl-text bg-gradient-to-r from-prowl-danger to-prowl-survivor bg-clip-text text-transparent animate-float">
+            Prowl
           </h1>
-          <div className="w-16 h-1 bg-gradient-to-r from-granny-danger to-granny-survivor mx-auto mb-6 rounded-full shadow-sm" />
+          <div className="w-16 h-1 bg-gradient-to-r from-prowl-danger to-prowl-survivor mx-auto mb-6 rounded-full shadow-sm" />
         </div>
         
-        <p className="subheading-mobile mb-4 text-granny-text">Real-life horror tag</p>
-        <p className="text-granny-text-muted mb-8 leading-relaxed text-sm sm:text-base">
+        <p className="subheading-mobile mb-4 text-prowl-text">Real-life horror tag</p>
+        <p className="text-prowl-text-muted mb-8 leading-relaxed text-sm sm:text-base">
           Outdoor multiplayer game with GPS tracking, skillchecks, and escape mechanics
         </p>
         
         <div className="space-y-4">
           <SignInButton />
-          <p className="text-sm text-granny-text-muted">
+          <p className="text-sm text-prowl-text-muted">
             Sign in with Google to start playing
           </p>
         </div>
       </div>
       
       {/* Floating elements for atmosphere - positioned safely away from edges */}
-      <div className="absolute top-24 left-8 w-2 h-2 bg-granny-danger/30 rounded-full animate-pulse hidden sm:block" />
-      <div className="absolute bottom-40 right-8 w-3 h-3 bg-granny-survivor/20 rounded-full animate-pulse delay-1000 hidden sm:block" />
-      <div className="absolute top-1/3 right-12 w-1 h-1 bg-granny-warning/40 rounded-full animate-pulse delay-500 hidden sm:block" />
+      <div className="absolute top-24 left-8 w-2 h-2 bg-prowl-danger/30 rounded-full animate-pulse hidden sm:block" />
+      <div className="absolute bottom-40 right-8 w-3 h-3 bg-prowl-survivor/20 rounded-full animate-pulse delay-1000 hidden sm:block" />
+      <div className="absolute top-1/3 right-12 w-1 h-1 bg-prowl-warning/40 rounded-full animate-pulse delay-500 hidden sm:block" />
     </main>
   );
 }

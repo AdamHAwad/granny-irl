@@ -51,10 +51,10 @@ export default function CurrentRoom() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'waiting': return 'bg-granny-survivor/20 text-granny-survivor border border-granny-survivor/50';
-      case 'headstart': return 'bg-granny-warning/20 text-granny-warning border border-granny-warning/50';
-      case 'active': return 'bg-granny-danger/20 text-granny-danger border border-granny-danger/50';
-      default: return 'bg-granny-surface text-granny-text-muted border border-granny-border/50';
+      case 'waiting': return 'bg-prowl-survivor/20 text-prowl-survivor border border-prowl-survivor/50';
+      case 'headstart': return 'bg-prowl-warning/20 text-prowl-warning border border-prowl-warning/50';
+      case 'active': return 'bg-prowl-danger/20 text-prowl-danger border border-prowl-danger/50';
+      default: return 'bg-prowl-surface text-prowl-text-muted border border-prowl-border/50';
     }
   };
 
@@ -78,7 +78,7 @@ export default function CurrentRoom() {
 
   return (
     <div className="w-full max-w-md mb-6">
-      <h2 className="text-lg font-semibold mb-4 text-granny-text flex items-center gap-2">
+      <h2 className="text-lg font-semibold mb-4 text-prowl-text flex items-center gap-2">
         🎮 Your Active Games
       </h2>
       <div className="space-y-3">
@@ -86,14 +86,14 @@ export default function CurrentRoom() {
           <div
             key={room.id}
             onClick={() => handleRoomClick(room)}
-            className="glass-card border border-granny-border/30 hover:border-granny-border/50 p-4 cursor-pointer transition-all duration-200 hover:scale-[1.02] group"
+            className="glass-card border border-prowl-border/30 hover:border-prowl-border/50 p-4 cursor-pointer transition-all duration-200 hover:scale-[1.02] group"
           >
             <div className="flex justify-between items-start mb-3">
               <div>
-                <h3 className="font-bold text-lg text-granny-text flex items-center gap-2 group-hover:text-granny-survivor transition-colors">
+                <h3 className="font-bold text-lg text-prowl-text flex items-center gap-2 group-hover:text-prowl-survivor transition-colors">
                   {getStatusEmoji(room.status)} Room {room.id}
                 </h3>
-                <p className="text-sm text-granny-text-muted flex items-center gap-1">
+                <p className="text-sm text-prowl-text-muted flex items-center gap-1">
                   👥 {Object.keys(room.players).length}/{room.settings.maxPlayers} players
                 </p>
               </div>
@@ -102,24 +102,24 @@ export default function CurrentRoom() {
               </span>
             </div>
             
-            <div className="flex justify-between items-center text-xs text-granny-text-muted mb-2">
+            <div className="flex justify-between items-center text-xs text-prowl-text-muted mb-2">
               <div className="flex items-center gap-1">
-                <span className="text-granny-danger">🔪</span>
+                <span className="text-prowl-danger">🔪</span>
                 <span>{room.settings.killerCount} killer{room.settings.killerCount > 1 ? 's' : ''}</span>
               </div>
               <div className="flex items-center gap-1">
-                <span className="text-granny-warning">⏱️</span>
+                <span className="text-prowl-warning">⏱️</span>
                 <span>{room.settings.roundLengthMinutes}m round</span>
               </div>
               <div className="flex items-center gap-1">
-                <span className="text-granny-survivor">🏃</span>
+                <span className="text-prowl-survivor">🏃</span>
                 <span>{room.settings.headstartMinutes}m start</span>
               </div>
             </div>
             
             {room.status !== 'waiting' && (
-              <div className="mt-3 pt-3 border-t border-granny-border/20">
-                <div className="text-xs text-granny-warning font-medium flex items-center gap-1 animate-pulse">
+              <div className="mt-3 pt-3 border-t border-prowl-border/20">
+                <div className="text-xs text-prowl-warning font-medium flex items-center gap-1 animate-pulse">
                   ⚡ Click to rejoin the hunt →
                 </div>
               </div>
