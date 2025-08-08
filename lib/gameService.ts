@@ -129,7 +129,7 @@ function batchRoomUpdate(roomCode: string, updates: any): void {
 }
 
 /**
- * Optimized room lookup with caching and RPC fallback
+ * Optimized room lookup with server-authoritative timers
  */
 async function getRoomOptimized(roomCode: string, useCache: boolean = true): Promise<Room | null> {
   const cacheKey = `room:${roomCode}`;
@@ -142,7 +142,25 @@ async function getRoomOptimized(roomCode: string, useCache: boolean = true): Pro
   }
   
   try {
-    // Try optimized RPC function first
+    // 🚀 NEW: Try server-authoritative timer function first
+    const { data: timerData, error: timerError } = await supabase
+      .rpc('get_room_with_timers', {
+        p_room_id: roomCode
+      });
+      
+    if (!timerError && timerData) {
+      console.log('✅ Retrieved room with server-calculated timers');
+      setCachedData(cacheKey, timerData, CACHE_TTL_SHORT);
+      return timerData;
+    } else {
+      console.log('⚠️ Server timer function not available, trying standard RPC');
+    }
+  } catch (error) {
+    console.warn('⚠️ Server timer function failed:', error);
+  }
+  
+  try {
+    // Fallback to optimized RPC function
     const { data: rpcData, error: rpcError } = await supabase
       .rpc('get_room_with_player', {
         p_room_code: roomCode,
@@ -158,7 +176,7 @@ async function getRoomOptimized(roomCode: string, useCache: boolean = true): Pro
     console.warn('⚠️ RPC fallback failed, using direct query:', error);
   }
   
-  // Fallback to direct query
+  // Final fallback to direct query
   const { data: room, error } = await supabase
     .from('rooms')
     .select('*')

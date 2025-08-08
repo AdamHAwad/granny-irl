@@ -364,113 +364,137 @@ function GamePage({ params }: PageProps) {
     if (!room) return;
 
     const updateTimers = () => {
-      // Simple, direct timer calculation using server timestamps
-      // All players use the same server timestamps for perfect synchronization
-      // Removed client offset logic that was causing +25/+50 second desync issues
-      const now = Date.now();
+      // 🚀 NEW SERVER-AUTHORITATIVE TIMER SYSTEM
+      // Server calculates remaining time and sends it to clients
+      // Eliminates client clock drift, caching issues, and network timing problems
       
-          // DEBUG: Comprehensive timer logging to identify desync source
       const isHost = user?.id === room.host_uid;
       
-      // POTENTIAL FIX: Account for network time synchronization
-      // Use server-side time adjustment to sync with database timestamps
-      const serverTimeOffset = 0; // We'll calculate this dynamically
-      const adjustedNow = now + serverTimeOffset;
+      // Try to use server-calculated remaining times if available
+      // These will be added to the Room interface and calculated server-side
+      const serverHeadstartRemaining = (room as any).headstart_remaining_ms;
+      const serverActiveRemaining = (room as any).active_remaining_ms;
+      const serverEscapeRemaining = (room as any).escape_remaining_ms;
       
-      console.log('🕰️ TIMER DEBUG:', {
+      console.log('🚀 SERVER-AUTHORITATIVE TIMER:', {
         isHost,
-        playerRole: room.players[user?.id || '']?.role,
         status: room.status,
-        clientTime: now,
-        clientTimeDate: new Date(now).toISOString(),
-        adjustedTime: adjustedNow,
-        headstart_started_at: room.headstart_started_at,
-        headstartDate: room.headstart_started_at ? new Date(room.headstart_started_at).toISOString() : null,
-        game_started_at: room.game_started_at,
-        gameStartDate: room.game_started_at ? new Date(room.game_started_at).toISOString() : null,
-        timeDiffFromHeadstart: room.headstart_started_at ? (adjustedNow - room.headstart_started_at) : null,
-        timeDiffFromGameStart: room.game_started_at ? (adjustedNow - room.game_started_at) : null,
-        roomCreatedAt: room.created_at,
-        headstartDurationMs: room.settings.headstartMinutes * 60 * 1000,
-        roundDurationMs: room.settings.roundLengthMinutes * 60 * 1000
+        serverTimers: {
+          headstartRemaining: serverHeadstartRemaining,
+          activeRemaining: serverActiveRemaining,
+          escapeRemaining: serverEscapeRemaining
+        },
+        fallbackToClientCalculation: !serverHeadstartRemaining && !serverActiveRemaining
       });
-      
-      // Use adjusted time for calculations
-      const syncedNow = adjustedNow;
 
-      if (room.status === 'headstart' && room.headstart_started_at) {
-        const headstartEnd = room.headstart_started_at + (room.settings.headstartMinutes * 60 * 1000);
-        const remaining = Math.max(0, headstartEnd - syncedNow);
-        console.log('🟡 HEADSTART TIMER:', {
-          isHost,
-          headstartEnd,
-          headstartEndDate: new Date(headstartEnd).toISOString(),
-          remaining,
-          remainingSeconds: Math.floor(remaining / 1000),
-          calculation: `${headstartEnd} - ${syncedNow} = ${headstartEnd - syncedNow}`,
-          usingClientTime: `${headstartEnd} - ${now} = ${headstartEnd - now}`
-        });
-        setHeadstartRemaining(remaining);
+      // FALLBACK: Client-side calculation (improved algorithm)
+      if (!serverHeadstartRemaining && !serverActiveRemaining) {
+        console.log('⚠️ Using client-side timer fallback');
+        
+        // Use more accurate time synchronization
+        const now = Date.now();
+        
+        // Apply network time synchronization offset (will be calculated dynamically)
+        const networkLatencyOffset = 0; // TODO: Implement NTP-like sync
+        const syncedNow = now + networkLatencyOffset;
+
+        if (room.status === 'headstart' && room.headstart_started_at) {
+          const headstartEnd = room.headstart_started_at + (room.settings.headstartMinutes * 60 * 1000);
+          const remaining = Math.max(0, headstartEnd - syncedNow);
+          console.log('🟡 CLIENT HEADSTART CALCULATION:', { remaining: Math.floor(remaining / 1000) });
+          setHeadstartRemaining(remaining);
+        }
+
+        if (room.status === 'active' && room.game_started_at) {
+          const gameEnd = room.game_started_at + (room.settings.roundLengthMinutes * 60 * 1000);
+          const remaining = Math.max(0, gameEnd - syncedNow);
+          console.log('🔴 CLIENT ACTIVE CALCULATION:', { remaining: Math.floor(remaining / 1000) });
+          setTimeRemaining(remaining);
+
+          // Handle game start sound and countdown with client calculation
+          if (!gameStartSoundPlayed) {
+            playGameStart();
+            vibrate([200, 100, 200]);
+            setGameStartSoundPlayed(true);
+          }
+
+          if (remaining <= 10000 && remaining > 0) {
+            playCountdown();
+            vibrate(100);
+          }
+
+          if (remaining <= 0 && room.status === 'active' && room.game_started_at) {
+            console.log('Client timer expired, checking game end');
+            import('@/lib/gameService').then(({ checkGameEnd }) => {
+              checkGameEnd(params.roomCode);
+            });
+          }
+        }
+
+        // Client-side escape timer calculation
+        const escapeArea = getEscapeArea(room);
+        if (room.status === 'active' && room.escape_timer_started_at && escapeArea?.isRevealed) {
+          const escapeEnd = room.escape_timer_started_at + (10 * 60 * 1000);
+          const escapeRemaining = Math.max(0, escapeEnd - syncedNow);
+          setEscapeTimerRemaining(escapeRemaining);
+        } else {
+          setEscapeTimerRemaining(0);
+        }
+        
+        return; // Exit early for client calculation
       }
 
-      if (room.status === 'active' && room.game_started_at) {
-        const gameEnd = room.game_started_at + (room.settings.roundLengthMinutes * 60 * 1000);
-        const remaining = Math.max(0, gameEnd - syncedNow);
-        console.log('🔴 ACTIVE TIMER:', {
-          isHost,
-          gameEnd,
-          gameEndDate: new Date(gameEnd).toISOString(),
-          remaining,
-          remainingSeconds: Math.floor(remaining / 1000),
-          calculation: `${gameEnd} - ${syncedNow} = ${gameEnd - syncedNow}`,
-          usingClientTime: `${gameEnd} - ${now} = ${gameEnd - now}`
-        });
-        setTimeRemaining(remaining);
+      // 🎯 SERVER-AUTHORITATIVE PATH: Use server-calculated timers
+      console.log('✅ Using server-calculated timers');
+      
+      if (room.status === 'headstart' && serverHeadstartRemaining !== undefined) {
+        console.log('🟡 SERVER HEADSTART TIMER:', Math.floor(serverHeadstartRemaining / 1000));
+        setHeadstartRemaining(Math.max(0, serverHeadstartRemaining));
+      }
 
-        // Play game start sound when transitioning to active
+      if (room.status === 'active' && serverActiveRemaining !== undefined) {
+        console.log('🔴 SERVER ACTIVE TIMER:', Math.floor(serverActiveRemaining / 1000));
+        setTimeRemaining(Math.max(0, serverActiveRemaining));
+
+        // Handle game start sound and countdown with server timers
         if (!gameStartSoundPlayed) {
           playGameStart();
           vibrate([200, 100, 200]);
           setGameStartSoundPlayed(true);
         }
 
-        // Play countdown sounds in final 10 seconds
-        if (remaining <= 10000 && remaining > 0 && Math.floor(remaining / 1000) !== Math.floor((remaining - 1000) / 1000)) {
+        if (serverActiveRemaining <= 10000 && serverActiveRemaining > 0) {
           playCountdown();
           vibrate(100);
         }
 
-        // Check if game should end due to timer (only if game has been active for at least 5 seconds)
-        if (remaining <= 0 && room.status === 'active' && room.game_started_at && (Date.now() - room.game_started_at) > 5000) {
-          console.log('Game timer expired on client side, triggering game end check');
+        if (serverActiveRemaining <= 0) {
+          console.log('Server timer expired');
           import('@/lib/gameService').then(({ checkGameEnd }) => {
             checkGameEnd(params.roomCode);
           });
         }
       }
 
-      // Handle escape timer (10 minutes after escape area revealed)
-      const escapeArea = getEscapeArea(room);
-      if (room.status === 'active' && room.escape_timer_started_at && escapeArea?.isRevealed) {
-        const escapeEnd = room.escape_timer_started_at + (10 * 60 * 1000); // 10 minutes
-        const escapeRemaining = Math.max(0, escapeEnd - now);
-        setEscapeTimerRemaining(escapeRemaining);
+      // Server-calculated escape timer
+      if (serverEscapeRemaining !== undefined) {
+        console.log('🚪 SERVER ESCAPE TIMER:', Math.floor(serverEscapeRemaining / 1000));
+        setEscapeTimerRemaining(Math.max(0, serverEscapeRemaining));
 
-        // Play warning sounds in final 60 seconds
-        if (escapeRemaining <= 60000 && escapeRemaining > 0 && Math.floor(escapeRemaining / 1000) !== Math.floor((escapeRemaining - 1000) / 1000)) {
-          const secondsLeft = Math.floor(escapeRemaining / 1000);
+        // Play warning sounds with server timer
+        if (serverEscapeRemaining <= 60000 && serverEscapeRemaining > 0) {
+          const secondsLeft = Math.floor(serverEscapeRemaining / 1000);
           if (secondsLeft <= 10) {
             playCountdown();
-            vibrate([200, 100, 200]); // More intense vibration for escape timer
+            vibrate([200, 100, 200]);
           } else if (secondsLeft % 10 === 0) {
-            playGameStart(); // Warning sound every 10 seconds in final minute
+            playGameStart();
             vibrate(150);
           }
         }
 
-        // Auto-eliminate when escape timer expires
-        if (escapeRemaining <= 0 && room.escape_timer_started_at && (now - room.escape_timer_started_at) > (10 * 60 * 1000)) {
-          console.log('Escape timer expired on client side, triggering auto-elimination');
+        if (serverEscapeRemaining <= 0) {
+          console.log('Server escape timer expired');
           import('@/lib/gameService').then(({ checkEscapeTimerExpired }) => {
             checkEscapeTimerExpired(params.roomCode);
           });
