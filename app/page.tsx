@@ -44,7 +44,7 @@ import LocationPermissionModal from '@/components/LocationPermissionModal';
 import { locationService } from '@/lib/locationService';
 
 function AuthenticatedHome() {
-  const { user, logout } = useAuth();
+  const { user, logout, loggingOut } = useAuth();
   const { profile, loading, needsSetup, setNeedsSetup, refreshProfile } = useUserProfile();
   const router = useRouter();
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -209,9 +209,21 @@ function AuthenticatedHome() {
             </button>
             <button
               onClick={logout}
-              className="text-prowl-text-muted hover:text-prowl-text underline hover:no-underline transition-all font-medium"
+              disabled={loggingOut}
+              className={`underline hover:no-underline transition-all font-medium flex items-center space-x-1 ${
+                loggingOut 
+                  ? 'text-prowl-text-muted/50 cursor-not-allowed' 
+                  : 'text-prowl-text-muted hover:text-prowl-text'
+              }`}
             >
-              Sign out
+              {loggingOut ? (
+                <>
+                  <div className="w-3 h-3 border border-prowl-text-muted border-t-transparent rounded-full animate-spin" />
+                  <span>Signing out...</span>
+                </>
+              ) : (
+                <span>Sign out</span>
+              )}
             </button>
           </div>
         </div>

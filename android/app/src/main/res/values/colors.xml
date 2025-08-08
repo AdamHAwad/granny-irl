@@ -3,4 +3,9 @@
     <color name="primary">#c41e3a</color>
     <color name="primaryDark">#0a0a0b</color>
     <color name="splashBackground">#000000</color>
+    
+    <!-- Material Design colors for themes -->
+    <color name="colorPrimary">#c41e3a</color>
+    <color name="colorPrimaryDark">#0a0a0b</color>
+    <color name="colorAccent">#c41e3a</color>
 </resources>

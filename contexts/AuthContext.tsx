@@ -10,6 +10,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  loggingOut: boolean;
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -20,6 +21,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     const getSession = async () => {
@@ -257,11 +259,74 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
+    if (loggingOut) {
+      console.log('⚠️ Logout already in progress, ignoring duplicate request');
+      return;
+    }
+
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      console.log('🔄 Starting logout process...');
+      setLoggingOut(true);
+
+      // Create timeout promise for responsiveness
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Logout timeout')), 10000)
+      );
+
+      // Create logout promise
+      const logoutPromise = supabase.auth.signOut();
+
+      // Race between logout and timeout
+      const result = await Promise.race([logoutPromise, timeoutPromise]) as { error: any };
+      
+      if (result.error) {
+        console.error('❌ Supabase logout error:', result.error);
+        throw result.error;
+      }
+
+      console.log('✅ Logout successful via Supabase');
+
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error('❌ Logout error, attempting force logout:', error);
+      
+      // Force logout by clearing local state and storage
+      try {
+        // Clear Supabase session storage
+        await supabase.auth.signOut({ scope: 'local' });
+        
+        // Clear local storage items that might contain auth data
+        if (typeof window !== 'undefined') {
+          const keysToRemove = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && (key.includes('supabase') || key.includes('auth'))) {
+              keysToRemove.push(key);
+            }
+          }
+          keysToRemove.forEach(key => localStorage.removeItem(key));
+        }
+
+        // Manually clear state
+        setUser(null);
+        setSession(null);
+        
+        console.log('✅ Force logout completed');
+        
+        // On mobile, also try to clear any app state
+        if (mobileService.isMobile()) {
+          console.log('📱 Clearing mobile app state...');
+          // Could add additional mobile cleanup here if needed
+        }
+        
+      } catch (forceError) {
+        console.error('❌ Force logout also failed:', forceError);
+        // Even if force logout fails, clear the UI state
+        setUser(null);
+        setSession(null);
+      }
+    } finally {
+      setLoggingOut(false);
+      console.log('🏁 Logout process completed');
     }
   };
 
@@ -270,6 +335,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     session,
     loading,
+    loggingOut,
     signInWithGoogle,
     logout,
   };
