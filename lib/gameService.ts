@@ -1166,54 +1166,66 @@ export async function checkGameEnd(roomCode: string): Promise<void> {
   let gameEnded = false;
   let winners: 'killers' | 'survivors' | null = null;
 
-  // Game only ends when ALL survivors are either eliminated OR escaped (no one still alive and trying)
-  console.log('🏁 checkGameEnd: Checking if game should end. Alive survivors:', aliveSurvivors.length);
-  if (aliveSurvivors.length === 0) {
-    console.log('🏁 checkGameEnd: ✅ Game should end - no alive survivors remaining');
-    // All survivors have either escaped or been eliminated - now determine winner
-    gameEnded = true;
-    
-    if (room.settings.skillchecks?.enabled) {
-      // DBD-style: Killers win if they eliminated 75%+ of survivors, regardless of escapes
-      const survivorEliminationRate = eliminatedSurvivors.length / allSurvivors.length;
-      
-      if (survivorEliminationRate >= 0.75) {
-        console.log('checkGameEnd: All survivors accounted for. Killers won - eliminated', Math.round(survivorEliminationRate * 100) + '% of survivors');
-        winners = 'killers';
-      } else {
-        console.log('checkGameEnd: All survivors accounted for. Survivors won - only', Math.round(survivorEliminationRate * 100) + '% eliminated, enough escaped');
-        winners = 'survivors';
-      }
-    } else {
-      // Original game logic: if no survivors alive, killers win
-      console.log('checkGameEnd: Game ended - no survivors left (original mode)');
-      winners = 'killers';
-    }
-  } else if (room.game_started_at && room.status === 'active') {
+  // Check if timer has expired first (this is the most important condition)
+  let timerExpired = false;
+  if (room.game_started_at && room.status === 'active') {
     const gameLength = room.settings.roundLengthMinutes * 60 * 1000;
     const gameEndTime = room.game_started_at + gameLength;
     const now = Date.now();
     const timeElapsed = now - room.game_started_at;
     
-    console.log('checkGameEnd: Game length:', gameLength, 'ms, End time:', gameEndTime, 'Current time:', now, 'Time elapsed:', timeElapsed, 'Time remaining:', gameEndTime - now);
+    console.log('🏁 checkGameEnd: Timer check - Game length:', gameLength, 'ms, End time:', gameEndTime, 'Current time:', now, 'Time elapsed:', timeElapsed, 'Time remaining:', gameEndTime - now);
     
-    // Timer expired - different behavior based on skillcheck settings
+    // Timer expired - game must end regardless of player status
     if (timeElapsed >= 5000 && now >= gameEndTime) {
-      if (room.settings.skillchecks?.enabled) {
-        // Skillcheck game: Timer expired - reveal escape area and continue game
-        console.log('checkGameEnd: Timer expired in skillcheck game - revealing escape area');
+      timerExpired = true;
+      console.log('🏁 checkGameEnd: ⏰ TIMER EXPIRED - Game must end now!');
+    }
+  }
+
+  // Game ends in three scenarios:
+  // 1. Timer expired (most important)
+  // 2. All survivors eliminated or escaped
+  // 3. Special skillcheck game conditions
+  
+  console.log('🏁 checkGameEnd: Checking end conditions - Timer expired:', timerExpired, 'Alive survivors:', aliveSurvivors.length);
+  
+  if (timerExpired || aliveSurvivors.length === 0) {
+    console.log('🏁 checkGameEnd: ✅ Game should end - Timer expired:', timerExpired, 'or no survivors alive:', aliveSurvivors.length === 0);
+    gameEnded = true;
+    
+    // Calculate elimination rate for win conditions
+    const survivorEliminationRate = eliminatedSurvivors.length / allSurvivors.length;
+    const eliminationPercentage = Math.round(survivorEliminationRate * 100);
+    
+    console.log('🎯 Win Condition Check: Eliminated', eliminatedSurvivors.length, 'out of', allSurvivors.length, 'survivors (', eliminationPercentage, '%)');
+    console.log('🎯 Player Status: Eliminated:', eliminatedSurvivors.length, 'Escaped:', escapedSurvivors.length, 'Still Alive:', aliveSurvivors.length);
+    
+    // UNIVERSAL WIN CONDITION: Killers win if they eliminated 75%+ of survivors
+    // This applies to ALL game types when timer expires or all players are accounted for
+    if (survivorEliminationRate >= 0.75) {
+      console.log('🔪 KILLERS WIN: Eliminated', eliminationPercentage + '% of survivors (≥75% required)');
+      winners = 'killers';
+    } else {
+      console.log('🏃 SURVIVORS WIN: Only', eliminationPercentage + '% eliminated (<75% required for killers)');
+      winners = 'survivors';
+    }
+    
+    // Special handling for skillcheck games with timer expiration
+    if (timerExpired && room.settings.skillchecks?.enabled && aliveSurvivors.length > 0) {
+      console.log('🎮 Skillcheck game timer expired with', aliveSurvivors.length, 'survivors still alive');
+      // In skillcheck games, timer expiration should reveal escape area if not revealed
+      // But also end the game with the elimination rate rule
+      try {
         await revealEscapeAreaOnTimer(roomCode);
-        // Don't end the game here - let survivors try to escape
-        // The game only ends when someone escapes or all survivors are eliminated
-      } else {
-        // Original game: Timer expired - survivors win
-        console.log('checkGameEnd: Timer expired in original game - survivors win');
-        gameEnded = true;
-        winners = 'survivors';
+        console.log('🚪 Escape area revealed due to timer expiration');
+      } catch (error) {
+        console.warn('Failed to reveal escape area:', error);
       }
     }
+    
   } else {
-    console.log('🏁 checkGameEnd: ❌ Game not ending - alive survivors still remain:', aliveSurvivors.length);
+    console.log('🏁 checkGameEnd: ❌ Game continues - Timer active and', aliveSurvivors.length, 'survivors still alive');
     console.log('🏁 checkGameEnd: Room status:', room.status, 'game_started_at:', room.game_started_at);
   }
 
