@@ -159,7 +159,8 @@ export const mobileService = {
   onAppStateChange(callback: (isActive: boolean) => void) {
     if (!this.isMobile()) return;
 
-    App.addListener('appStateChange', ({ isActive }) => {
+    return App.addListener('appStateChange', ({ isActive }) => {
+      console.log('📱 App state changed:', isActive ? 'active/foreground' : 'background');
       callback(isActive);
     });
   },

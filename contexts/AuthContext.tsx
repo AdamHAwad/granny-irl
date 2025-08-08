@@ -60,15 +60,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (isActive) {
           console.log('📱 App became active, checking auth state...');
           
+          // Add small delay to ensure Safari has completed the redirect
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
           // Check if user is now authenticated after returning from browser
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session && !user) {
-            console.log('✅ Found new session after app resumed from background');
-            setSession(session);
-            setUser(session.user);
-          } else if (isActive && !session && !user) {
+          const { data: { session: newSession } } = await supabase.auth.getSession();
+          console.log('📱 Session check result:', newSession ? 'Found session' : 'No session');
+          
+          if (newSession && (!user || user.id !== newSession.user.id)) {
+            console.log('✅ Found new/different session after app resumed from background');
+            setSession(newSession);
+            setUser(newSession.user);
+          } else if (!newSession && !user) {
             console.log('⚠️ App resumed but no session found');
           }
+          
+          // Also check for auth state change events
+          supabase.auth.onAuthStateChange((event, session) => {
+            console.log('📱 Auth state change during app resume:', event, session ? 'has session' : 'no session');
+            if (session && event === 'SIGNED_IN') {
+              setSession(session);
+              setUser(session.user);
+            }
+          });
           
           // Request permissions when app becomes active (if not already done)
           try {
