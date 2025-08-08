@@ -1,4 +1,4 @@
-package com.grannyirl.app;
+package com.prowl.app;
 
 import com.getcapacitor.BridgeActivity;
 

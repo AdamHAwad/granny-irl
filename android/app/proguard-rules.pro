@@ -19,3 +19,26 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Capacitor and Cordova specific rules
+-keep class com.getcapacitor.** { *; }
+-keep class com.getcapacitor.plugin.** { *; }
+-keepattributes *Annotation*
+
+# Keep WebView JavaScript Interface
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
+
+# Keep Supabase/OAuth related classes
+-keep class io.supabase.** { *; }
+-keep class com.google.** { *; }
+
+# Keep application class
+-keep public class * extends android.app.Application
+-keep public class * extends android.app.Activity
+-keep public class * extends android.app.Service
+
+# Suppress warnings for missing classes
+-dontwarn com.getcapacitor.**
+-dontwarn org.apache.**
