@@ -35,6 +35,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import SignInButton from '@/components/SignInButton';
+import SignInWithAppleButton from '@/components/SignInWithAppleButton';
 import AuthGuard from '@/components/AuthGuard';
 import ProfileSetup from '@/components/ProfileSetup';
 import CreateRoomModal from '@/components/CreateRoomModal';
@@ -289,10 +290,11 @@ function UnauthenticatedHome() {
           Outdoor multiplayer game with GPS tracking, skillchecks, and escape mechanics
         </p>
         
-        <div className="space-y-4">
+        <div className="space-y-3">
           <SignInButton />
+          <SignInWithAppleButton />
           <p className="text-sm text-prowl-text-muted">
-            Sign in with Google to start playing
+            Sign in with Google or Apple to start playing
           </p>
         </div>
       </div>

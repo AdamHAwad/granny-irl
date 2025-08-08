@@ -12,6 +12,7 @@ interface AuthContextType {
   loading: boolean;
   loggingOut: boolean;
   signInWithGoogle: () => Promise<void>;
+  signInWithApple: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -258,6 +259,75 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const signInWithApple = async () => {
+    try {
+      console.log('signInWithApple called');
+
+      const isCapacitorApp =
+        mobileService.isMobile() ||
+        (window as any).Capacitor !== undefined ||
+        window.location.href.includes('capacitor=true');
+
+      if (isCapacitorApp) {
+        console.log('📱 Mobile OAuth (Apple): Using custom URL scheme for seamless auth');
+
+        const redirectUrl = 'com.prowl.app://oauth';
+
+        try {
+          const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'apple',
+            options: {
+              redirectTo: redirectUrl,
+            },
+          });
+
+          if (error) {
+            console.error('Apple OAuth error:', error);
+            console.log('📱 Fallback (Apple): Getting OAuth URL manually...');
+
+            const { data: urlData, error: urlError } = await supabase.auth.signInWithOAuth({
+              provider: 'apple',
+              options: {
+                redirectTo: redirectUrl,
+                skipBrowserRedirect: true,
+              },
+            });
+
+            if (urlError || !urlData?.url) {
+              console.error('Failed to get Apple OAuth URL:', urlError);
+              alert('Failed to start Apple sign-in. Please try again.');
+              return;
+            }
+
+            console.log('Opening Apple OAuth URL in system browser:', urlData.url);
+            await mobileService.openInSystemBrowser(urlData.url);
+          }
+        } catch (browserError) {
+          console.error('Browser Apple OAuth failed:', browserError);
+          alert('Failed to open Apple authentication browser. Please try again.');
+        }
+      } else {
+        const redirectUrl =
+          process.env.NODE_ENV === 'production'
+            ? 'https://granny-irl.vercel.app/'
+            : `${window.location.origin}/`;
+
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'apple',
+          options: {
+            redirectTo: redirectUrl,
+          },
+        });
+
+        if (error) {
+          console.error('Web Apple OAuth error:', error);
+        }
+      }
+    } catch (error) {
+      console.error('Error signing in with Apple:', error);
+    }
+  };
+
   const logout = async () => {
     if (loggingOut) {
       console.log('⚠️ Logout already in progress, ignoring duplicate request');
@@ -337,6 +407,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     loggingOut,
     signInWithGoogle,
+    signInWithApple,
     logout,
   };
 
