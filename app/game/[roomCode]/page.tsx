@@ -848,7 +848,7 @@ function GamePage({ params }: PageProps) {
           
           {isHeadstart && (
             <div className="mb-4">
-              <div className="text-4xl sm:text-5xl font-mono font-bold text-prowl-warning animate-pulse">
+              <div className="text-3xl sm:text-4xl font-mono font-bold text-prowl-warning animate-pulse">
                 {formatTime(headstartRemaining)}
               </div>
               <p className="text-prowl-text-muted flex items-center justify-center gap-2">
@@ -859,7 +859,7 @@ function GamePage({ params }: PageProps) {
 
           {isActive && (
             <div className="mb-4">
-              <div className="text-4xl sm:text-5xl font-mono font-bold text-prowl-danger animate-pulse">
+              <div className="text-3xl sm:text-4xl font-mono font-bold text-prowl-danger animate-pulse">
                 {formatTime(timeRemaining)}
               </div>
               <p className="text-prowl-text-muted flex items-center justify-center gap-2">
@@ -870,7 +870,7 @@ function GamePage({ params }: PageProps) {
 
           {/* Escape Timer - only show when escape area is revealed */}
           {isActive && room?.escapeArea?.isRevealed && room?.settings.skillchecks?.enabled && escapeTimerRemaining > 0 && (
-            <div className="mb-6 glass-card border-2 border-prowl-survivor/50 bg-prowl-survivor/10 p-4">
+            <div className="mb-4 glass-card border-2 border-prowl-survivor/50 bg-prowl-survivor/10 p-3">
               <div className="text-4xl font-mono font-bold text-prowl-survivor animate-pulse">
                 🚪 {formatTime(escapeTimerRemaining)}
               </div>
@@ -900,7 +900,7 @@ function GamePage({ params }: PageProps) {
             <div className="mt-6 space-y-4">
               {/* Skillcheck Progress */}
               {room.skillchecks && room.skillchecks.length > 0 && (
-                <div className="glass-card border border-prowl-survivor/30 bg-prowl-survivor/5 p-4">
+                <div className="glass-card border border-prowl-survivor/30 bg-prowl-survivor/5 p-3">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-semibold text-prowl-survivor flex items-center gap-2">
                       ⚡ Skillcheck Progress
@@ -954,7 +954,7 @@ function GamePage({ params }: PageProps) {
 
               {/* Player Escaped Status */}
               {currentPlayer.hasEscaped && (
-                <div className="glass-card border border-prowl-success/50 bg-prowl-success/10 p-4">
+                <div className="glass-card border border-prowl-success/50 bg-prowl-success/10 p-3">
                   <div className="text-sm font-semibold text-prowl-success flex items-center gap-2">
                     🎉 You Escaped!
                   </div>
@@ -972,7 +972,7 @@ function GamePage({ params }: PageProps) {
         </div>
 
         {currentPlayer?.isAlive && currentPlayer?.role === 'survivor' && isActive && (
-          <div className="mb-6 space-y-4">
+          <div className="mb-4 space-y-3">
             <div className="glass-card border border-prowl-error/30 bg-prowl-error/5 p-4">
               <div className="text-center mb-4">
                 <div className="text-4xl mb-2">💀</div>
@@ -983,7 +983,7 @@ function GamePage({ params }: PageProps) {
               <button
                 onClick={handleEliminate}
                 disabled={eliminating}
-                className="w-full bg-prowl-error hover:bg-prowl-error/90 text-white font-bold py-4 px-8 rounded-xl text-lg disabled:opacity-50 shadow-xl hover:shadow-prowl-error/30 transition-all duration-300 flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98]"
+                className="w-full bg-prowl-error hover:bg-prowl-error/90 text-white font-bold py-3.5 px-6 rounded-xl text-base disabled:opacity-50 shadow-xl hover:shadow-prowl-error/30 transition-all duration-300 flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98]"
               >
                 {eliminating ? (
                   <>
@@ -1172,7 +1172,7 @@ function GamePage({ params }: PageProps) {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <h2 className="text-lg font-semibold mb-4 text-prowl-danger flex items-center gap-2">
               🔪 Killers ({aliveKillers.length})
