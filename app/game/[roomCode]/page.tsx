@@ -778,7 +778,10 @@ function GamePage({ params }: PageProps) {
   const isActive = room.status === 'active';
 
   return (
-    <main className="flex min-h-screen flex-col native-full-width max-w-4xl mx-auto relative">
+    <main
+      className="flex min-h-screen flex-col native-full-width max-w-4xl mx-auto relative"
+      style={{ paddingTop: 'calc(env(safe-area-inset-top) + 8px)' }}
+    >
       {/* Background effects */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-prowl-bg/80 to-prowl-bg pointer-events-none" />
       
@@ -838,10 +841,7 @@ function GamePage({ params }: PageProps) {
         </div>
       )}
 
-      <div
-        className="w-full glass-modal p-2 text-prowl-text mb-2 relative z-10 sticky z-20 mt-2"
-        style={{ top: 'calc(env(safe-area-inset-top) + 8px)' }}
-      >
+      <div className="w-full glass-modal p-2 text-prowl-text mb-2 relative z-10">
         <div className="text-center mb-3">
           <h1 className={`text-3xl sm:text-4xl font-bold mb-2 animate-glow flex items-center justify-center gap-3 ${
             isHeadstart ? 'text-prowl-warning' : 'text-prowl-danger'
