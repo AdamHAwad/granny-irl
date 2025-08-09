@@ -838,7 +838,10 @@ function GamePage({ params }: PageProps) {
         </div>
       )}
 
-      <div className="w-full glass-modal p-2 text-prowl-text mb-2 relative z-10 sticky top-[env(safe-area-inset-top)] z-20">
+      <div
+        className="w-full glass-modal p-2 text-prowl-text mb-2 relative z-10 sticky z-20 mt-2"
+        style={{ top: 'calc(env(safe-area-inset-top) + 8px)' }}
+      >
         <div className="text-center mb-3">
           <h1 className={`text-3xl sm:text-4xl font-bold mb-2 animate-glow flex items-center justify-center gap-3 ${
             isHeadstart ? 'text-prowl-warning' : 'text-prowl-danger'
