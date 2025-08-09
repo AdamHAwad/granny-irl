@@ -838,7 +838,7 @@ function GamePage({ params }: PageProps) {
         </div>
       )}
 
-      <div className="w-full glass-modal p-4 text-prowl-text mb-3 relative z-10">
+      <div className="w-full glass-modal p-3 text-prowl-text mb-2 relative z-10">
         <div className="text-center mb-6">
           <h1 className={`text-4xl font-bold mb-3 animate-glow flex items-center justify-center gap-3 ${
             isHeadstart ? 'text-prowl-warning' : 'text-prowl-danger'
@@ -848,7 +848,7 @@ function GamePage({ params }: PageProps) {
           
           {isHeadstart && (
             <div className="mb-6">
-              <div className="text-5xl font-mono font-bold text-prowl-warning animate-pulse">
+              <div className="text-4xl sm:text-5xl font-mono font-bold text-prowl-warning animate-pulse">
                 {formatTime(headstartRemaining)}
               </div>
               <p className="text-prowl-text-muted flex items-center justify-center gap-2">
@@ -859,7 +859,7 @@ function GamePage({ params }: PageProps) {
 
           {isActive && (
             <div className="mb-6">
-              <div className="text-5xl font-mono font-bold text-prowl-danger animate-pulse">
+              <div className="text-4xl sm:text-5xl font-mono font-bold text-prowl-danger animate-pulse">
                 {formatTime(timeRemaining)}
               </div>
               <p className="text-prowl-text-muted flex items-center justify-center gap-2">
@@ -880,7 +880,7 @@ function GamePage({ params }: PageProps) {
           )}
 
           <div className="flex justify-center">
-            <div className={`glass-card px-6 py-3 border-2 ${
+            <div className={`glass-card px-4 py-2 border-2 ${
               currentPlayer?.role === 'killer' 
                 ? 'border-prowl-danger/50 bg-prowl-danger/10' 
                 : 'border-prowl-survivor/50 bg-prowl-survivor/10'
@@ -973,7 +973,7 @@ function GamePage({ params }: PageProps) {
 
         {currentPlayer?.isAlive && currentPlayer?.role === 'survivor' && isActive && (
           <div className="mb-6 space-y-4">
-            <div className="glass-card border border-prowl-error/30 bg-prowl-error/5 p-6">
+            <div className="glass-card border border-prowl-error/30 bg-prowl-error/5 p-4"},{>
               <div className="text-center mb-4">
                 <div className="text-4xl mb-2">💀</div>
                 <div className="text-prowl-error font-bold text-lg">
@@ -1009,7 +1009,7 @@ function GamePage({ params }: PageProps) {
 
         {currentPlayer?.isAlive && currentPlayer?.role === 'killer' && isActive && (
           <div className="mb-6">
-            <div className="glass-card border border-prowl-danger/50 bg-prowl-danger/10 p-6">
+            <div className="glass-card border border-prowl-danger/50 bg-prowl-danger/10 p-4"},{>
               <div className="text-center mb-4">
                 <div className="font-bold text-2xl mb-3 text-prowl-danger animate-glow flex items-center justify-center gap-2">
                   🔪 You are a KILLER!
@@ -1051,7 +1051,7 @@ function GamePage({ params }: PageProps) {
         {/* Map Section - Available to all alive players during active game */}
         {currentPlayer?.isAlive && isActive && (
           <div className="mb-6">
-            <div className="glass-card border border-prowl-border/30 p-4">
+            <div className="glass-card border border-prowl-border/30 p-3">
               <div className="flex items-center justify-between mb-4">
                 <h2 className={`text-lg font-semibold flex items-center gap-2 ${
                   currentPlayer?.role === 'killer' ? 'text-prowl-danger' : 'text-prowl-survivor'
@@ -1097,7 +1097,7 @@ function GamePage({ params }: PageProps) {
             )}
             
               {!showMap && (
-                <div className={`glass-card border-2 border-dashed p-6 text-center ${
+                <div className={`glass-card border-2 border-dashed p-4 text-center ${
                   currentPlayer?.role === 'killer' 
                     ? 'border-prowl-danger/30 bg-prowl-danger/5' 
                     : 'border-prowl-survivor/30 bg-prowl-survivor/5'
@@ -1117,7 +1117,7 @@ function GamePage({ params }: PageProps) {
         {!currentPlayer?.isAlive && (
           <div className="mb-6">
             <div className="text-center mb-6">
-              <div className="glass-card border border-prowl-text-muted/30 bg-prowl-text-muted/10 p-6">
+              <div className="glass-card border border-prowl-text-muted/30 bg-prowl-text-muted/10 p-4">
                 <div className="text-6xl mb-4">💀</div>
                 <div className="font-bold text-xl mb-3 text-prowl-text">You have been eliminated</div>
                 <p className="text-sm text-prowl-text-muted">
@@ -1128,7 +1128,7 @@ function GamePage({ params }: PageProps) {
             
             {/* Spectator Map */}
             {isActive && (
-              <div className="glass-card border border-prowl-border/30 p-4">
+              <div className="glass-card border border-prowl-border/30 p-3">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold text-prowl-text flex items-center gap-2">
                     👻 Spectator Map
@@ -1263,7 +1263,7 @@ function GamePage({ params }: PageProps) {
       <div className="text-center">
         <button
           onClick={() => router.push(`/room/${params.roomCode}`)}
-          className="btn-ghost px-6 py-3"
+          className="btn-ghost px-5 py-2.5"
         >
           🏠 Back to Room
         </button>
@@ -1271,7 +1271,7 @@ function GamePage({ params }: PageProps) {
 
       {/* Location Error Display */}
       {locationError && (
-        <div className="mt-4 glass-card p-4 border border-prowl-warning/30 bg-prowl-warning/10">
+        <div className="mt-3 glass-card p-3 border border-prowl-warning/30 bg-prowl-warning/10">
           <p className="text-prowl-warning text-sm font-medium flex items-center gap-2">
             ⚠️ {locationError}
           </p>
@@ -1280,7 +1280,7 @@ function GamePage({ params }: PageProps) {
 
       {/* Location Status */}
       {locationEnabled && (
-        <div className="mt-4 glass-card p-4 border border-prowl-success/30 bg-prowl-success/10">
+        <div className="mt-3 glass-card p-3 border border-prowl-success/30 bg-prowl-success/10">
           <p className="text-prowl-success text-sm font-medium flex items-center gap-2">
             📍 Location sharing enabled
           </p>
