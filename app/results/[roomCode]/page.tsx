@@ -97,7 +97,7 @@ function ResultsPage({ params }: PageProps) {
             <div className="text-6xl mb-4">
               {gameResult.winners === 'killers' ? '💀' : '🛡️'}
             </div>
-            <div className={`text-3xl sm:text-5xl md:text-6xl font-bold mb-4 animate-glow break-words ${
+            <div className={`text-3xl sm:text-5xl md:text-6xl font-bold mb-4 break-words ${
               gameResult.winners === 'killers' ? 'text-prowl-danger' : 'text-prowl-survivor'
             }`}>
               {gameResult.winners === 'killers' ? 'KILLERS WIN!' : 'SURVIVORS WIN!'}

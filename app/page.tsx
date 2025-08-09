@@ -235,7 +235,7 @@ function AuthenticatedHome() {
         <div className="flex flex-col sm:flex-row gap-4 w-full max-w-lg relative z-10">
           <button
             onClick={() => setShowCreateModal(true)}
-            className="btn-primary btn-mobile flex-1 text-lg font-semibold animate-glow"
+            className="btn-primary btn-mobile flex-1 text-lg font-semibold"
           >
             🎮 Create Room
           </button>

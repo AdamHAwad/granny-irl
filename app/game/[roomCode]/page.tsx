@@ -843,7 +843,7 @@ function GamePage({ params }: PageProps) {
 
       <div className="w-full glass-modal p-2 text-prowl-text mb-2 relative z-10">
         <div className="text-center mb-3">
-          <h1 className={`text-3xl sm:text-4xl font-bold mb-2 animate-glow flex items-center justify-center gap-3 ${
+          <h1 className={`text-3xl sm:text-4xl font-bold mb-2 flex items-center justify-center gap-3 ${
             isHeadstart ? 'text-prowl-warning' : 'text-prowl-danger'
           }`}>
             {isHeadstart ? '⚡ HEADSTART' : '🔥 GAME ACTIVE'}
@@ -1014,7 +1014,7 @@ function GamePage({ params }: PageProps) {
           <div className="mb-6">
             <div className="glass-card border border-prowl-danger/50 bg-prowl-danger/10 p-4">
               <div className="text-center mb-4">
-                <div className="font-bold text-2xl mb-3 text-prowl-danger animate-glow flex items-center justify-center gap-2">
+                <div className="font-bold text-2xl mb-3 text-prowl-danger flex items-center justify-center gap-2">
                   🔪 You are a KILLER!
                 </div>
                 <p className="text-sm text-prowl-text flex items-center justify-center gap-2">
