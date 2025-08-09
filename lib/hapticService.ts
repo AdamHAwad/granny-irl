@@ -5,8 +5,20 @@
  * with contextual tactile feedback for skillchecks, proximity detection, and critical actions.
  */
 
-import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 import { Capacitor } from '@capacitor/core';
+
+// Lazy loader to avoid bundling @capacitor/haptics in web builds
+async function loadHaptics() {
+  try {
+    // Only attempt to load on native platforms
+    if (!Capacitor.isNativePlatform()) return null;
+    const mod = await import('@capacitor/haptics');
+    return mod;
+  } catch (err) {
+    // Module not available in web build or not installed
+    return null;
+  }
+}
 
 type HapticPreference = 'full' | 'minimal' | 'off';
 
@@ -55,11 +67,13 @@ class HapticService {
   /**
    * Execute haptic feedback with error handling
    */
-  private async executeHaptic(hapticFn: () => Promise<void>): Promise<void> {
+  private async executeHaptic(hapticFn: (api: any) => Promise<void>): Promise<void> {
     if (!this.isAvailable()) return;
     
     try {
-      await hapticFn();
+      const api = await loadHaptics();
+      if (!api) return;
+      await hapticFn(api);
       this.lastHapticTime = Date.now();
     } catch (error) {
       console.warn('Haptic feedback failed:', error);
@@ -82,7 +96,7 @@ class HapticService {
    * Gentle notification to alert player without being jarring
    */
   async skillcheckProximityEntered(): Promise<void> {
-    await this.executeHaptic(async () => {
+    await this.executeHaptic(async ({ Haptics, ImpactStyle }) => {
       await Haptics.impact({ style: ImpactStyle.Light });
       await this.delay(100);
       await Haptics.impact({ style: ImpactStyle.Light });
@@ -94,7 +108,7 @@ class HapticService {
    * Builds anticipation and tension
    */
   async skillcheckProximityHeartbeat(): Promise<void> {
-    await this.executeHaptic(async () => {
+    await this.executeHaptic(async ({ Haptics, ImpactStyle }) => {
       await Haptics.impact({ style: ImpactStyle.Medium });
       await this.delay(80);
       await Haptics.impact({ style: ImpactStyle.Light });
@@ -106,7 +120,7 @@ class HapticService {
    * Immediate tactile confirmation of successful timing
    */
   async skillcheckHitSuccess(): Promise<void> {
-    await this.executeHaptic(async () => {
+    await this.executeHaptic(async ({ Haptics, ImpactStyle }) => {
       await Haptics.impact({ style: ImpactStyle.Medium });
     });
   }
@@ -116,7 +130,7 @@ class HapticService {
    * Distinct from success to provide clear failure indication
    */
   async skillcheckHitMiss(): Promise<void> {
-    await this.executeHaptic(async () => {
+    await this.executeHaptic(async ({ Haptics, ImpactStyle }) => {
       await Haptics.impact({ style: ImpactStyle.Light });
     });
   }
@@ -126,7 +140,7 @@ class HapticService {
    * Escalating sequence to convey achievement
    */
   async skillcheckCompleted(): Promise<void> {
-    await this.executeHaptic(async () => {
+    await this.executeHaptic(async ({ Haptics, ImpactStyle, NotificationType }) => {
       await Haptics.impact({ style: ImpactStyle.Light });
       await this.delay(80);
       await Haptics.impact({ style: ImpactStyle.Medium });
@@ -142,7 +156,7 @@ class HapticService {
    * Clear negative feedback pattern
    */
   async skillcheckFailed(): Promise<void> {
-    await this.executeHaptic(async () => {
+    await this.executeHaptic(async ({ Haptics, NotificationType }) => {
       await Haptics.notification({ type: NotificationType.Error });
       await this.delay(100);
       await Haptics.vibrate({ duration: 200 });
@@ -159,10 +173,11 @@ class HapticService {
    */
   async escapeAreaProximity(distance: number): Promise<void> {
     // Intensity based on distance (50m range)
-    const intensity = distance < 20 ? ImpactStyle.Heavy : 
+    const pickIntensity = (ImpactStyle: any) => distance < 20 ? ImpactStyle.Heavy : 
                      distance < 35 ? ImpactStyle.Medium : ImpactStyle.Light;
     
-    await this.executeHaptic(async () => {
+    await this.executeHaptic(async ({ Haptics, ImpactStyle }) => {
+      const intensity = pickIntensity(ImpactStyle);
       await Haptics.impact({ style: intensity });
       
       // Double pulse for urgency when very close
@@ -178,7 +193,7 @@ class HapticService {
    * Celebration pattern with building intensity
    */
   async playerEscaped(): Promise<void> {
-    await this.executeHaptic(async () => {
+    await this.executeHaptic(async ({ Haptics, ImpactStyle, NotificationType }) => {
       // Building crescendo
       await Haptics.impact({ style: ImpactStyle.Light });
       await this.delay(120);
@@ -208,7 +223,7 @@ class HapticService {
    * Heavy, impactful pattern to match the gravity of elimination
    */
   async playerCaught(): Promise<void> {
-    await this.executeHaptic(async () => {
+    await this.executeHaptic(async ({ Haptics, ImpactStyle, NotificationType }) => {
       await Haptics.impact({ style: ImpactStyle.Heavy });
       await this.delay(100);
       await Haptics.impact({ style: ImpactStyle.Heavy });
@@ -224,7 +239,7 @@ class HapticService {
    * Clear tactile confirmation for important buttons
    */
   async criticalButtonPress(): Promise<void> {
-    await this.executeHaptic(async () => {
+    await this.executeHaptic(async ({ Haptics, ImpactStyle }) => {
       await Haptics.impact({ style: ImpactStyle.Medium });
     });
   }
@@ -238,7 +253,7 @@ class HapticService {
    * Three escalating pulses to signal the hunt beginning
    */
   async gamePhaseActive(): Promise<void> {
-    await this.executeHaptic(async () => {
+    await this.executeHaptic(async ({ Haptics, ImpactStyle }) => {
       await Haptics.impact({ style: ImpactStyle.Light });
       await this.delay(300);
       await Haptics.impact({ style: ImpactStyle.Medium });
@@ -253,7 +268,7 @@ class HapticService {
    * Victory fanfare for survivors winning
    */
   async survivorsWin(): Promise<void> {
-    await this.executeHaptic(async () => {
+    await this.executeHaptic(async ({ Haptics, ImpactStyle, NotificationType }) => {
       // Celebration sequence
       for (let i = 0; i < 4; i++) {
         await Haptics.impact({ style: ImpactStyle.Medium });
@@ -268,7 +283,7 @@ class HapticService {
    * Heavy, ominous feedback
    */
   async killersWin(): Promise<void> {
-    await this.executeHaptic(async () => {
+    await this.executeHaptic(async ({ Haptics, ImpactStyle }) => {
       await Haptics.impact({ style: ImpactStyle.Heavy });
       await this.delay(200);
       await Haptics.vibrate({ duration: 400 });
@@ -284,7 +299,7 @@ class HapticService {
    * Warning pattern to heighten tension
    */
   async killerProximityAlert(): Promise<void> {
-    await this.executeHaptic(async () => {
+    await this.executeHaptic(async ({ Haptics, ImpactStyle }) => {
       await Haptics.impact({ style: ImpactStyle.Medium });
       await this.delay(150);
       await Haptics.impact({ style: ImpactStyle.Light });
@@ -301,7 +316,7 @@ class HapticService {
     // Convert bearing to haptic pattern (simplified directional feedback)
     const pattern = bearing < 90 || bearing > 270 ? 'strong' : 'gentle';
     
-    await this.executeHaptic(async () => {
+    await this.executeHaptic(async ({ Haptics, ImpactStyle }) => {
       if (pattern === 'strong') {
         await Haptics.impact({ style: ImpactStyle.Medium });
         await this.delay(100);
@@ -320,10 +335,11 @@ class HapticService {
    * Subtle pulse for timer warnings (60s, 30s, 10s remaining)
    */
   async timerWarning(secondsRemaining: number): Promise<void> {
-    const intensity = secondsRemaining <= 10 ? ImpactStyle.Heavy :
+    const pick = (ImpactStyle: any) => secondsRemaining <= 10 ? ImpactStyle.Heavy :
                      secondsRemaining <= 30 ? ImpactStyle.Medium : ImpactStyle.Light;
     
-    await this.executeHaptic(async () => {
+    await this.executeHaptic(async ({ Haptics, ImpactStyle }) => {
+      const intensity = pick(ImpactStyle);
       await Haptics.impact({ style: intensity });
       
       // Final countdown gets double pulse
