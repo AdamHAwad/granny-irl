@@ -66,6 +66,7 @@ interface InteractiveGameMapProps {
   skillchecks?: Skillcheck[]; // Optional skillchecks to display
   escapeArea?: EscapeArea; // Optional escape area to display (survivors only)
   onEnableLocation?: () => void; // Callback to enable location
+  mapHeight?: number | string; // Optional height override for map container
 }
 
 // Custom icon for skillchecks
@@ -194,7 +195,8 @@ function InteractiveGameMap({
   className = '',
   skillchecks = [],
   escapeArea,
-  onEnableLocation
+  onEnableLocation,
+  mapHeight
 }: InteractiveGameMapProps) {
   const [map, setMap] = useState<L.Map | null>(null);
   const [center, setCenter] = useState<[number, number]>([37.7749, -122.4194]); // Default to SF
@@ -556,7 +558,7 @@ function InteractiveGameMap({
 
       <div className="relative">
         <div 
-          style={{ height: '400px', width: '100%' }}
+          style={{ height: typeof mapHeight === 'number' ? `${mapHeight}px` : (mapHeight || '400px'), width: '100%' }}
           onClick={onMapClick}
         >
           <MapContainer

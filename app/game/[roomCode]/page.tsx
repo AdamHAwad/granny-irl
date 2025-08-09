@@ -39,6 +39,7 @@ import LocationPermissionModal from '@/components/LocationPermissionModal';
 import InteractiveGameMap from '@/components/InteractiveGameMap';
 import ProximityArrow from '@/components/ProximityArrow';
 import SkillcheckMinigame from '@/components/SkillcheckMinigame';
+import { hapticService } from '@/lib/hapticService';
 
 interface PageProps {
   params: {
@@ -74,6 +75,8 @@ function GamePage({ params }: PageProps) {
   
   // UI state
   const [showMap, setShowMap] = useState(false);
+  const [isMapFullscreen, setIsMapFullscreen] = useState(false);
+  const [fullscreenMode, setFullscreenMode] = useState<'alive' | 'spectator'>('alive');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [activeSkillcheck, setActiveSkillcheck] = useState<string | null>(null);
   const [nearbyEscapeArea, setNearbyEscapeArea] = useState(false);
@@ -148,6 +151,9 @@ function GamePage({ params }: PageProps) {
     setNearbyEscapeArea(false);
     setBackgroundEscape(false);
     
+    // 🎮 HAPTIC: Victory crescendo when player successfully escapes
+    hapticService.playerEscaped();
+    
     try {
       console.log('🏃 Calling markPlayerEscaped for player:', user.id);
       
@@ -209,6 +215,9 @@ function GamePage({ params }: PageProps) {
     if (!user || !room || eliminating) return; // Prevent double clicks
 
     setEliminating(true);
+    
+    // 🎮 HAPTIC: Dramatic impact sequence for "I Was Caught!" button
+    hapticService.playerCaught();
     
     // Create a timeout to reset the button if the operation hangs
     const timeout = setTimeout(() => {
@@ -416,6 +425,9 @@ function GamePage({ params }: PageProps) {
             playGameStart();
             vibrate([200, 100, 200]);
             setGameStartSoundPlayed(true);
+            
+            // 🎮 HAPTIC: Building tension pattern for headstart → active transition
+            hapticService.gamePhaseActive();
           }
 
           if (remaining <= 10000 && remaining > 0) {
@@ -461,6 +473,9 @@ function GamePage({ params }: PageProps) {
           playGameStart();
           vibrate([200, 100, 200]);
           setGameStartSoundPlayed(true);
+          
+          // 🎮 HAPTIC: Building tension pattern for headstart → active transition
+          hapticService.gamePhaseActive();
         }
 
         if (serverActiveRemaining <= 10000 && serverActiveRemaining > 0) {
@@ -567,6 +582,9 @@ function GamePage({ params }: PageProps) {
           if (!showSkillcheckPrompt && !activeSkillcheck && !backgroundSkillcheck) {
             console.log('Near skillcheck:', skillcheck.id, 'distance:', distance);
             
+            // 🎮 HAPTIC: Subtle pulse when entering skillcheck proximity
+            hapticService.skillcheckProximityEntered();
+            
             // If we've dismissed this prompt before, show it in background
             if (dismissedSkillcheckPrompts.has(skillcheck.id)) {
               setBackgroundSkillcheck(skillcheck.id);
@@ -594,6 +612,9 @@ function GamePage({ params }: PageProps) {
         if (!showEscapePrompt && !nearbyEscapeArea && !backgroundEscape) {
           console.log('Near escape area, distance:', distance);
           setNearbyEscapeArea(true);
+          
+          // 🎮 HAPTIC: Urgent proximity feedback based on distance
+          hapticService.escapeAreaProximity(distance);
           
           // If we've dismissed the escape prompt before, show it in background
           if (dismissedEscapePrompt) {
@@ -761,6 +782,67 @@ function GamePage({ params }: PageProps) {
       {/* Background effects */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-prowl-bg/80 to-prowl-bg pointer-events-none" />
       
+      {/* Pseudo-Fullscreen Map Overlay */}
+      {isMapFullscreen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setIsMapFullscreen(false)} />
+          <div className="relative w-full max-w-5xl mx-auto animate-slide-up">
+            <div className="glass-modal p-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-prowl-text font-semibold flex items-center gap-2">
+                  {fullscreenMode === 'alive' ? (
+                    <span className={currentPlayer?.role === 'killer' ? 'text-prowl-danger' : 'text-prowl-survivor'}>
+                      🗺️ {currentPlayer?.role === 'killer' ? 'Tracking Map' : 'Survivor Map'}
+                    </span>
+                  ) : (
+                    <span className="text-prowl-text">👻 Spectator Map</span>
+                  )}
+                </div>
+                <button
+                  onClick={() => setIsMapFullscreen(false)}
+                  className="px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 bg-prowl-surface border border-prowl-border text-prowl-text hover:bg-prowl-surface-light"
+                >
+                  ✕ Close
+                </button>
+              </div>
+              <div className="rounded-xl overflow-hidden border border-prowl-border/30">
+                {fullscreenMode === 'alive' ? (
+                  <InteractiveGameMap
+                    players={players}
+                    currentPlayerUid={user?.id || ''}
+                    isKiller={currentPlayer?.role === 'killer'}
+                    selectedPlayerId={selectedPlayerId}
+                    onPlayerClick={handlePlayerClick}
+                    onMapClick={() => setSelectedPlayerId(null)}
+                    skillchecks={room?.skillchecks}
+                    escapeArea={getEscapeArea(room)}
+                    mapHeight="75vh"
+                    onEnableLocation={() => setShowLocationModal(true)}
+                  />
+                ) : (
+                  <InteractiveGameMap
+                    players={players}
+                    currentPlayerUid={user?.id || ''}
+                    isKiller={false}
+                    isEliminated={true}
+                    selectedPlayerId={selectedPlayerId}
+                    onPlayerClick={handlePlayerClick}
+                    onMapClick={() => setSelectedPlayerId(null)}
+                    skillchecks={room?.skillchecks}
+                    escapeArea={room?.escapeArea}
+                    mapHeight="75vh"
+                    onEnableLocation={() => setShowLocationModal(true)}
+                  />
+                )}
+              </div>
+              <div className="text-center mt-2 text-xs text-prowl-text-muted">
+                📱 Drag to pan • Pinch to zoom • Tap markers for details
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="w-full glass-modal p-4 text-prowl-text mb-3 relative z-10">
         <div className="text-center mb-6">
           <h1 className={`text-4xl font-bold mb-3 animate-glow flex items-center justify-center gap-3 ${
@@ -981,19 +1063,30 @@ function GamePage({ params }: PageProps) {
                 }`}>
                   🗺️ {currentPlayer?.role === 'killer' ? 'Tracking Map' : 'Survivor Map'}
                 </h2>
-                <button
-                  onClick={() => setShowMap(!showMap)}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                    currentPlayer?.role === 'killer' 
-                      ? 'bg-prowl-danger/20 text-prowl-danger border border-prowl-danger/50 hover:bg-prowl-danger/30' 
-                      : 'bg-prowl-survivor/20 text-prowl-survivor border border-prowl-survivor/50 hover:bg-prowl-survivor/30'
-                  }`}
-                >
-                  {showMap ? '👁️ Hide Map' : '🗺️ Show Map'}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowMap(!showMap)}
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                      currentPlayer?.role === 'killer' 
+                        ? 'bg-prowl-danger/20 text-prowl-danger border border-prowl-danger/50 hover:bg-prowl-danger/30' 
+                        : 'bg-prowl-survivor/20 text-prowl-survivor border border-prowl-survivor/50 hover:bg-prowl-survivor/30'
+                    }`}
+                  >
+                    {showMap ? '👁️ Hide Map' : '🗺️ Show Map'}
+                  </button>
+                  {showMap && (
+                    <button
+                      onClick={() => { setFullscreenMode('alive'); setIsMapFullscreen(true); }}
+                      className="px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 bg-prowl-surface border border-prowl-border text-prowl-text hover:bg-prowl-surface-light"
+                      title="Fullscreen map"
+                    >
+                      ⤢ Fullscreen
+                    </button>
+                  )}
+                </div>
               </div>
             
-            {showMap && (
+                {showMap && (
               <InteractiveGameMap
                 players={players}
                 currentPlayerUid={user?.id || ''}
@@ -1002,7 +1095,7 @@ function GamePage({ params }: PageProps) {
                 onPlayerClick={handlePlayerClick}
                 onMapClick={() => setSelectedPlayerId(null)}
                 skillchecks={room?.skillchecks}
-                escapeArea={getEscapeArea(room)}
+                    escapeArea={getEscapeArea(room)}
                 className="mb-4"
                 onEnableLocation={() => setShowLocationModal(true)}
               />
@@ -1045,12 +1138,23 @@ function GamePage({ params }: PageProps) {
                   <h2 className="text-lg font-semibold text-prowl-text flex items-center gap-2">
                     👻 Spectator Map
                   </h2>
-                  <button
-                    onClick={() => setShowMap(!showMap)}
-                    className="px-4 py-2 bg-prowl-surface border border-prowl-border text-prowl-text rounded-lg hover:bg-prowl-surface-light text-sm font-semibold transition-all duration-200"
-                  >
-                    {showMap ? '👁️ Hide Map' : '🗺️ Show Map'}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setShowMap(!showMap)}
+                      className="px-4 py-2 bg-prowl-surface border border-prowl-border text-prowl-text rounded-lg hover:bg-prowl-surface-light text-sm font-semibold transition-all duration-200"
+                    >
+                      {showMap ? '👁️ Hide Map' : '🗺️ Show Map'}
+                    </button>
+                    {showMap && (
+                      <button
+                        onClick={() => { setFullscreenMode('spectator'); setIsMapFullscreen(true); }}
+                        className="px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 bg-prowl-surface border border-prowl-border text-prowl-text hover:bg-prowl-surface-light"
+                        title="Fullscreen map"
+                      >
+                        ⤢ Fullscreen
+                      </button>
+                    )}
+                  </div>
                 </div>
                 
                 {showMap && (
