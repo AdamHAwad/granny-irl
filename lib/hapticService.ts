@@ -12,7 +12,12 @@ async function loadHaptics() {
   try {
     // Only attempt to load on native platforms
     if (!Capacitor.isNativePlatform()) return null;
-    const mod = await import('@capacitor/haptics');
+    // Use indirect dynamic import to avoid bundler resolution at build time
+    const importer: (s: string) => Promise<any> = new Function(
+      's',
+      'return import(s)'
+    ) as any;
+    const mod = await importer('@capacitor/haptics');
     return mod;
   } catch (err) {
     // Module not available in web build or not installed
