@@ -394,7 +394,7 @@ class HapticService {
    * Test haptic pattern for settings/debugging
    */
   async testPattern(): Promise<void> {
-    await this.executeHaptic(async () => {
+    await this.executeHaptic(async ({ Haptics, ImpactStyle, NotificationType }) => {
       await Haptics.impact({ style: ImpactStyle.Light });
       await this.delay(200);
       await Haptics.impact({ style: ImpactStyle.Medium });
