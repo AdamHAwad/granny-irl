@@ -218,4 +218,34 @@ body {
     @apply text-lg sm:text-xl font-medium;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   }
+
+  /* Mobile-only compaction helpers */
+  @media (max-width: 640px) {
+    .mobile-compact .glass-modal {
+      padding: 8px !important;
+    }
+    .mobile-compact .glass-card {
+      padding: 10px !important; /* ~p-2.5 */
+    }
+    .mobile-compact .game-title {
+      font-size: 1.75rem !important; /* ~text-3xl */
+      line-height: 1.15 !important;
+      margin-bottom: 0.5rem !important;
+    }
+    .mobile-compact .game-timer {
+      font-size: 2rem !important; /* smaller timer on phones */
+      line-height: 1.1 !important;
+      margin-bottom: 0.5rem !important;
+    }
+    .mobile-compact .section-mb {
+      margin-bottom: 0.75rem !important; /* ~mb-3 */
+    }
+    .mobile-compact .btn-lg {
+      padding-top: 0.75rem !important;  /* ~py-3 */
+      padding-bottom: 0.75rem !important;
+      padding-left: 1rem !important;    /* ~px-4 */
+      padding-right: 1rem !important;
+      font-size: 1rem !important;       /* ~text-base */
+    }
+  }
 }
