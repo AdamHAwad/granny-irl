@@ -787,7 +787,7 @@ function GamePage({ params }: PageProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setIsMapFullscreen(false)} />
           <div className="relative w-full max-w-5xl mx-auto animate-slide-up">
-            <div className="glass-modal p-3">
+            <div className="glass-modal p-3 card-compact">
               <div className="flex items-center justify-between mb-2">
                 <div className="text-prowl-text font-semibold flex items-center gap-2">
                   {fullscreenMode === 'alive' ? (
@@ -798,11 +798,8 @@ function GamePage({ params }: PageProps) {
                     <span className="text-prowl-text">👻 Spectator Map</span>
                   )}
                 </div>
-                <button
-                  onClick={() => setIsMapFullscreen(false)}
-                  className="px-3 py-2 rounded-lg text-sm font-semibold transition-all duration-200 bg-prowl-surface border border-prowl-border text-prowl-text hover:bg-prowl-surface-light"
-                >
-                  ✕ Close
+                <button onClick={() => setIsMapFullscreen(false)} className="btn-close-mobile">
+                  ✕
                 </button>
               </div>
               <div className="rounded-xl overflow-hidden border border-prowl-border/30">
@@ -816,7 +813,7 @@ function GamePage({ params }: PageProps) {
                     onMapClick={() => setSelectedPlayerId(null)}
                     skillchecks={room?.skillchecks}
                     escapeArea={getEscapeArea(room)}
-                    mapHeight="75vh"
+                    mapHeight="70vh"
                     onEnableLocation={() => setShowLocationModal(true)}
                   />
                 ) : (
@@ -830,14 +827,12 @@ function GamePage({ params }: PageProps) {
                     onMapClick={() => setSelectedPlayerId(null)}
                     skillchecks={room?.skillchecks}
                     escapeArea={room?.escapeArea}
-                    mapHeight="75vh"
+                    mapHeight="70vh"
                     onEnableLocation={() => setShowLocationModal(true)}
                   />
                 )}
               </div>
-              <div className="text-center mt-2 text-xs text-prowl-text-muted">
-                📱 Drag to pan • Pinch to zoom • Tap markers for details
-              </div>
+              <div className="text-center mt-2 text-xs text-prowl-text-muted">📱 Drag to pan • Pinch to zoom • Tap markers for details</div>
             </div>
           </div>
         </div>

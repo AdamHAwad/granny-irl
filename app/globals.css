@@ -72,6 +72,14 @@ body {
     @apply bg-transparent hover:bg-prowl-surface-light text-prowl-text border border-prowl-border hover:border-prowl-border font-medium py-2 px-4 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-prowl-border active:scale-95 select-none;
   }
   
+  /* High-contrast, mobile-friendly close button */
+  .btn-close-mobile {
+    @apply bg-prowl-surface text-prowl-text border border-prowl-border hover:bg-prowl-surface-light font-semibold rounded-full shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-prowl-border active:scale-95 select-none;
+    min-height: 44px; /* iOS minimum tap target */
+    min-width: 44px;
+    padding: 0.5rem 0.9rem; /* compact but tappable */
+  }
+  
   .input-field {
     @apply bg-prowl-surface border border-prowl-border text-prowl-text placeholder-prowl-text-muted rounded-lg px-4 py-3 focus:outline-none focus:border-prowl-danger/50 focus:ring-2 focus:ring-prowl-danger/20 transition-all duration-200;
     /* Prevent iOS zoom on focus */
@@ -169,6 +177,11 @@ body {
     backdrop-filter: blur(20px);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(196, 30, 58, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  /* Compact card variant for tight layouts (e.g., overlays) */
+  .card-compact {
+    @apply p-3 sm:p-4 rounded-xl;
   }
   
   /* Mobile-friendly button enhancements */

@@ -545,9 +545,9 @@ function InteractiveGameMap({
 
   return (
     <div className={`glass-card border-2 ${getBorderColor()} ${className}`}>
-      <div className={`p-4 border-b border-prowl-border/20 ${getHeaderBg()}`}>
-        <h3 className={`font-bold text-lg ${getHeaderText()} text-center`}>{getHeaderTitle()}</h3>
-        <div className={`text-sm ${getSubtitleText()} text-center mt-2`}>
+      <div className={`p-3 sm:p-4 border-b border-prowl-border/20 ${getHeaderBg()}`}>
+        <h3 className={`font-bold text-base sm:text-lg ${getHeaderText()} text-center`}>{getHeaderTitle()}</h3>
+        <div className={`text-xs sm:text-sm ${getSubtitleText()} text-center mt-1 sm:mt-2`}>
           {isKiller || isEliminated ? (
             `${visibleSurvivors} survivor${visibleSurvivors !== 1 ? 's' : ''} visible`
           ) : (
@@ -558,7 +558,7 @@ function InteractiveGameMap({
 
       <div className="relative">
         <div 
-          style={{ height: typeof mapHeight === 'number' ? `${mapHeight}px` : (mapHeight || '400px'), width: '100%' }}
+          style={{ height: typeof mapHeight === 'number' ? `${mapHeight}px` : (mapHeight || '360px'), width: '100%' }}
           onClick={onMapClick}
         >
           <MapContainer
@@ -606,7 +606,7 @@ function InteractiveGameMap({
         </div>
 
         {/* Legend */}
-        <div className="absolute bottom-4 left-4 glass-card border border-prowl-border/30 p-3 text-xs shadow-xl z-[1000]">
+        <div className="absolute bottom-3 left-3 glass-card border border-prowl-border/30 p-2 sm:p-3 text-[11px] sm:text-xs shadow-xl z-[1000]">
           <div className="font-semibold text-prowl-text mb-2 flex items-center gap-1">
             🗺️ Legend
           </div>
@@ -682,17 +682,11 @@ function InteractiveGameMap({
         </div>
 
         {/* Controls hint */}
-        <div className="absolute top-4 right-4 glass-card border border-prowl-border/30 p-2 text-xs shadow-lg z-[1000]">
-          <div className="text-prowl-text-muted font-medium">
-            📱 Pinch to zoom • Drag to pan
-          </div>
-        </div>
+        <div className="absolute top-3 right-3 glass-card border border-prowl-border/30 px-2 py-1 text-[11px] sm:text-xs shadow-lg z-[1000] text-prowl-text-muted font-medium">📱 Pinch to zoom • Drag to pan</div>
       </div>
 
       {/* Update info */}
-      <div className="p-3 text-xs text-prowl-text-muted text-center border-t border-prowl-border/20">
-        🔄 Updates every 5 seconds • 📍 Tap markers for details
-      </div>
+      <div className="px-3 py-2 text-[11px] sm:text-xs text-prowl-text-muted text-center border-t border-prowl-border/20">🔄 Updates every 5 seconds • 📍 Tap markers for details</div>
     </div>
   );
 }
