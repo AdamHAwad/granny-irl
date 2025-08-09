@@ -973,7 +973,7 @@ function GamePage({ params }: PageProps) {
 
         {currentPlayer?.isAlive && currentPlayer?.role === 'survivor' && isActive && (
           <div className="mb-6 space-y-4">
-            <div className="glass-card border border-prowl-error/30 bg-prowl-error/5 p-4"},{>
+            <div className="glass-card border border-prowl-error/30 bg-prowl-error/5 p-4">
               <div className="text-center mb-4">
                 <div className="text-4xl mb-2">💀</div>
                 <div className="text-prowl-error font-bold text-lg">
@@ -1009,7 +1009,7 @@ function GamePage({ params }: PageProps) {
 
         {currentPlayer?.isAlive && currentPlayer?.role === 'killer' && isActive && (
           <div className="mb-6">
-            <div className="glass-card border border-prowl-danger/50 bg-prowl-danger/10 p-4"},{>
+            <div className="glass-card border border-prowl-danger/50 bg-prowl-danger/10 p-4">
               <div className="text-center mb-4">
                 <div className="font-bold text-2xl mb-3 text-prowl-danger animate-glow flex items-center justify-center gap-2">
                   🔪 You are a KILLER!
