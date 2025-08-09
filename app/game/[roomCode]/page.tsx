@@ -838,16 +838,16 @@ function GamePage({ params }: PageProps) {
         </div>
       )}
 
-      <div className="w-full glass-modal p-3 text-prowl-text mb-2 relative z-10">
-        <div className="text-center mb-6">
-          <h1 className={`text-4xl font-bold mb-3 animate-glow flex items-center justify-center gap-3 ${
+      <div className="w-full glass-modal p-2 text-prowl-text mb-2 relative z-10 sticky top-[env(safe-area-inset-top)] z-20">
+        <div className="text-center mb-3">
+          <h1 className={`text-3xl sm:text-4xl font-bold mb-2 animate-glow flex items-center justify-center gap-3 ${
             isHeadstart ? 'text-prowl-warning' : 'text-prowl-danger'
           }`}>
             {isHeadstart ? '⚡ HEADSTART' : '🔥 GAME ACTIVE'}
           </h1>
           
           {isHeadstart && (
-            <div className="mb-6">
+            <div className="mb-4">
               <div className="text-4xl sm:text-5xl font-mono font-bold text-prowl-warning animate-pulse">
                 {formatTime(headstartRemaining)}
               </div>
@@ -858,7 +858,7 @@ function GamePage({ params }: PageProps) {
           )}
 
           {isActive && (
-            <div className="mb-6">
+            <div className="mb-4">
               <div className="text-4xl sm:text-5xl font-mono font-bold text-prowl-danger animate-pulse">
                 {formatTime(timeRemaining)}
               </div>
